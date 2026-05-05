@@ -52,7 +52,7 @@ export default async function KelolaAdminPage() {
                   </td>
                 </tr>
               ) : (
-                adminUsers.map((user) => (
+                adminUsers.map((user: any) => (
                   <tr key={user.id} className="border-b border-gray-50 last:border-0 hover:bg-blue-50/30 transition-colors">
                     <td className="py-3.5 px-4">
                       <div className="flex items-center gap-3">

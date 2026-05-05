@@ -357,7 +357,7 @@ export default function TentangPage() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {pengurus.map((p) => (
+            {pengurus.map((p: any) => (
               <div
                 key={p.nama}
                 className="bg-white border border-slate-100 rounded-2xl p-6 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 text-center flex flex-col items-center"

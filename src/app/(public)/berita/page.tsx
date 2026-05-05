@@ -140,7 +140,7 @@ export default async function BeritaPage({
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filtered.map((b) => (
+              {filtered.map((b: any) => (
                 <article
                   key={b.id}
                   className="group bg-white border border-slate-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 flex flex-col"

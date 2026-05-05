@@ -202,7 +202,7 @@ export default async function ArtikelPage({
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filtered.map((a) => (
+              {filtered.map((a: any) => (
                 <article
                   key={a.id}
                   className="group bg-white border border-slate-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 flex flex-col p-6 relative"

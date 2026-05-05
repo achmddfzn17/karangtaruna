@@ -274,7 +274,7 @@ export default async function KegiatanPage({
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {paged.map((k) => (
+              {paged.map((k: any) => (
                 <article
                   key={k.id}
                   className="bg-white border border-slate-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 group flex flex-col"
