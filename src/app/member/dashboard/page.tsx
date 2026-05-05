@@ -167,7 +167,7 @@ export default async function MemberDashboard() {
             
             {anggotaData?.kegiatan && anggotaData.kegiatan.length > 0 ? (
               <div className="space-y-6 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-slate-300 before:to-transparent">
-                {anggotaData.kegiatan.map((ak, idx) => (
+                {anggotaData.kegiatan.map((ak: any, idx: number) => (
                   <div key={ak.id} className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
                     <div className="flex items-center justify-center w-10 h-10 rounded-full border border-white bg-green-100 text-green-600 shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2">
                       <Calendar className="w-4 h-4" />

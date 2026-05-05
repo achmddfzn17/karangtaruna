@@ -216,7 +216,7 @@ export default function GaleriPage() {
               transition={{ duration: 0.3 }}
               className="grid grid-cols-2 md:grid-cols-4 auto-rows-[160px] gap-4"
             >
-              {filtered.map((item, i) => (
+              {filtered.map((item: any, i: number) => (
                 <motion.div
                   key={item.id}
                   initial={{ opacity: 0, scale: 0.95 }}

@@ -155,7 +155,7 @@ export default function EvaluasiPage() {
             </div>
 
             <div className="space-y-8">
-              {susQuestions.map((q, index) => (
+              {susQuestions.map((q: any, index: number) => (
                 <motion.div
                   key={index}
                   initial={{ opacity: 0, x: -10 }}
