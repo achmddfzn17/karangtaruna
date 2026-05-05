@@ -3,20 +3,36 @@
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { z } from "zod";
+
+const kegiatanSchema = z.object({
+  nama: z.string().min(5, "Nama kegiatan minimal 5 karakter"),
+  deskripsi: z.string().optional(),
+  jenis: z.enum(["SOSIAL", "PENDIDIKAN", "EKONOMI", "OLAHRAGA", "SENI_BUDAYA", "LAINNYA"]),
+  tanggalMulai: z.string().min(1, "Tanggal mulai wajib diisi"),
+  tanggalSelesai: z.string().optional(),
+  lokasi: z.string().optional(),
+  anggaran: z.string().optional(),
+  status: z.enum(["UPCOMING", "ONGOING", "SELESAI", "DIBATALKAN"]),
+});
 
 export async function createKegiatan(formData: FormData) {
-  const nama = formData.get("nama") as string;
-  const deskripsi = formData.get("deskripsi") as string;
-  const jenis = formData.get("jenis") as "SOSIAL" | "PENDIDIKAN" | "EKONOMI" | "OLAHRAGA" | "SENI_BUDAYA" | "LAINNYA";
-  const tanggalMulai = formData.get("tanggalMulai") as string;
-  const tanggalSelesai = formData.get("tanggalSelesai") as string;
-  const lokasi = formData.get("lokasi") as string;
-  const anggaran = formData.get("anggaran") as string;
-  const status = formData.get("status") as "UPCOMING" | "ONGOING" | "SELESAI" | "DIBATALKAN";
+  const parsed = kegiatanSchema.safeParse({
+    nama: formData.get("nama"),
+    deskripsi: formData.get("deskripsi"),
+    jenis: formData.get("jenis"),
+    tanggalMulai: formData.get("tanggalMulai"),
+    tanggalSelesai: formData.get("tanggalSelesai"),
+    lokasi: formData.get("lokasi"),
+    anggaran: formData.get("anggaran"),
+    status: formData.get("status") || "UPCOMING",
+  });
 
-  if (!nama || !jenis || !tanggalMulai) {
-    throw new Error("Data wajib tidak lengkap");
+  if (!parsed.success) {
+    throw new Error(parsed.error.issues[0].message);
   }
+
+  const { nama, deskripsi, jenis, tanggalMulai, tanggalSelesai, lokasi, anggaran, status } = parsed.data;
 
   try {
     await prisma.kegiatan.create({

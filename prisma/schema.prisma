@@ -221,6 +221,7 @@ model Berita {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@index([status, publishedAt(sort: Desc)])
   @@map("berita")
 }
 
@@ -240,6 +241,7 @@ model Artikel {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@index([status, publishedAt(sort: Desc)])
   @@map("artikel")
 }
 

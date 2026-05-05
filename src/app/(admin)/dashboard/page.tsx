@@ -1,6 +1,5 @@
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
-import { redirect } from "next/navigation";
 import Link from "next/link";
 import {
   Users,
@@ -13,47 +12,94 @@ import {
   Check,
 } from "lucide-react";
 import { formatDate } from "@/lib/utils";
+import {
+  AnggotaStatusChart,
+  KegiatanJenisChart,
+  KontenTrenChart,
+} from "@/components/admin/DashboardCharts";
 
 export const metadata = {
   title: "Dashboard Admin",
 };
 
 export default async function AdminDashboard() {
+  // Auth is already checked by the parent layout — no redirect here to avoid loops
   const session = await auth();
-
-  if (!session || !session.user) {
-    redirect("/login");
-  }
-
-  const userRole = (session.user as any).role;
-  if (userRole !== "ADMIN" && userRole !== "SUPER_ADMIN") {
-    redirect("/login");
-  }
-
-  const userName = session.user.name || "Admin";
+  const userName = session?.user?.name || "Admin";
 
   // Fetch data
-  const [totalAnggota, anggotaAktif, totalKegiatan, totalProgram, totalBerita, totalArtikel, recentKegiatan] =
-    await Promise.all([
-      prisma.anggota.count(),
-      prisma.anggota.count({ where: { status: "AKTIF" } }),
-      prisma.kegiatan.count(),
-      prisma.program.count(),
-      prisma.berita.count({ where: { status: "PUBLISHED" } }),
-      prisma.artikel.count({ where: { status: "PUBLISHED" } }),
-      prisma.kegiatan.findMany({
-        take: 5,
-        orderBy: { createdAt: "desc" },
-        select: {
-          id: true,
-          nama: true,
-          jenis: true,
-          tanggalMulai: true,
-          status: true,
-          deskripsi: true,
-        },
-      }),
-    ]);
+  const [
+    totalAnggota, anggotaAktif, totalKegiatan, totalProgram, totalBerita, totalArtikel,
+    recentKegiatan, anggotaNonAktif, anggotaAlumni, kegiatanByJenis, allBerita, allArtikel,
+  ] = await Promise.all([
+    prisma.anggota.count(),
+    prisma.anggota.count({ where: { status: "AKTIF" } }),
+    prisma.kegiatan.count(),
+    prisma.program.count(),
+    prisma.berita.count({ where: { status: "PUBLISHED" } }),
+    prisma.artikel.count({ where: { status: "PUBLISHED" } }),
+    prisma.kegiatan.findMany({
+      take: 5,
+      orderBy: { createdAt: "desc" },
+      select: { id: true, nama: true, jenis: true, tanggalMulai: true, status: true, deskripsi: true },
+    }),
+    // Chart data queries
+    prisma.anggota.count({ where: { status: "NON_AKTIF" } }),
+    prisma.anggota.count({ where: { status: "ALUMNI" } }),
+    prisma.kegiatan.groupBy({ by: ["jenis"], _count: { id: true } }),
+    prisma.berita.findMany({
+      where: { status: "PUBLISHED" },
+      select: { publishedAt: true },
+    }),
+    prisma.artikel.findMany({
+      where: { status: "PUBLISHED" },
+      select: { publishedAt: true },
+    }),
+  ]);
+
+  // --- Prepare chart data ---
+
+  // 1. Anggota donut chart
+  const anggotaChartData = [
+    { name: "Aktif", value: anggotaAktif, color: "#3b82f6" },
+    { name: "Non-Aktif", value: anggotaNonAktif, color: "#f59e0b" },
+    { name: "Alumni", value: anggotaAlumni, color: "#94a3b8" },
+  ].filter((d) => d.value > 0);
+
+  // 2. Kegiatan bar chart
+  const jenisLabels: Record<string, string> = {
+    SOSIAL: "Sosial",
+    PENDIDIKAN: "Pendidikan",
+    EKONOMI: "Ekonomi",
+    OLAHRAGA: "Olahraga",
+    SENI_BUDAYA: "Seni & Budaya",
+    LAINNYA: "Lainnya",
+  };
+  const kegiatanChartData = kegiatanByJenis.map((k) => ({
+    name: jenisLabels[k.jenis] || k.jenis,
+    jumlah: k._count.id,
+  }));
+
+  // 3. Konten tren area chart (last 6 months)
+  const months = Array.from({ length: 6 }, (_, i) => {
+    const d = new Date();
+    d.setMonth(d.getMonth() - (5 - i));
+    return { year: d.getFullYear(), month: d.getMonth() };
+  });
+  const monthNames = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
+  const kontenTrenData = months.map(({ year, month }) => {
+    const beritaCount = allBerita.filter((b) => {
+      if (!b.publishedAt) return false;
+      const d = new Date(b.publishedAt);
+      return d.getFullYear() === year && d.getMonth() === month;
+    }).length;
+    const artikelCount = allArtikel.filter((a) => {
+      if (!a.publishedAt) return false;
+      const d = new Date(a.publishedAt);
+      return d.getFullYear() === year && d.getMonth() === month;
+    }).length;
+    return { bulan: `${monthNames[month]} ${year}`, berita: beritaCount, artikel: artikelCount };
+  });
 
   // Server time
   const now = new Date();
@@ -218,6 +264,13 @@ export default async function AdminDashboard() {
             </div>
           );
         })}
+      </div>
+
+      {/* Analytics Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <AnggotaStatusChart data={anggotaChartData} />
+        <KegiatanJenisChart data={kegiatanChartData} />
+        <KontenTrenChart data={kontenTrenData} />
       </div>
 
       {/* Bottom Grid: Recent + Quick Actions */}

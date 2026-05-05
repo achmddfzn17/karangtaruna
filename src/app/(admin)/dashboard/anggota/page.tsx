@@ -9,6 +9,7 @@ import {
   Phone,
   Mail,
 } from "lucide-react";
+import { ExportAnggotaButton } from "@/components/admin/ExportAnggotaButton";
 
 export const metadata = { title: "Data Anggota" };
 
@@ -43,13 +44,16 @@ export default async function DataAnggotaPage() {
             Kelola data seluruh anggota Karang Taruna
           </p>
         </div>
-        <Link
-          href="/dashboard/anggota/tambah"
-          className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-xl shadow-sm transition-colors"
-        >
-          <Plus className="w-4 h-4" />
-          Tambah Anggota
-        </Link>
+        <div className="flex items-center gap-3">
+          <ExportAnggotaButton data={anggotaList} />
+          <Link
+            href="/dashboard/anggota/tambah"
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-xl shadow-sm transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            Tambah Anggota
+          </Link>
+        </div>
       </div>
 
       {/* Stats */}
