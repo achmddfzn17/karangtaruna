@@ -69,7 +69,7 @@ export default async function KeuanganPage() {
                   </td>
                 </tr>
               ) : (
-                transaksiList.map((t) => (
+                transaksiList.map((t: any) => (
                   <tr key={t.id} className="border-b border-gray-50 last:border-0 hover:bg-blue-50/30 transition-colors">
                     <td className="py-3.5 px-4 text-sm text-slate-500">{formatDate(t.tanggal)}</td>
                     <td className="py-3.5 px-4">

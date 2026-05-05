@@ -67,7 +67,7 @@ export default async function DataKegiatanPage() {
                   </td>
                 </tr>
               ) : (
-                kegiatanList.map((k) => (
+                kegiatanList.map((k: any) => (
                   <tr key={k.id} className="border-b border-gray-50 last:border-0 hover:bg-blue-50/30 transition-colors">
                     <td className="py-3.5 px-4">
                       <p className="text-sm font-semibold text-slate-800">{k.nama}</p>

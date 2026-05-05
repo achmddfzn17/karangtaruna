@@ -43,7 +43,7 @@ export default async function DataProgramPage() {
                   </td>
                 </tr>
               ) : (
-                programList.map((p) => (
+                programList.map((p: any) => (
                   <tr key={p.id} className="border-b border-gray-50 last:border-0 hover:bg-blue-50/30 transition-colors">
                     <td className="py-3.5 px-4 text-sm font-bold text-slate-400 text-center">{p.urutan}</td>
                     <td className="py-3.5 px-4">

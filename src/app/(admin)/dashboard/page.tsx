@@ -75,7 +75,7 @@ export default async function AdminDashboard() {
     SENI_BUDAYA: "Seni & Budaya",
     LAINNYA: "Lainnya",
   };
-  const kegiatanChartData = kegiatanByJenis.map((k) => ({
+  const kegiatanChartData = kegiatanByJenis.map((k: any) => ({
     name: jenisLabels[k.jenis] || k.jenis,
     jumlah: k._count.id,
   }));
@@ -312,7 +312,7 @@ export default async function AdminDashboard() {
                   </tr>
                 </thead>
                 <tbody>
-                  {recentKegiatan.map((k) => (
+                  {recentKegiatan.map((k: any) => (
                     <tr
                       key={k.id}
                       className="border-b border-gray-50 last:border-0 hover:bg-slate-50/50 transition-colors"

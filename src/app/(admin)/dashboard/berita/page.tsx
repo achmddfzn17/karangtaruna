@@ -55,7 +55,7 @@ export default async function DataBeritaPage() {
                   </td>
                 </tr>
               ) : (
-                beritaList.map((b) => (
+                beritaList.map((b: any) => (
                   <tr key={b.id} className="border-b border-gray-50 last:border-0 hover:bg-blue-50/30 transition-colors">
                     <td className="py-3.5 px-4">
                       <p className="text-sm font-semibold text-slate-800 line-clamp-1 max-w-xs">{b.judul}</p>

@@ -55,7 +55,7 @@ export default async function DataArtikelPage() {
                   </td>
                 </tr>
               ) : (
-                artikelList.map((a) => (
+                artikelList.map((a: any) => (
                   <tr key={a.id} className="border-b border-gray-50 last:border-0 hover:bg-blue-50/30 transition-colors">
                     <td className="py-3.5 px-4">
                       <p className="text-sm font-semibold text-slate-800 line-clamp-1 max-w-xs">{a.judul}</p>
