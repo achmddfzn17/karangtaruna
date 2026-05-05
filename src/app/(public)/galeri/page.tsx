@@ -140,7 +140,7 @@ export default function GaleriPage() {
   const filtered =
     filter === "ALL"
       ? galeriItems
-      : galeriItems.filter((g) => g.type === filter);
+      : galeriItems.filter((g: any) => g.type === filter);
   const active = galeriItems.find((g) => g.id === lightbox);
 
   return (
@@ -196,7 +196,7 @@ export default function GaleriPage() {
                 >
                   {value === "ALL"
                     ? galeriItems.length
-                    : galeriItems.filter((g) => g.type === value).length}
+                    : galeriItems.filter((g: any) => g.type === value).length}
                 </span>
               </button>
             ))}

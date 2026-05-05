@@ -11,12 +11,12 @@ export default async function KeuanganPage() {
   });
 
   const totalPemasukan = transaksiList
-    .filter((t) => t.jenis === "MASUK")
-    .reduce((sum, t) => sum + t.jumlah, 0);
+    .filter((t: any) => t.jenis === "MASUK")
+    .reduce((sum: number, t: any) => sum + t.jumlah, 0);
 
   const totalPengeluaran = transaksiList
-    .filter((t) => t.jenis === "KELUAR")
-    .reduce((sum, t) => sum + t.jumlah, 0);
+    .filter((t: any) => t.jenis === "KELUAR")
+    .reduce((sum: number, t: any) => sum + t.jumlah, 0);
 
   const saldo = totalPemasukan - totalPengeluaran;
 

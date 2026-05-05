@@ -116,7 +116,7 @@ export default async function ArtikelPage({
   const q = typeof params.q === "string" ? params.q : "";
   const kat = typeof params.kat === "string" ? params.kat : "Semua";
 
-  const filtered = artikelList.filter((a) => {
+  const filtered = artikelList.filter((a: any) => {
     const matchQ = !q || a.title.toLowerCase().includes(q.toLowerCase());
     const matchKat = kat === "Semua" || a.kategori === kat;
     return matchQ && matchKat;

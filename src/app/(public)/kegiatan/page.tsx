@@ -175,7 +175,7 @@ export default async function KegiatanPage({
   const page = typeof params.page === "string" ? parseInt(params.page, 10) : 1;
 
   // Filter mock data
-  const filtered = kegiatanList.filter((k) => {
+  const filtered = kegiatanList.filter((k: any) => {
     const matchQ = !q || k.title.toLowerCase().includes(q.toLowerCase());
     const matchJenis = jenis === "ALL" || k.jenis === jenis;
     const matchStatus = status === "ALL" || k.status === status;
