@@ -46,7 +46,7 @@ export default async function ProgramSection() {
           {programs.length === 0 ? (
             <p className="text-slate-500 col-span-full text-center">Belum ada program unggulan.</p>
           ) : (
-            programs.map((program) => {
+            programs.map((program: any) => {
               const Icon = getIcon(program.icon);
               return (
                 <div

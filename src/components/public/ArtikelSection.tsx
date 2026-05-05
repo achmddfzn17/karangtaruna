@@ -41,7 +41,7 @@ export default async function ArtikelSection() {
           {artikelList.length === 0 ? (
             <p className="text-slate-500 col-span-full text-center">Belum ada artikel yang dipublikasikan.</p>
           ) : (
-            artikelList.map((a) => (
+            artikelList.map((a: any) => (
               <article
                 key={a.id}
                 className="group bg-white border border-slate-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 flex flex-col"

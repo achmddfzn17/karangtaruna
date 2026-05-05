@@ -15,7 +15,7 @@ export function ExportAnggotaButton({ data }: ExportAnggotaButtonProps) {
   const [isExporting, setIsExporting] = useState(false);
 
   const formatDataForExport = () => {
-    return data.map((a, index) => ({
+    return data.map((a: any, index: number) => ({
       No: index + 1,
       NIK: a.nik,
       "Nama Lengkap": a.namaLengkap,

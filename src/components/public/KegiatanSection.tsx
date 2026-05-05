@@ -41,7 +41,7 @@ export default async function KegiatanSection() {
           {kegiatanList.length === 0 ? (
             <p className="text-slate-500 col-span-full text-center">Belum ada kegiatan mendatang.</p>
           ) : (
-            kegiatanList.map((k) => {
+            kegiatanList.map((k: any) => {
               const jenisLabels: Record<string, string> = {
                 SOSIAL: "Sosial",
                 PENDIDIKAN: "Pendidikan",

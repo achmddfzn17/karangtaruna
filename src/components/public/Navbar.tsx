@@ -80,7 +80,7 @@ export default function Navbar() {
 
           {/* Desktop Nav Links */}
           <div className="hidden lg:flex items-center gap-1">
-            {navLinks.map((link) => {
+            {navLinks.map((link: any) => {
               const active = isActive(link.href);
               const Icon = link.icon;
               return (
@@ -136,7 +136,7 @@ export default function Navbar() {
               className="lg:hidden border-t border-gray-100 bg-white"
             >
               <div className="px-2 py-4 flex flex-col gap-1">
-                {navLinks.map((link, i) => {
+                {navLinks.map((link: any, i: number) => {
                   const active = isActive(link.href);
                   const Icon = link.icon;
                   return (

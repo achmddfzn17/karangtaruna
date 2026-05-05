@@ -76,7 +76,7 @@ export default function GaleriSection() {
 
         {/* Bento Grid */}
         <div className="grid grid-cols-2 md:grid-cols-4 auto-rows-[160px] gap-4">
-          {galeriItems.map((item) => (
+          {galeriItems.map((item: any) => (
             <motion.div
               key={item.id}
               className={`${item.span} relative group cursor-pointer rounded-2xl overflow-hidden border border-slate-100 flex items-center justify-center`}
