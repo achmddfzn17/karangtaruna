@@ -7,7 +7,9 @@ const globalForPrisma = globalThis as unknown as {
 };
 
 function createPrismaClient() {
-  const connectionString = process.env.DATABASE_URL;
+  const connectionString =
+    process.env.DATABASE_URL ||
+    "postgresql://postgres.csacgdbuckmrhudtoejz:@Achmddfzn17@aws-1-ap-southeast-1.pooler.supabase.com:6543/postgres?pgbouncer=true";
   const pool = new Pool({ connectionString });
   const adapter = new PrismaPg(pool);
 
