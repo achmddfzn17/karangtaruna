@@ -5,9 +5,11 @@ import { formatDate } from "@/lib/utils";
 // Halaman di-cache secara statis dan diregenerasi otomatis setiap 60 detik (ISR)
 export const revalidate = 60; 
 
-export default async function DetailBeritaPage({ params }: { params: { slug: string } }) {
+export default async function DetailBeritaPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  
   const berita = await prisma.berita.findUnique({
-    where: { slug: params.slug },
+    where: { slug },
   });
 
   if (!berita || berita.status !== "PUBLISHED") {
