@@ -19,9 +19,9 @@ export default async function DataAnggotaPage() {
     include: { user: { select: { email: true } } },
   });
 
-  const totalAktif = anggotaList.filter((a) => a.status === "AKTIF").length;
-  const totalNonAktif = anggotaList.filter((a) => a.status === "NON_AKTIF").length;
-  const totalAlumni = anggotaList.filter((a) => a.status === "ALUMNI").length;
+  const totalAktif = anggotaList.filter((a: any) => a.status === "AKTIF").length;
+  const totalNonAktif = anggotaList.filter((a: any) => a.status === "NON_AKTIF").length;
+  const totalAlumni = anggotaList.filter((a: any) => a.status === "ALUMNI").length;
 
   const statusColor: Record<string, string> = {
     AKTIF: "bg-green-100 text-green-700",
@@ -99,7 +99,7 @@ export default async function DataAnggotaPage() {
                   </td>
                 </tr>
               ) : (
-                anggotaList.map((a) => (
+                anggotaList.map((a: any) => (
                   <tr key={a.id} className="border-b border-gray-50 last:border-0 hover:bg-blue-50/30 transition-colors">
                     <td className="py-3.5 px-4">
                       <div className="flex items-center gap-3">
