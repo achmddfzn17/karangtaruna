@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { formatDate } from "@/lib/utils";
 import { Image as ImageIcon, Plus, Video } from "lucide-react";
+import Link from "next/link";
 
 export const metadata = { title: "Kelola Galeri" };
 
@@ -17,10 +18,13 @@ export default async function KelolaGaleriPage() {
           <h1 className="text-2xl font-extrabold text-slate-900">Data Galeri</h1>
           <p className="text-sm text-slate-400 mt-1">Kelola dokumentasi foto dan video</p>
         </div>
-        <button className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-xl shadow-sm transition-colors">
+        <Link
+          href="/dashboard/galeri/tambah"
+          className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-xl shadow-sm transition-colors"
+        >
           <Plus className="w-4 h-4" />
           Tambah Dokumentasi
-        </button>
+        </Link>
       </div>
 
       {galeriList.length === 0 ? (
@@ -30,9 +34,9 @@ export default async function KelolaGaleriPage() {
           <p className="text-sm text-slate-500 mb-6 max-w-sm mx-auto">
             Mulai unggah foto atau video kegiatan Karang Taruna untuk ditampilkan di website publik.
           </p>
-          <button className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-50 text-blue-600 text-sm font-bold rounded-xl hover:bg-blue-100 transition-colors">
+          <Link href="/dashboard/galeri/tambah" className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-50 text-blue-600 text-sm font-bold rounded-xl hover:bg-blue-100 transition-colors">
             <Plus className="w-4 h-4" /> Unggah Sekarang
-          </button>
+          </Link>
         </div>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">

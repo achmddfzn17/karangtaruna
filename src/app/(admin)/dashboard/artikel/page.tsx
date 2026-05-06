@@ -79,10 +79,10 @@ export default async function DataArtikelPage() {
                     <td className="py-3.5 px-4 text-sm text-slate-500">{formatDate(a.createdAt)}</td>
                     <td className="py-3.5 px-4 text-right">
                       <div className="flex items-center justify-end gap-1">
-                        <Link href={`/artikel/${a.id}`} title="Review Artikel" aria-label="Review Artikel" className="p-2 text-slate-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-colors">
+                        <Link href={`/artikel/${a.slug}`} title="Review Artikel" aria-label="Review Artikel" className="p-2 text-slate-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-colors">
                           <Eye className="w-4 h-4" />
                         </Link>
-                        <Link href={`/dashboard/artikel/edit/${a.id}`} title="Edit Artikel" aria-label="Edit Artikel" className="p-2 text-slate-400 hover:text-amber-500 hover:bg-amber-50 rounded-lg transition-colors">
+                        <Link href={`/dashboard/artikel/edit/${a.slug}`} title="Edit Artikel" aria-label="Edit Artikel" className="p-2 text-slate-400 hover:text-amber-500 hover:bg-amber-50 rounded-lg transition-colors">
                           <Pencil className="w-4 h-4" />
                         </Link>
                         <form action={deleteArtikel.bind(null, a.id)}>

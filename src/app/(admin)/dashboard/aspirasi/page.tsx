@@ -4,9 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import {
   MessageSquare,
-  Clock,
   CheckCircle2,
-  XCircle,
   AlertCircle,
   User,
   Reply,
@@ -14,6 +12,7 @@ import {
   Search,
   Filter,
 } from "lucide-react";
+import DeleteAspirasiButton from "@/components/admin/DeleteAsirasiButton";
 
 export const metadata = {
   title: "Kelola Aspirasi",
@@ -59,11 +58,12 @@ export default async function AdminAspirasiPage({
       });
       revalidatePath("/dashboard/aspirasi");
       revalidatePath("/member/aspirasi");
-      redirect("/dashboard/aspirasi?success=1");
     } catch (e) {
       console.error(e);
       redirect("/dashboard/aspirasi?error=1");
     }
+
+    redirect("/dashboard/aspirasi?success=1");
   }
 
   // Server Action: Delete Aspirasi
@@ -75,11 +75,12 @@ export default async function AdminAspirasiPage({
     try {
       await prisma.aspirasi.delete({ where: { id } });
       revalidatePath("/dashboard/aspirasi");
-      redirect("/dashboard/aspirasi?deleted=1");
     } catch (e) {
       console.error(e);
       redirect("/dashboard/aspirasi?error=1");
     }
+
+    redirect("/dashboard/aspirasi?deleted=1");
   }
 
   const statusColor: Record<string, string> = {
@@ -215,17 +216,7 @@ export default async function AdminAspirasiPage({
                   </button>
                 </form>
 
-                <form action={deleteAspirasi} className="mt-4">
-                  <input type="hidden" name="id" value={asp.id} />
-                  <button
-                    type="submit"
-                    className="w-full flex items-center justify-center gap-2 py-2 text-red-500 hover:bg-red-50 text-xs font-bold rounded-xl transition-all"
-                    onClick={(e) => { if(!confirm("Hapus aspirasi ini?")) e.preventDefault(); }}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                    Hapus Aspirasi
-                  </button>
-                </form>
+                <DeleteAspirasiButton action={deleteAspirasi} aspirasiId={asp.id} />
               </div>
             </div>
           ))

@@ -299,7 +299,7 @@ export function RichTextEditor({
 
       <div
         className={cn(
-          "rounded-lg border border-input bg-background overflow-hidden transition-colors duration-150",
+          "rounded-lg border border-input bg-background overflow-hidden transition-colors duration-150 relative",
           "focus-within:ring-2 focus-within:ring-ring focus-within:border-primary",
           error && "border-destructive focus-within:ring-destructive/30",
           disabled && "opacity-60 cursor-not-allowed",
@@ -322,7 +322,9 @@ export function RichTextEditor({
         {!editor?.getText()?.trim() && editor && (
           <div
             className="absolute top-0 pointer-events-none px-4 py-3 text-sm text-muted-foreground select-none"
-          ></div>
+          >
+            {placeholder}
+          </div>
         )}
       </div>
 

@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { formatDate } from "@/lib/utils";
-import { Calendar, Plus, Trash2, Pencil, Eye } from "lucide-react";
+import { Calendar, Plus, Trash2, Pencil } from "lucide-react";
 import { deleteKegiatan } from "./tambah/actions";
 
 export const metadata = { title: "Data Kegiatan" };
@@ -88,9 +88,6 @@ export default async function DataKegiatanPage() {
                     </td>
                     <td className="py-3.5 px-4 text-right">
                       <div className="flex items-center justify-end gap-1">
-                        <Link href={`/kegiatan/${k.id}`} title="Review Kegiatan" aria-label="Review Kegiatan" className="p-2 text-slate-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-colors">
-                          <Eye className="w-4 h-4" />
-                        </Link>
                         <Link href={`/dashboard/kegiatan/edit/${k.id}`} title="Edit Kegiatan" aria-label="Edit Kegiatan" className="p-2 text-slate-400 hover:text-amber-500 hover:bg-amber-50 rounded-lg transition-colors">
                           <Pencil className="w-4 h-4" />
                         </Link>

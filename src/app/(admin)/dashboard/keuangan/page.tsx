@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { Wallet, Plus, ArrowUpRight, ArrowDownRight } from "lucide-react";
+import Link from "next/link";
 
 export const metadata = { title: "Keuangan" };
 
@@ -27,10 +28,13 @@ export default async function KeuanganPage() {
           <h1 className="text-2xl font-extrabold text-slate-900">Keuangan</h1>
           <p className="text-sm text-slate-400 mt-1">Laporan arus kas dan transparansi dana</p>
         </div>
-        <button className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-xl shadow-sm transition-colors">
+        <Link
+          href="/dashboard/keuangan/tambah"
+          className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-xl shadow-sm transition-colors"
+        >
           <Plus className="w-4 h-4" />
           Tambah Transaksi
-        </button>
+        </Link>
       </div>
 
       {/* Summary Cards */}

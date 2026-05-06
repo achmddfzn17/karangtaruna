@@ -14,6 +14,7 @@ import {
   ToggleLeft,
   ToggleRight,
 } from "lucide-react";
+import DeletePollingButton from "@/components/admin/DeletePollingButton";
 
 export const metadata = {
   title: "Kelola E-Voting",
@@ -69,11 +70,12 @@ export default async function AdminVotingPage({
       });
       revalidatePath("/dashboard/voting");
       revalidatePath("/member/voting");
-      redirect("/dashboard/voting?success=1");
     } catch (e) {
       console.error(e);
       redirect("/dashboard/voting?error=1");
     }
+
+    redirect("/dashboard/voting?success=1");
   }
 
   // Server Action: Toggle Status
@@ -98,14 +100,16 @@ export default async function AdminVotingPage({
   async function deletePolling(formData: FormData) {
     "use server";
     const id = formData.get("id") as string;
+
     try {
       await prisma.polling.delete({ where: { id } });
       revalidatePath("/dashboard/voting");
-      redirect("/dashboard/voting?deleted=1");
     } catch (e) {
       console.error(e);
       redirect("/dashboard/voting?error=1");
     }
+
+    redirect("/dashboard/voting?deleted=1");
   }
 
   return (
@@ -231,16 +235,7 @@ export default async function AdminVotingPage({
                             {poll.isActive ? <ToggleRight className="w-5 h-5 text-green-600" /> : <ToggleLeft className="w-5 h-5 text-slate-400" />}
                           </button>
                         </form>
-                        <form action={deletePolling}>
-                          <input type="hidden" name="id" value={poll.id} />
-                          <button
-                            type="submit"
-                            className="p-2 rounded-xl border border-slate-200 hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors"
-                            onClick={(e) => { if(!confirm("Hapus voting ini? Semua data suara akan hilang.")) e.preventDefault(); }}
-                          >
-                            <Trash2 className="w-5 h-5" />
-                          </button>
-                        </form>
+                        <DeletePollingButton action={deletePolling} pollingId={poll.id} />
                       </div>
                     </div>
 

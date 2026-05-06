@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { formatDate } from "@/lib/utils";
 import { UserCog, Plus, ShieldCheck } from "lucide-react";
+import Link from "next/link";
 
 export const metadata = { title: "Kelola Admin" };
 
@@ -25,10 +26,13 @@ export default async function KelolaAdminPage() {
           <h1 className="text-2xl font-extrabold text-slate-900">Kelola Admin</h1>
           <p className="text-sm text-slate-400 mt-1">Daftar pengguna dengan akses administrator</p>
         </div>
-        <button className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-xl shadow-sm transition-colors">
+        <Link
+          href="/dashboard/kelola-admin/tambah"
+          className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-xl shadow-sm transition-colors"
+        >
           <Plus className="w-4 h-4" />
           Tambah Admin
-        </button>
+        </Link>
       </div>
 
       <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">

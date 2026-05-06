@@ -69,7 +69,7 @@ export default async function BeritaSection() {
                   {featured?.ringkasan || "Baca berita selengkapnya..."}
                 </p>
                 <Link
-                  href={`/berita/${featured?.id}`}
+                  href={`/berita/${featured?.slug}`}
                   className="inline-flex items-center gap-1.5 text-[13px] font-bold text-blue-500 hover:text-blue-600 hover:gap-2.5 transition-all mt-6"
                 >
                   Baca Selengkapnya
@@ -81,8 +81,9 @@ export default async function BeritaSection() {
             {/* Other news cards */}
             <div className="lg:col-span-2 flex flex-col gap-4">
               {others.map((b: any) => (
-                <article
+                <Link
                   key={b.id}
+                  href={`/berita/${b.slug}`}
                   className="group bg-white border border-slate-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1 flex gap-4 h-[120px]"
                 >
                   {/* Thumbnail */}
@@ -103,7 +104,7 @@ export default async function BeritaSection() {
                       {b.publishedAt ? formatDate(b.publishedAt) : ""}
                     </div>
                   </div>
-                </article>
+                </Link>
               ))}
 
               {/* View all */}

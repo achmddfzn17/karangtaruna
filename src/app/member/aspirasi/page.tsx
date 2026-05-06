@@ -57,11 +57,12 @@ export default async function AspirasiPage({
         },
       });
       revalidatePath("/member/aspirasi");
-      redirect("/member/aspirasi?success=1");
     } catch (e) {
       console.error(e);
       redirect("/member/aspirasi?error=1");
     }
+
+    redirect("/member/aspirasi?success=1");
   }
 
   const statusColor: Record<string, string> = {

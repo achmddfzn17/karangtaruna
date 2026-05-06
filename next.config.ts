@@ -1,8 +1,6 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Silence Turbopack warning during Vercel builds
-  turbopack: {},
   // Exclude AI agent folders from file watcher to prevent infinite HMR refresh
   webpack: (config) => {
     config.watchOptions = {
