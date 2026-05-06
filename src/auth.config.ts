@@ -14,6 +14,7 @@ const credentialsSchema = z.object({
  */
 export default {
   secret: process.env.AUTH_SECRET,
+  trustHost: true,
   providers: [
     Credentials({
       name: "credentials",
