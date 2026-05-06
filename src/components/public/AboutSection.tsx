@@ -24,14 +24,22 @@ const keyPoints = [
   },
 ];
 
-const orgStats = [
-  { value: "2026", label: "Tahun Berdiri" },
-  { value: "5+", label: "Anggota Aktif" },
-  { value: "3", label: "Program" },
-  { value: "2", label: "Kegiatan" },
-];
+interface AboutSectionProps {
+  statsData: {
+    anggota: number;
+    kegiatan: number;
+    program: number;
+    tahun: number;
+  };
+}
 
-export default function AboutSection() {
+export default function AboutSection({ statsData }: AboutSectionProps) {
+  const orgStats = [
+    { value: "2020", label: "Tahun Berdiri" },
+    { value: `${statsData.anggota}+`, label: "Anggota Aktif" },
+    { value: `${statsData.program}`, label: "Program" },
+    { value: `${statsData.kegiatan}`, label: "Kegiatan" },
+  ];
   return (
     <section className="py-20 md:py-28 bg-white border-t border-slate-100">
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
@@ -59,7 +67,7 @@ export default function AboutSection() {
             </p>
 
             <p className="text-slate-600 leading-relaxed text-[15px] md:text-[16px] mb-4">
-              Dengan lebih dari 247 anggota aktif yang tersebar di berbagai
+              Dengan lebih dari {statsData.anggota} anggota aktif yang tersebar di berbagai
               wilayah, kami terus mengembangkan program-program strategis yang
               menyentuh berbagai aspek kehidupan pemuda, mulai dari pendidikan,
               pemberdayaan ekonomi, hingga pelestarian seni budaya lokal.

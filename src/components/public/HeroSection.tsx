@@ -4,7 +4,15 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { Shield } from "lucide-react";
 
-export default function HeroSection() {
+interface HeroSectionProps {
+  statsData: {
+    anggota: number;
+    kegiatan: number;
+    program: number;
+  };
+}
+
+export default function HeroSection({ statsData }: HeroSectionProps) {
   return (
     <section className="relative min-h-screen flex items-center pt-24 bg-white overflow-hidden">
       <div className="relative max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-20 w-full">
@@ -59,15 +67,15 @@ export default function HeroSection() {
             {/* Stats row */}
             <div className="flex items-center gap-12 mt-12">
               <div>
-                <div className="text-3xl font-extrabold text-blue-500">2</div>
+                <div className="text-3xl font-extrabold text-blue-500">{statsData.anggota}</div>
                 <div className="text-[11px] text-slate-500 font-medium uppercase tracking-wide mt-1">Anggota</div>
               </div>
               <div>
-                <div className="text-3xl font-extrabold text-blue-500">0</div>
+                <div className="text-3xl font-extrabold text-blue-500">{statsData.kegiatan}</div>
                 <div className="text-[11px] text-slate-500 font-medium uppercase tracking-wide mt-1">Kegiatan</div>
               </div>
               <div>
-                <div className="text-3xl font-extrabold text-blue-500">1</div>
+                <div className="text-3xl font-extrabold text-blue-500">{statsData.program}</div>
                 <div className="text-[11px] text-slate-500 font-medium uppercase tracking-wide mt-1">Program</div>
               </div>
             </div>

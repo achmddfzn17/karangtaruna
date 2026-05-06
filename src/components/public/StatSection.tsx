@@ -4,37 +4,14 @@ import { useRef } from "react";
 import { motion, useInView, useMotionValue, useSpring, useTransform } from "framer-motion";
 import { Users, Calendar, BookOpen, Clock } from "lucide-react";
 
-const stats = [
-  {
-    icon: Users,
-    value: 247,
-    suffix: "+",
-    label: "Anggota Aktif",
-    description: "Pemuda berdedikasi yang terdaftar",
-  },
-  {
-    icon: Calendar,
-    value: 89,
-    suffix: "",
-    label: "Kegiatan",
-    description: "Program dan acara telah dilaksanakan",
-  },
-  {
-    icon: BookOpen,
-    value: 12,
-    suffix: "",
-    label: "Program Unggulan",
-    description: "Bidang pemberdayaan masyarakat",
-  },
-  {
-    icon: Clock,
-    value: 5,
-    suffix: " Thn",
-    label: "Tahun Berdiri",
-    description: "Melayani masyarakat dengan tulus",
-  },
-];
-
+interface StatSectionProps {
+  statsData: {
+    anggota: number;
+    kegiatan: number;
+    program: number;
+    tahun: number;
+  };
+}
 function CountUp({
   value,
   suffix,
@@ -63,9 +40,40 @@ function CountUp({
   );
 }
 
-export default function StatSection() {
+export default function StatSection({ statsData }: StatSectionProps) {
   const ref = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { once: true, margin: "-80px" });
+
+  const dynamicStats = [
+    {
+      icon: Users,
+      value: statsData.anggota,
+      suffix: "",
+      label: "Anggota Aktif",
+      description: "Pemuda berdedikasi yang terdaftar",
+    },
+    {
+      icon: Calendar,
+      value: statsData.kegiatan,
+      suffix: "",
+      label: "Kegiatan",
+      description: "Program dan acara telah dilaksanakan",
+    },
+    {
+      icon: BookOpen,
+      value: statsData.program,
+      suffix: "",
+      label: "Program Unggulan",
+      description: "Bidang pemberdayaan masyarakat",
+    },
+    {
+      icon: Clock,
+      value: statsData.tahun,
+      suffix: " Thn",
+      label: "Tahun Berdiri",
+      description: "Melayani masyarakat dengan tulus",
+    },
+  ];
 
   return (
     <section ref={ref} className="py-20 md:py-24 bg-white">
@@ -76,7 +84,7 @@ export default function StatSection() {
           <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/2" />
 
           <div className="relative grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 md:gap-12">
-            {stats.map(({ icon: Icon, value, suffix, label, description }, i) => (
+            {dynamicStats.map(({ icon: Icon, value, suffix, label, description }, i) => (
               <motion.div
                 key={label}
                 initial={{ opacity: 0, y: 30 }}
