@@ -31,6 +31,8 @@ model User {
   admin         Admin?
   susResponses  SusResponse[]
   notifications Notification[]
+  aspirasi      Aspirasi[]
+  votes         Vote[]
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
@@ -341,4 +343,67 @@ model Notification {
   createdAt DateTime @default(now())
 
   @@map("notifications")
+}
+
+// ===== ASPIRASI =====
+
+enum StatusAspirasi {
+  PENDING
+  DIPROSES
+  SELESAI
+  DITOLAK
+}
+
+model Aspirasi {
+  id        String         @id @default(cuid())
+  userId    String?
+  user      User?          @relation(fields: [userId], references: [id])
+  nama      String?
+  judul     String
+  pesan     String         @db.Text
+  kategori  String?
+  status    StatusAspirasi @default(PENDING)
+  balasan   String?        @db.Text
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  @@map("aspirasi")
+}
+
+// ===== POLLING (E-Voting) =====
+
+model Polling {
+  id          String   @id @default(cuid())
+  judul       String
+  deskripsi   String?  @db.Text
+  isActive    Boolean  @default(true)
+  expiresAt   DateTime?
+  options     PollingOption[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("polling")
+}
+
+model PollingOption {
+  id        String   @id @default(cuid())
+  pollingId String
+  polling   Polling  @relation(fields: [pollingId], references: [id], onDelete: Cascade)
+  label     String
+  votes     Vote[]
+  
+  @@map("polling_options")
+}
+
+model Vote {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  pollingId String
+  optionId  String
+  option    PollingOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, pollingId])
+  @@map("votes")
 }

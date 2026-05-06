@@ -2,13 +2,16 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, User, Clock, ExternalLink, LogOut } from "lucide-react";
+import { Home, User, Clock, Wallet, MessageSquare, Vote as VoteIcon, ExternalLink, LogOut } from "lucide-react";
 import { signOut } from "next-auth/react";
 
 const navLinks = [
   { href: "/member/dashboard", label: "Dashboard", icon: Home },
   { href: "/member/profile", label: "Profile Saya", icon: User },
   { href: "/member/kegiatan", label: "Riwayat Kegiatan", icon: Clock },
+  { href: "/member/keuangan", label: "Transparansi Keuangan", icon: Wallet },
+  { href: "/member/aspirasi", label: "Papan Aspirasi", icon: MessageSquare },
+  { href: "/member/voting", label: "E-Voting", icon: VoteIcon },
 ];
 
 export default function MemberSidebar() {

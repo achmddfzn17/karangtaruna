@@ -10,6 +10,10 @@ import {
   ChevronRight,
   Plus,
   Check,
+  MessageSquare,
+  Vote as VoteIcon,
+  Wallet,
+  Zap,
 } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import {
@@ -31,6 +35,7 @@ export default async function AdminDashboard() {
   const [
     totalAnggota, anggotaAktif, totalKegiatan, totalProgram, totalBerita, totalArtikel,
     recentKegiatan, anggotaNonAktif, anggotaAlumni, kegiatanByJenis, allBerita, allArtikel,
+    totalAspirasi, totalPolling, pendingAspirasi, totalSaldo
   ] = await Promise.all([
     prisma.anggota.count(),
     prisma.anggota.count({ where: { status: "AKTIF" } }),
@@ -43,7 +48,6 @@ export default async function AdminDashboard() {
       orderBy: { createdAt: "desc" },
       select: { id: true, nama: true, jenis: true, tanggalMulai: true, status: true, deskripsi: true },
     }),
-    // Chart data queries
     prisma.anggota.count({ where: { status: "NON_AKTIF" } }),
     prisma.anggota.count({ where: { status: "ALUMNI" } }),
     prisma.kegiatan.groupBy({ by: ["jenis"], _count: { id: true } }),
@@ -55,6 +59,14 @@ export default async function AdminDashboard() {
       where: { status: "PUBLISHED" },
       select: { publishedAt: true },
     }),
+    prisma.aspirasi.count(),
+    prisma.polling.count(),
+    prisma.aspirasi.count({ where: { status: "PENDING" } }),
+    prisma.transaksiKeuangan.findMany({
+      select: { jumlah: true, jenis: true }
+    }).then(transactions => 
+      transactions.reduce((acc, t) => t.jenis === "MASUK" ? acc + t.jumlah : acc - t.jumlah, 0)
+    )
   ]);
 
   // --- Prepare chart data ---
@@ -121,64 +133,70 @@ export default async function AdminDashboard() {
       label: "Total Anggota",
       value: totalAnggota,
       icon: Users,
-      color: "bg-blue-500",
+      color: "bg-blue-600 shadow-blue-500/20",
       sub: `✓ ${anggotaAktif} Aktif`,
       subColor: "text-blue-600",
       href: "/dashboard/anggota",
     },
     {
-      label: "Total Kegiatan",
+      label: "Keuangan (Saldo)",
+      value: new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumSignificantDigits: 3 }).format(totalSaldo),
+      icon: Wallet,
+      color: "bg-green-600 shadow-green-500/20",
+      sub: "Saldo saat ini",
+      subColor: "text-green-600",
+      href: "/dashboard/keuangan",
+    },
+    {
+      label: "Aspirasi Masuk",
+      value: totalAspirasi,
+      icon: MessageSquare,
+      color: "bg-purple-600 shadow-purple-500/20",
+      sub: `${pendingAspirasi} Menunggu`,
+      subColor: "text-purple-600",
+      href: "/dashboard/aspirasi",
+    },
+    {
+      label: "Voting Aktif",
+      value: totalPolling,
+      icon: VoteIcon,
+      color: "bg-orange-600 shadow-orange-500/20",
+      sub: "E-Voting digital",
+      subColor: "text-orange-600",
+      href: "/dashboard/voting",
+    },
+    {
+      label: "Kegiatan",
       value: totalKegiatan,
       icon: Calendar,
-      color: "bg-blue-500",
-      sub: "Semua kegiatan",
-      subColor: "text-slate-400",
+      color: "bg-sky-600 shadow-sky-500/20",
+      sub: "Total aktivitas",
+      subColor: "text-sky-600",
       href: "/dashboard/kegiatan",
-    },
-    {
-      label: "Total Program",
-      value: totalProgram,
-      icon: CheckCircle2,
-      color: "bg-green-500",
-      sub: "Program aktif",
-      subColor: "text-slate-400",
-      href: "/dashboard/program",
-    },
-    {
-      label: "Total Berita",
-      value: totalBerita,
-      icon: Newspaper,
-      color: "bg-blue-500",
-      sub: "Berita published",
-      subColor: "text-slate-400",
-      href: "/dashboard/berita",
-    },
-    {
-      label: "Total Artikel",
-      value: totalArtikel,
-      icon: FileText,
-      color: "bg-blue-500",
-      sub: "Artikel edukasi",
-      subColor: "text-slate-400",
-      href: "/dashboard/artikel",
     },
   ];
 
   const quickActions = [
     {
-      label: "Tambah Anggota",
-      desc: "Daftarkan anggota baru",
-      href: "/dashboard/anggota",
-    },
-    {
       label: "Tambah Kegiatan",
-      desc: "Buat kegiatan baru",
+      desc: "Buat agenda baru",
       href: "/dashboard/kegiatan",
+      icon: Calendar,
+      color: "bg-blue-100 text-blue-600",
     },
     {
-      label: "Tambah Berita",
-      desc: "Publikasi berita baru",
+      label: "Buat E-Voting",
+      desc: "Mulai pemungutan suara",
+      href: "/dashboard/voting",
+      icon: VoteIcon,
+      color: "bg-orange-100 text-orange-600",
+    },
+    {
+      label: "Update Berita",
+      desc: "Publikasi info terbaru",
       href: "/dashboard/berita",
+      icon: Newspaper,
+      color: "bg-purple-100 text-purple-600",
     },
   ];
 
@@ -203,28 +221,40 @@ export default async function AdminDashboard() {
   return (
     <div className="space-y-6">
       {/* Welcome Banner */}
-      <div className="bg-blue-600 rounded-2xl p-6 md:p-8 text-white relative overflow-hidden">
-        {/* Decorative circles */}
-        <div className="absolute top-0 right-0 w-40 h-40 bg-blue-500/40 rounded-full -translate-y-1/2 translate-x-1/4" />
-        <div className="absolute bottom-0 right-20 w-24 h-24 bg-blue-500/30 rounded-full translate-y-1/3" />
+      <div className="bg-gradient-to-br from-blue-700 via-blue-600 to-indigo-700 rounded-3xl p-8 md:p-10 text-white relative overflow-hidden shadow-xl shadow-blue-500/20">
+        {/* Decorative elements */}
+        <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/4 blur-3xl" />
+        <div className="absolute bottom-0 left-0 w-32 h-32 bg-blue-400/20 rounded-full translate-y-1/2 -translate-x-1/2 blur-2xl" />
+        <div className="absolute top-1/2 right-10 -translate-y-1/2 w-48 h-48 border border-white/10 rounded-full" />
 
-        <div className="relative z-10 flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl md:text-[26px] font-extrabold mb-1">
-              Selamat Datang Kembali! 👋
-            </h1>
-            <p className="text-blue-100 text-sm font-medium">
-              {userName} - Administrator
-            </p>
-            <p className="text-blue-200 text-xs mt-1">{dateStr}</p>
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="flex items-center gap-6">
+            <div className="w-16 h-16 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center shadow-inner border border-white/30">
+              <Zap className="w-8 h-8 text-white fill-white/20" />
+            </div>
+            <div>
+              <h1 className="text-2xl md:text-3xl font-black mb-1 tracking-tight">
+                Halo, {userName}!
+              </h1>
+              <p className="text-blue-100 text-sm font-bold uppercase tracking-widest opacity-80">
+                Administrator Panel • Generasi Emas
+              </p>
+              <div className="flex items-center gap-2 mt-2">
+                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
+                <p className="text-blue-200 text-xs font-medium">{dateStr}</p>
+              </div>
+            </div>
           </div>
-          <div className="hidden sm:flex flex-col items-center bg-blue-700/60 rounded-xl px-5 py-3 backdrop-blur-sm">
-            <span className="text-[10px] text-blue-200 font-semibold uppercase tracking-wider">
-              Waktu Server
-            </span>
-            <span className="text-2xl font-extrabold tracking-wide">
-              {timeStr} WIB
-            </span>
+          
+          <div className="flex items-center gap-4">
+            <div className="flex flex-col items-end bg-black/10 backdrop-blur-sm rounded-2xl px-6 py-4 border border-white/10">
+              <span className="text-[10px] text-blue-200 font-black uppercase tracking-widest mb-1 opacity-60">
+                Server Time
+              </span>
+              <span className="text-2xl font-black tracking-tighter">
+                {timeStr} <span className="text-sm font-bold opacity-60 ml-1">WIB</span>
+              </span>
+            </div>
           </div>
         </div>
       </div>
@@ -236,30 +266,24 @@ export default async function AdminDashboard() {
           return (
             <div
               key={stat.label}
-              className="bg-white rounded-2xl border border-gray-100 p-5 flex flex-col justify-between hover:shadow-md transition-shadow"
+              className="bg-white rounded-3xl border border-slate-100 p-6 flex flex-col justify-between hover:shadow-xl hover:shadow-slate-200/50 transition-all duration-300 group"
             >
-              <div className="flex items-start justify-between mb-4">
-                <div className={`w-11 h-11 ${stat.color} rounded-xl flex items-center justify-center`}>
-                  <Icon className="w-5 h-5 text-white" />
+              <div className="flex items-start justify-between mb-5">
+                <div className={`w-12 h-12 ${stat.color} rounded-2xl flex items-center justify-center shadow-lg transition-transform group-hover:scale-110`}>
+                  <Icon className="w-6 h-6 text-white" />
                 </div>
-                <Link href={stat.href} className="text-slate-300 hover:text-blue-500 transition-colors">
+                <Link href={stat.href} className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-300 hover:text-blue-600 hover:bg-blue-50 transition-all">
                   <ChevronRight className="w-5 h-5" />
                 </Link>
               </div>
               <div>
-                <p className="text-3xl font-extrabold text-slate-900 mb-0.5">{stat.value}</p>
-                <p className="text-xs text-slate-400 font-medium">{stat.label}</p>
+                <p className="text-3xl font-black text-slate-900 mb-1 tracking-tight">{stat.value}</p>
+                <p className="text-[11px] text-slate-400 font-bold uppercase tracking-widest">{stat.label}</p>
               </div>
-              <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-50">
-                <span className={`text-[11px] font-semibold ${stat.subColor}`}>
+              <div className="mt-4 pt-4 border-t border-slate-50 flex items-center justify-between">
+                <span className={`text-[11px] font-black uppercase tracking-tight ${stat.subColor}`}>
                   {stat.sub}
                 </span>
-                <Link
-                  href={stat.href}
-                  className="text-[11px] font-bold text-blue-500 hover:text-blue-600 transition-colors"
-                >
-                  Lihat Detail →
-                </Link>
               </div>
             </div>
           );
@@ -353,27 +377,43 @@ export default async function AdminDashboard() {
         </div>
 
         {/* Quick Actions */}
-        <div className="bg-white rounded-2xl border border-gray-100 p-6">
-          <h2 className="text-lg font-bold text-slate-900 mb-5">Quick Actions</h2>
-          <div className="space-y-3">
+        <div className="bg-white rounded-3xl border border-slate-100 p-8 shadow-sm">
+          <div className="flex items-center gap-2 mb-6">
+            <div className="w-1.5 h-6 bg-blue-600 rounded-full" />
+            <h2 className="text-xl font-black text-slate-900 tracking-tight">Aksi Cepat</h2>
+          </div>
+          <div className="space-y-4">
             {quickActions.map((action) => (
               <Link
                 key={action.label}
                 href={action.href}
-                className="flex items-center gap-4 p-4 rounded-xl border border-gray-100 hover:border-blue-200 hover:bg-blue-50/30 transition-all group"
+                className="flex items-center gap-5 p-5 rounded-2xl border border-slate-50 bg-slate-50/30 hover:border-blue-200 hover:bg-blue-50/50 hover:shadow-lg hover:shadow-blue-500/5 transition-all duration-300 group"
               >
-                <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center shrink-0 group-hover:bg-blue-500 transition-colors">
-                  <Plus className="w-5 h-5 text-blue-600 group-hover:text-white transition-colors" />
+                <div className={`w-12 h-12 ${action.color} rounded-2xl flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform`}>
+                  <action.icon className="w-6 h-6" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-bold text-slate-800 group-hover:text-blue-600 transition-colors">
+                  <p className="text-[15px] font-black text-slate-900 group-hover:text-blue-700 transition-colors">
                     {action.label}
                   </p>
-                  <p className="text-[11px] text-slate-400">{action.desc}</p>
+                  <p className="text-xs text-slate-500 font-medium">{action.desc}</p>
                 </div>
-                <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-blue-500 transition-colors" />
+                <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-slate-300 group-hover:text-blue-600 group-hover:shadow-sm transition-all">
+                  <ChevronRight className="w-5 h-5" />
+                </div>
               </Link>
             ))}
+          </div>
+          
+          <div className="mt-8 p-6 bg-slate-900 rounded-2xl relative overflow-hidden group cursor-pointer">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/20 blur-3xl group-hover:bg-blue-500/40 transition-all" />
+            <div className="relative z-10">
+              <p className="text-blue-400 text-[10px] font-black uppercase tracking-[0.2em] mb-1">Butuh Bantuan?</p>
+              <p className="text-white text-sm font-bold leading-snug">Panduan Lengkap Penggunaan Dashboard Admin</p>
+              <button className="mt-4 text-[11px] font-black text-white bg-blue-600 px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                Buka Dokumentasi
+              </button>
+            </div>
           </div>
         </div>
       </div>

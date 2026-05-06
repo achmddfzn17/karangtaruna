@@ -28,9 +28,9 @@ export default async function AdminLayout({ children }: { children: ReactNode })
       <AdminSidebar userName={userName} signOutAction={handleSignOut} />
 
       {/* Main Content Area */}
-      <div className="ml-[260px] transition-all duration-300">
+      <div className="ml-[80px] lg:ml-[280px] transition-all duration-300">
         {/* Top Header Bar */}
-        <header className="sticky top-0 z-30 h-[72px] bg-white border-b border-gray-100 flex items-center justify-between px-8">
+        <header className="sticky top-0 z-30 h-[80px] bg-white/80 backdrop-blur-md border-b border-slate-200 flex items-center justify-between px-8 shadow-sm">
           <div>
             <h2 className="text-lg font-bold text-slate-900">Dashboard Admin</h2>
             <p className="text-xs text-slate-400 font-medium">Kelola data Karang Taruna</p>
