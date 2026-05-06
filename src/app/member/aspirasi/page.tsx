@@ -59,7 +59,8 @@ export default async function AspirasiPage({
       revalidatePath("/member/aspirasi");
     } catch (e) {
       console.error(e);
-      redirect("/member/aspirasi?error=1");
+      // Do not redirect inside catch — throw instead
+      throw new Error("Gagal mengirim aspirasi");
     }
 
     redirect("/member/aspirasi?success=1");

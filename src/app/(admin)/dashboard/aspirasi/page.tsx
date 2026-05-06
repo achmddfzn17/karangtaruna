@@ -60,7 +60,7 @@ export default async function AdminAspirasiPage({
       revalidatePath("/member/aspirasi");
     } catch (e) {
       console.error(e);
-      redirect("/dashboard/aspirasi?error=1");
+      throw new Error("Gagal mengirim balasan");
     }
 
     redirect("/dashboard/aspirasi?success=1");
@@ -77,7 +77,7 @@ export default async function AdminAspirasiPage({
       revalidatePath("/dashboard/aspirasi");
     } catch (e) {
       console.error(e);
-      redirect("/dashboard/aspirasi?error=1");
+      throw new Error("Gagal menghapus aspirasi");
     }
 
     redirect("/dashboard/aspirasi?deleted=1");

@@ -66,18 +66,18 @@ export default async function MemberVotingPage({
 
     if (!pollingId || !optionId) return;
 
+    // Final check if user already voted (backend enforcement)
+    const existingVote = await prisma.vote.findUnique({
+      where: {
+        userId_pollingId: { userId, pollingId },
+      },
+    });
+
+    if (existingVote) {
+      redirect(`/member/voting?error=already_voted`);
+    }
+
     try {
-      // Final check if user already voted (backend enforcement)
-      const existingVote = await prisma.vote.findUnique({
-        where: {
-          userId_pollingId: { userId, pollingId },
-        },
-      });
-
-      if (existingVote) {
-        redirect(`/member/voting?error=already_voted`);
-      }
-
       await prisma.vote.create({
         data: {
           userId,
@@ -88,10 +88,8 @@ export default async function MemberVotingPage({
       revalidatePath("/member/voting");
       revalidatePath("/dashboard/voting");
     } catch (e: any) {
-      // Re-throw NEXT_REDIRECT so Next.js can handle it
-      if (e?.digest?.startsWith("NEXT_REDIRECT")) throw e;
       console.error(e);
-      redirect(`/member/voting?error=1`);
+      throw new Error("Gagal mengirim suara");
     }
 
     redirect("/member/voting?success=1");

@@ -72,7 +72,7 @@ export default async function AdminVotingPage({
       revalidatePath("/member/voting");
     } catch (e) {
       console.error(e);
-      redirect("/dashboard/voting?error=1");
+      throw new Error("Gagal membuat voting");
     }
 
     redirect("/dashboard/voting?success=1");
@@ -106,7 +106,7 @@ export default async function AdminVotingPage({
       revalidatePath("/dashboard/voting");
     } catch (e) {
       console.error(e);
-      redirect("/dashboard/voting?error=1");
+      throw new Error("Gagal menghapus voting");
     }
 
     redirect("/dashboard/voting?deleted=1");
