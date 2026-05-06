@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Shield, MapPin, Phone, Mail, Clock, ChevronRight, Heart } from "lucide-react";
+import { Shield, MapPin, Phone, Mail, Clock, ChevronRight } from "lucide-react";
 
 // Inline social media SVG icons (lucide-react v1 doesn't include brand icons)
 function IconFacebook({ className }: { className?: string }) {
@@ -61,67 +61,85 @@ const operasional = [
 
 export default function Footer() {
   return (
-    <footer className="bg-[#0b1120] text-slate-300 relative overflow-hidden">
-      {/* Decorative gradient blur at the top right */}
-      <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-600/10 rounded-full blur-[120px] -translate-y-1/2 translate-x-1/3 pointer-events-none" />
-
+    <footer className="bg-sidebar text-sidebar-foreground">
       {/* Main footer grid */}
-      <div className="relative max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-16">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-12 lg:gap-8">
-          
-          {/* Col 1: Brand (Takes up 4 columns on large screens) */}
-          <div className="sm:col-span-2 lg:col-span-4">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/20">
-                <Shield className="w-6 h-6 text-white" />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
+          {/* Col 1: Brand */}
+          <div className="sm:col-span-2 lg:col-span-1">
+            <div className="flex items-center gap-2.5 mb-4">
+              <div className="w-10 h-10 gradient-bg rounded-xl flex items-center justify-center shadow-md">
+                <Shield className="w-5 h-5 text-white" />
               </div>
               <div className="flex flex-col leading-tight">
-                <span className="text-lg font-extrabold text-white tracking-tight">
+                <span className="text-sm font-bold text-white">
                   Karang Taruna
                 </span>
-                <span className="text-[11px] text-blue-400 font-bold tracking-[0.2em] uppercase">
+                <span className="text-[10px] text-sidebar-foreground font-medium tracking-wide">
                   Generasi Emas
                 </span>
               </div>
             </div>
-            <p className="text-[15px] leading-relaxed text-slate-400 mb-8 max-w-sm">
-              Membangun ruang kolaborasi bagi pemuda yang kreatif, inovatif, dan berdedikasi tinggi untuk kemajuan bangsa Indonesia di masa depan.
+            <p className="text-sm leading-relaxed text-sidebar-foreground mb-5">
+              Organisasi kepemudaan yang berkomitmen membangun generasi muda
+              yang berkarakter, kreatif, dan berdaya saing tinggi demi kemajuan
+              bangsa Indonesia.
             </p>
             {/* Social Media */}
             <div className="flex items-center gap-3">
               {[
-                { icon: IconFacebook, href: "https://facebook.com", label: "Facebook" },
-                { icon: IconInstagram, href: "https://instagram.com", label: "Instagram" },
-                { icon: IconYoutube, href: "https://youtube.com", label: "YouTube" },
-                { icon: IconTwitterX, href: "https://twitter.com", label: "Twitter (X)" },
-              ].map(({ icon: Icon, href, label }) => (
+                {
+                  icon: IconFacebook,
+                  href: "https://facebook.com",
+                  label: "Facebook",
+                  color: "hover:bg-blue-600",
+                },
+                {
+                  icon: IconInstagram,
+                  href: "https://instagram.com",
+                  label: "Instagram",
+                  color: "hover:bg-pink-600",
+                },
+                {
+                  icon: IconYoutube,
+                  href: "https://youtube.com",
+                  label: "YouTube",
+                  color: "hover:bg-red-600",
+                },
+                {
+                  icon: IconTwitterX,
+                  href: "https://twitter.com",
+                  label: "Twitter (X)",
+                  color: "hover:bg-slate-700",
+                },
+              ].map(({ icon: Icon, href, label, color }) => (
                 <a
                   key={label}
                   href={href}
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={label}
-                  className="w-10 h-10 rounded-xl bg-slate-800/50 border border-slate-700/50 flex items-center justify-center text-slate-400 hover:bg-blue-600 hover:text-white hover:border-blue-500 transition-all duration-300 hover:-translate-y-1"
+                  className={`w-9 h-9 rounded-lg bg-sidebar-accent flex items-center justify-center transition-colors ${color}`}
                 >
-                  <Icon className="w-[18px] h-[18px]" />
+                  <Icon className="w-4 h-4 text-white" />
                 </a>
               ))}
             </div>
           </div>
 
-          {/* Col 2: Quick Links (Takes up 2 columns) */}
-          <div className="lg:col-span-2 lg:col-start-6">
-            <h4 className="text-white font-bold text-sm mb-6 uppercase tracking-wider">
-              Eksplorasi
+          {/* Col 2: Quick Links */}
+          <div>
+            <h4 className="text-white font-semibold text-sm mb-4 uppercase tracking-wider">
+              Menu Utama
             </h4>
-            <ul className="space-y-3">
+            <ul className="space-y-2">
               {quickLinks.map((link: any) => (
                 <li key={link.href}>
                   <Link
                     href={link.href}
-                    className="group flex items-center gap-2 text-[15px] text-slate-400 hover:text-white transition-colors"
+                    className="flex items-center gap-1.5 text-sm text-sidebar-foreground hover:text-white transition-colors group"
                   >
-                    <ChevronRight className="w-4 h-4 text-slate-600 group-hover:text-blue-500 group-hover:translate-x-1 transition-all duration-300" />
+                    <ChevronRight className="w-3.5 h-3.5 text-primary group-hover:translate-x-0.5 transition-transform" />
                     {link.label}
                   </Link>
                 </li>
@@ -129,38 +147,33 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Col 3: Contact (Takes up 3 columns) */}
-          <div className="lg:col-span-3">
-            <h4 className="text-white font-bold text-sm mb-6 uppercase tracking-wider">
-              Hubungi Kami
+          {/* Col 3: Contact */}
+          <div>
+            <h4 className="text-white font-semibold text-sm mb-4 uppercase tracking-wider">
+              Kontak Kami
             </h4>
-            <ul className="space-y-5">
-              <li className="flex gap-4 group">
-                <div className="w-10 h-10 rounded-full bg-slate-800/50 flex items-center justify-center shrink-0 group-hover:bg-blue-500/10 transition-colors">
-                  <MapPin className="w-4 h-4 text-blue-400" />
-                </div>
-                <span className="text-[14px] text-slate-400 leading-relaxed pt-2">
-                  Jl. Pisang Batu RW. 10, Kel. Mangga Dua Selatan, Kec. Sawah Besar, Jakarta Pusat, DKI Jakarta 10730
+            <ul className="space-y-3">
+              <li className="flex gap-3">
+                <MapPin className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+                <span className="text-sm text-sidebar-foreground leading-relaxed">
+                  Jl. pisang batu RW. 10, Kelurahan Mangga Dua Selatan, Kecamatan Sawah Besar,
+                  Kota Jakarata Pusaat, DKI Jakarta 10730
                 </span>
               </li>
-              <li className="flex gap-4 group">
-                <div className="w-10 h-10 rounded-full bg-slate-800/50 flex items-center justify-center shrink-0 group-hover:bg-blue-500/10 transition-colors">
-                  <Phone className="w-4 h-4 text-blue-400" />
-                </div>
+              <li className="flex gap-3">
+                <Phone className="w-4 h-4 text-primary mt-0.5 shrink-0" />
                 <a
                   href="tel:+62895327395457"
-                  className="text-[15px] text-slate-400 hover:text-white transition-colors pt-2"
+                  className="text-sm text-sidebar-foreground hover:text-white transition-colors"
                 >
-                  +62 895-3273-95457
+                  +62 895327395457
                 </a>
               </li>
-              <li className="flex gap-4 group">
-                <div className="w-10 h-10 rounded-full bg-slate-800/50 flex items-center justify-center shrink-0 group-hover:bg-blue-500/10 transition-colors">
-                  <Mail className="w-4 h-4 text-blue-400" />
-                </div>
+              <li className="flex gap-3">
+                <Mail className="w-4 h-4 text-primary mt-0.5 shrink-0" />
                 <a
                   href="mailto:achmddfzn@gmail.com"
-                  className="text-[15px] text-slate-400 hover:text-white transition-colors pt-2 break-all"
+                  className="text-sm text-sidebar-foreground hover:text-white transition-colors break-all"
                 >
                   achmddfzn@gmail.com
                 </a>
@@ -168,44 +181,48 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Col 4: Operating Hours (Takes up 3 columns) */}
-          <div className="lg:col-span-3">
-            <h4 className="text-white font-bold text-sm mb-6 uppercase tracking-wider">
+          {/* Col 4: Operating Hours */}
+          <div>
+            <h4 className="text-white font-semibold text-sm mb-4 uppercase tracking-wider">
               Jam Operasional
             </h4>
-            <div className="bg-slate-800/30 border border-slate-700/50 rounded-2xl p-5">
-              <div className="flex items-center gap-2 mb-4 pb-4 border-b border-slate-700/50">
-                <Clock className="w-4 h-4 text-blue-400" />
-                <span className="text-[13px] font-medium text-slate-300">
-                  Waktu Indonesia Barat (WIB)
-                </span>
-              </div>
-              <ul className="space-y-3">
-                {operasional.map(({ hari, jam }) => (
-                  <li key={hari} className="flex justify-between items-center text-[14px]">
-                    <span className="text-slate-400">{hari}</span>
-                    <span className={`font-semibold ${jam === "Tutup" ? "text-red-400/80" : "text-emerald-400/80"}`}>
-                      {jam}
-                    </span>
-                  </li>
-                ))}
-              </ul>
+            <div className="flex items-center gap-2 mb-3">
+              <Clock className="w-4 h-4 text-primary" />
+              <span className="text-xs text-sidebar-foreground">
+                Waktu Indonesia Barat (WIB)
+              </span>
             </div>
+            <table className="w-full text-sm">
+              <tbody className="divide-y divide-sidebar-border">
+                {operasional.map(({ hari, jam }) => (
+                  <tr key={hari}>
+                    <td className="py-2 text-sidebar-foreground pr-2">
+                      {hari}
+                    </td>
+                    <td
+                      className={`py-2 text-right font-medium ${
+                        jam === "Tutup" ? "text-red-400" : "text-green-400"
+                      }`}
+                    >
+                      {jam}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
 
       {/* Bottom bar */}
-      <div className="relative border-t border-slate-800 bg-[#070b14]">
-        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-[13px] text-slate-500 font-medium">
-            &copy; 2026 Karang Taruna Generasi Emas. Hak Cipta Dilindungi.
+      <div className="border-t border-sidebar-border">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+          <p className="text-xs text-sidebar-foreground">
+            © 2026 Karang Taruna Generasi Emas. Semua hak dilindungi.
           </p>
-          <div className="flex items-center gap-1.5 text-[13px] text-slate-500 font-medium">
-            <span>Didesain dengan</span>
-            <Heart className="w-3.5 h-3.5 text-red-500 fill-red-500 animate-pulse" />
-            <span>untuk Pemuda Indonesia</span>
-          </div>
+          <p className="text-xs text-sidebar-foreground">
+            Dibuat dengan ❤️ untuk kemajuan pemuda Indonesia
+          </p>
         </div>
       </div>
     </footer>
