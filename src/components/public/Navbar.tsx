@@ -26,7 +26,7 @@ const navLinks = [
   { label: "Galeri", href: "/galeri", icon: ImageIcon },
 ];
 
-export default function Navbar() {
+export default function Navbar({ session }: { session: any }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = usePathname();
 
@@ -100,15 +100,25 @@ export default function Navbar() {
             })}
           </div>
 
-          {/* Right: Login Button */}
+          {/* Right: Login Button or Dashboard Button */}
           <div className="hidden lg:flex items-center">
-            <Link
-              href="/anggota/login"
-              className="flex items-center gap-2 px-5 py-2.5 text-[13px] font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors shadow-sm shadow-blue-500/20"
-            >
-              <Lock className="w-4 h-4" />
-              Login Anggota
-            </Link>
+            {session ? (
+              <Link
+                href={(session.user as any)?.role === "ADMIN" || (session.user as any)?.role === "SUPER_ADMIN" ? "/dashboard" : "/member/dashboard"}
+                className="flex items-center gap-2 px-5 py-2.5 text-[13px] font-bold text-white bg-green-600 hover:bg-green-700 rounded-lg transition-colors shadow-sm shadow-green-500/20"
+              >
+                <Home className="w-4 h-4" />
+                {(session.user as any)?.role === "ADMIN" || (session.user as any)?.role === "SUPER_ADMIN" ? "Dashboard Admin" : "Dashboard Anggota"}
+              </Link>
+            ) : (
+              <Link
+                href="/anggota/login"
+                className="flex items-center gap-2 px-5 py-2.5 text-[13px] font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors shadow-sm shadow-blue-500/20"
+              >
+                <Lock className="w-4 h-4" />
+                Login Anggota
+              </Link>
+            )}
           </div>
 
           {/* Mobile Hamburger */}
@@ -168,13 +178,23 @@ export default function Navbar() {
                   transition={{ delay: navLinks.length * 0.03 + 0.1 }}
                   className="mt-2 pt-4 border-t border-gray-100 px-2"
                 >
-                  <Link
-                    href="/anggota/login"
-                    className="flex items-center justify-center gap-2 w-full px-5 py-3.5 rounded-xl text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 shadow-sm transition-colors"
-                  >
-                    <Lock className="w-5 h-5" />
-                    Login Anggota
-                  </Link>
+                  {session ? (
+                    <Link
+                      href={(session.user as any)?.role === "ADMIN" || (session.user as any)?.role === "SUPER_ADMIN" ? "/dashboard" : "/member/dashboard"}
+                      className="flex items-center justify-center gap-2 w-full px-5 py-3.5 rounded-xl text-sm font-bold text-white bg-green-600 hover:bg-green-700 shadow-sm transition-colors"
+                    >
+                      <Home className="w-5 h-5" />
+                      {(session.user as any)?.role === "ADMIN" || (session.user as any)?.role === "SUPER_ADMIN" ? "Dashboard Admin" : "Dashboard Anggota"}
+                    </Link>
+                  ) : (
+                    <Link
+                      href="/anggota/login"
+                      className="flex items-center justify-center gap-2 w-full px-5 py-3.5 rounded-xl text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 shadow-sm transition-colors"
+                    >
+                      <Lock className="w-5 h-5" />
+                      Login Anggota
+                    </Link>
+                  )}
                 </motion.div>
               </div>
             </motion.div>
