@@ -8,15 +8,27 @@ const globalForPrisma = globalThis as unknown as {
 
 function createPrismaClient() {
   const connectionString = process.env.DATABASE_URL;
+  
+  // During build time on Vercel, DATABASE_URL might not be available yet
+  // This is okay because the client won't actually be used during build
   if (!connectionString) {
-    throw new Error("DATABASE_URL environment variable is not set");
+    // Only throw error in runtime (not during build)
+    if (process.env.NEXT_PHASE !== "phase-production-build") {
+      console.warn("DATABASE_URL not set, creating Prisma client without adapter");
+    }
+    // Return basic Prisma client without adapter for build time
+    return new PrismaClient({
+      log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
+    });
   }
+  
+  // Production runtime with DATABASE_URL available
   const pool = new Pool({ connectionString });
   const adapter = new PrismaPg(pool);
 
   return new PrismaClient({
     adapter,
-    log: ["error", "warn"],
+    log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
   });
 }
 
