@@ -246,12 +246,12 @@ export default function SusDashboard({ responses, stats, distribution, avgPerQ, 
                 />
                 <Tooltip
                   contentStyle={{ borderRadius: 10, border: "1px solid #e2e8f0", fontSize: 12 }}
-                  formatter={(v: number, _name: string, props: any) => [
-                    `${v} / 5`,
+                  formatter={(v, _name, props: any) => [
+                    `${typeof v === 'number' ? v : 0} / 5`,
                     props.payload.positif ? "Pertanyaan Positif" : "Pertanyaan Negatif",
                   ]}
                   labelFormatter={(label) => {
-                    const idx = parseInt(label.replace("Q", "")) - 1;
+                    const idx = parseInt(String(label).replace("Q", "")) - 1;
                     return susQuestions[idx] || label;
                   }}
                 />

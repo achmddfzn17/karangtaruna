@@ -28,7 +28,7 @@ export default function LaporanKeuanganCharts({ perBulan }: { perBulan: BulanDat
             <YAxis tick={{ fontSize: 10, fill: "#94a3b8" }} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
             <Tooltip
               contentStyle={{ borderRadius: 12, border: "1px solid #e2e8f0", fontSize: 12 }}
-              formatter={(v: number) => [formatCurrency(v)]}
+              formatter={(v) => [formatCurrency(typeof v === 'number' ? v : 0)]}
             />
             <Legend wrapperStyle={{ fontSize: 11 }} />
             <Bar dataKey="masuk" name="Pemasukan" fill="#10b981" radius={[4, 4, 0, 0]} />
@@ -47,7 +47,7 @@ export default function LaporanKeuanganCharts({ perBulan }: { perBulan: BulanDat
             <YAxis tick={{ fontSize: 10, fill: "#94a3b8" }} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
             <Tooltip
               contentStyle={{ borderRadius: 12, border: "1px solid #e2e8f0", fontSize: 12 }}
-              formatter={(v: number) => [formatCurrency(v), "Saldo"]}
+              formatter={(v) => [formatCurrency(typeof v === 'number' ? v : 0), "Saldo"]}
             />
             <Line
               type="monotone"

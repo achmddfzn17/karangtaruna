@@ -29,12 +29,20 @@ export default async function EditAdminPage({
 
     if (!name) throw new Error("Nama wajib diisi");
 
+    // Re-fetch user untuk memastikan data terbaru dan type safety
+    const currentUser = await prisma.user.findUnique({
+      where: { id },
+      include: { admin: true },
+    });
+
+    if (!currentUser) throw new Error("User tidak ditemukan");
+
     await prisma.user.update({
       where: { id },
       data: { name, role },
     });
 
-    if (user.admin) {
+    if (currentUser.admin) {
       await prisma.admin.update({
         where: { userId: id },
         data: { jabatan: jabatan || null, phone: phone || null },

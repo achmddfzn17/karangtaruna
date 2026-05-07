@@ -121,7 +121,7 @@ export default async function MemberVotingPage({
         await tx.auditLog.create({
           data: {
             userId,
-            userName: session.user.name || session.user.email || "Unknown",
+            userName: session.user?.name || session.user?.email || "Unknown",
             action: "CREATE",
             module: "voting",
             targetId: pollingId,
