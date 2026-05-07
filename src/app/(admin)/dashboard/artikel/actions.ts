@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { deleteFileFromStorage } from "@/lib/supabase";
 
 const artikelSchema = z.object({
   judul: z.string().min(5, "Judul artikel minimal 5 karakter"),
@@ -27,6 +28,10 @@ export async function createArtikel(formData: FormData) {
   }
 
   const { judul, kategori, status, ringkasan, isi } = parsed.data;
+  const thumbnail = formData.get("thumbnail") as string;
+  const tagsRaw = formData.get("tags") as string;
+  let tags: string[] = [];
+  try { tags = tagsRaw ? JSON.parse(tagsRaw) : []; } catch {}
 
   const slug = judul.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, "") + "-" + Date.now();
 
@@ -39,6 +44,8 @@ export async function createArtikel(formData: FormData) {
         status,
         ringkasan: ringkasan || null,
         isi,
+        thumbnail: thumbnail || null,
+        tags,
         publishedAt: status === "PUBLISHED" ? new Date() : null,
       },
     });
@@ -52,9 +59,23 @@ export async function createArtikel(formData: FormData) {
 
 export async function deleteArtikel(id: string) {
   try {
+    // Ambil data artikel untuk hapus thumbnail dari Supabase
+    const artikel = await prisma.artikel.findUnique({
+      where: { id },
+      select: { thumbnail: true },
+    });
+
+    // Hapus thumbnail dari Supabase Storage jika ada
+    if (artikel?.thumbnail) {
+      await deleteFileFromStorage(artikel.thumbnail);
+    }
+
+    // Hapus data artikel dari database
     await prisma.artikel.delete({ where: { id } });
     revalidatePath("/dashboard/artikel");
+    revalidatePath("/");
   } catch (error) {
+    console.error("[DELETE_ARTIKEL_ERROR]", error);
     throw new Error("Gagal menghapus artikel");
   }
 }

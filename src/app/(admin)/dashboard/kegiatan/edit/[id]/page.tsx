@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ArrowLeft, Save } from "lucide-react";
 import { notFound, redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import ThumbnailUpload from "@/components/admin/ThumbnailUpload";
 
 export const metadata = { title: "Edit Kegiatan" };
 
@@ -33,6 +34,7 @@ export default async function EditKegiatanPage({ params }: EditKegiatanPageProps
     const lokasi = formData.get("lokasi") as string;
     const anggaran = formData.get("anggaran") as string;
     const status = formData.get("status") as string;
+    const thumbnail = formData.get("thumbnail") as string;
 
     if (!nama || nama.length < 5) throw new Error("Nama kegiatan minimal 5 karakter");
     if (!tanggalMulai) throw new Error("Tanggal mulai wajib diisi");
@@ -49,6 +51,7 @@ export default async function EditKegiatanPage({ params }: EditKegiatanPageProps
           lokasi: lokasi || null,
           anggaran: anggaran ? parseFloat(anggaran) : null,
           status: status as any,
+          thumbnail: thumbnail || null,
         },
       });
     } catch {
@@ -206,6 +209,14 @@ export default async function EditKegiatanPage({ params }: EditKegiatanPageProps
               className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white text-sm text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 transition-all resize-none"
             />
           </div>
+
+          {/* Thumbnail */}
+          <ThumbnailUpload
+            name="thumbnail"
+            defaultUrl={kegiatan.thumbnail}
+            folder="kegiatan"
+            label="Thumbnail Kegiatan (Opsional)"
+          />
 
           {/* Actions */}
           <div className="flex items-center justify-end gap-3 pt-2 border-t border-slate-100">

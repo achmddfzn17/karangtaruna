@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { deleteFileFromStorage } from "@/lib/supabase";
 
 const beritaSchema = z.object({
   judul: z.string().min(5, "Judul berita minimal 5 karakter"),
@@ -27,8 +28,11 @@ export async function createBerita(formData: FormData) {
   }
 
   const { judul, kategori, status, ringkasan, isi } = parsed.data;
+  const thumbnail = formData.get("thumbnail") as string;
+  const tagsRaw = formData.get("tags") as string;
+  let tags: string[] = [];
+  try { tags = tagsRaw ? JSON.parse(tagsRaw) : []; } catch {}
 
-  // Buat slug sederhana dari judul
   const slug = judul.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, "") + "-" + Date.now();
 
   try {
@@ -40,6 +44,8 @@ export async function createBerita(formData: FormData) {
         status,
         ringkasan: ringkasan || null,
         isi,
+        thumbnail: thumbnail || null,
+        tags,
         publishedAt: status === "PUBLISHED" ? new Date() : null,
       },
     });
@@ -53,9 +59,23 @@ export async function createBerita(formData: FormData) {
 
 export async function deleteBerita(id: string) {
   try {
+    // Ambil data berita untuk hapus thumbnail dari Supabase
+    const berita = await prisma.berita.findUnique({
+      where: { id },
+      select: { thumbnail: true },
+    });
+
+    // Hapus thumbnail dari Supabase Storage jika ada
+    if (berita?.thumbnail) {
+      await deleteFileFromStorage(berita.thumbnail);
+    }
+
+    // Hapus data berita dari database
     await prisma.berita.delete({ where: { id } });
     revalidatePath("/dashboard/berita");
+    revalidatePath("/");
   } catch (error) {
+    console.error("[DELETE_BERITA_ERROR]", error);
     throw new Error("Gagal menghapus berita");
   }
 }

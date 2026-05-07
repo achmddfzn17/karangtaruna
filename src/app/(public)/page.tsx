@@ -13,18 +13,31 @@ import { prisma } from "@/lib/prisma";
 export const revalidate = 60;
 
 export default async function HomePage() {
-  const [anggotaCount, kegiatanCount, programCount] = await Promise.all([
+  const [anggotaCount, kegiatanCount, programCount, galeriItems] = await Promise.all([
     prisma.anggota.count({ where: { status: "AKTIF" } }),
     prisma.kegiatan.count(),
     prisma.program.count(),
+    prisma.galeriItem.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 6,
+      select: {
+        id: true,
+        judul: true,
+        url: true,
+        type: true,
+        deskripsi: true,
+        kegiatan: { select: { nama: true } },
+      },
+    }),
   ]);
 
   const statsData = {
     anggota: anggotaCount,
     kegiatan: kegiatanCount,
     program: programCount,
-    tahun: 5, // Hardcoded or calculated later
+    tahun: 5,
   };
+
   return (
     <>
       <HeroSection statsData={statsData} />
@@ -33,7 +46,7 @@ export default async function HomePage() {
       <KegiatanSection />
       <BeritaSection />
       <ArtikelSection />
-      <GaleriSection />
+      <GaleriSection items={galeriItems} />
       <StatSection statsData={statsData} />
     </>
   );

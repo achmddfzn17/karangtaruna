@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { ChevronLeft, Save, AlertCircle } from "lucide-react";
 import { createProgram } from "../actions";
+import ThumbnailUpload from "@/components/admin/ThumbnailUpload";
 
 export default function TambahProgramPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -130,6 +131,13 @@ export default function TambahProgramPage() {
               </select>
             </div>
           </div>
+
+          {/* Thumbnail */}
+          <ThumbnailUpload
+            name="thumbnail"
+            folder="program"
+            label="Thumbnail Program (Opsional)"
+          />
 
           {/* Actions */}
           <div className="pt-4 border-t border-gray-100 flex justify-end gap-4">

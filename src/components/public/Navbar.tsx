@@ -14,7 +14,8 @@ import {
   Newspaper,
   FileText,
   Image as ImageIcon,
-  ChevronRight
+  ChevronRight,
+  ClipboardList,
 } from "lucide-react";
 
 const navLinks = [
@@ -24,6 +25,7 @@ const navLinks = [
   { label: "Berita", href: "/berita", icon: Newspaper },
   { label: "Artikel", href: "/artikel", icon: FileText },
   { label: "Galeri", href: "/galeri", icon: ImageIcon },
+  { label: "Kuisioner", href: "/sus", icon: ClipboardList },
 ];
 
 export default function Navbar({ session }: { session: any }) {

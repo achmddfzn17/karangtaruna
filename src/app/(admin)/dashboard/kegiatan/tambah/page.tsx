@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ChevronLeft, Save, AlertCircle } from "lucide-react";
 import { createKegiatan } from "./actions";
 import { toast } from "sonner";
+import ThumbnailUpload from "@/components/admin/ThumbnailUpload";
 
 export default function TambahKegiatanPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -154,6 +155,15 @@ export default function TambahKegiatanPage() {
                 placeholder="Jelaskan detail kegiatan ini..."
                 className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all resize-none"
               ></textarea>
+            </div>
+
+            {/* Thumbnail */}
+            <div className="md:col-span-2">
+              <ThumbnailUpload
+                name="thumbnail"
+                folder="kegiatan"
+                label="Thumbnail Kegiatan (Opsional)"
+              />
             </div>
           </div>
 

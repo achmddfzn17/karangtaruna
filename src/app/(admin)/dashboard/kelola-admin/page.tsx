@@ -1,17 +1,21 @@
 import { prisma } from "@/lib/prisma";
+import { auth } from "@/auth";
 import { formatDate } from "@/lib/utils";
-import { UserCog, Plus, ShieldCheck } from "lucide-react";
+import { UserCog, Plus, ShieldCheck, Pencil } from "lucide-react";
 import Link from "next/link";
+import DeleteAdminButton from "@/components/admin/DeleteAdminButton";
 
 export const metadata = { title: "Kelola Admin" };
 
 export default async function KelolaAdminPage() {
+  const session = await auth();
+  const currentUserId = (session?.user as any)?.id;
+  const currentRole = (session?.user as any)?.role;
+
   const adminUsers = await prisma.user.findMany({
-    where: {
-      role: { in: ["ADMIN", "SUPER_ADMIN"] }
-    },
+    where: { role: { in: ["ADMIN", "SUPER_ADMIN"] } },
     include: { admin: true },
-    orderBy: { createdAt: "asc" }
+    orderBy: { createdAt: "asc" },
   });
 
   const roleColor: Record<string, string> = {
@@ -35,7 +39,7 @@ export default async function KelolaAdminPage() {
         </Link>
       </div>
 
-      <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
@@ -45,40 +49,77 @@ export default async function KelolaAdminPage() {
                 <th className="text-left text-[11px] text-slate-400 font-bold uppercase tracking-wider py-3 px-4">Role</th>
                 <th className="text-left text-[11px] text-slate-400 font-bold uppercase tracking-wider py-3 px-4">Jabatan</th>
                 <th className="text-left text-[11px] text-slate-400 font-bold uppercase tracking-wider py-3 px-4">Terdaftar</th>
+                <th className="py-3 px-4" />
               </tr>
             </thead>
             <tbody>
               {adminUsers.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="text-center py-12 text-slate-400">
+                  <td colSpan={6} className="text-center py-12 text-slate-400">
                     <UserCog className="w-10 h-10 mx-auto mb-3 opacity-40" />
                     <p className="text-sm font-medium">Belum ada data admin</p>
                   </td>
                 </tr>
               ) : (
-                adminUsers.map((user: any) => (
-                  <tr key={user.id} className="border-b border-gray-50 last:border-0 hover:bg-blue-50/30 transition-colors">
-                    <td className="py-3.5 px-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 bg-slate-100 text-slate-600 rounded-full flex items-center justify-center font-bold text-sm shrink-0">
-                          {user.name?.charAt(0) || "A"}
+                adminUsers.map((user: any) => {
+                  const isSelf = user.id === currentUserId;
+                  return (
+                    <tr
+                      key={user.id}
+                      className="border-b border-gray-50 last:border-0 hover:bg-blue-50/30 transition-colors"
+                    >
+                      <td className="py-3.5 px-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-9 h-9 bg-slate-100 text-slate-600 rounded-full flex items-center justify-center font-bold text-sm shrink-0">
+                            {user.name?.charAt(0) || "A"}
+                          </div>
+                          <div>
+                            <p className="text-sm font-semibold text-slate-800">{user.name || "Admin"}</p>
+                            {isSelf && (
+                              <span className="text-[10px] font-bold text-blue-500 bg-blue-50 px-1.5 py-0.5 rounded">
+                                Anda
+                              </span>
+                            )}
+                          </div>
                         </div>
-                        <p className="text-sm font-semibold text-slate-800">{user.name || "Admin"}</p>
-                      </div>
-                    </td>
-                    <td className="py-3.5 px-4 text-sm text-slate-600">{user.email}</td>
-                    <td className="py-3.5 px-4">
-                      <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold ${roleColor[user.role]}`}>
-                        <ShieldCheck className="w-3 h-3" />
-                        {user.role.replace("_", " ")}
-                      </span>
-                    </td>
-                    <td className="py-3.5 px-4 text-sm text-slate-600">
-                      {user.admin?.jabatan || "-"}
-                    </td>
-                    <td className="py-3.5 px-4 text-sm text-slate-500">{formatDate(user.createdAt)}</td>
-                  </tr>
-                ))
+                      </td>
+                      <td className="py-3.5 px-4 text-sm text-slate-600">{user.email}</td>
+                      <td className="py-3.5 px-4">
+                        <span
+                          className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold ${roleColor[user.role]}`}
+                        >
+                          <ShieldCheck className="w-3 h-3" />
+                          {user.role.replace("_", " ")}
+                        </span>
+                      </td>
+                      <td className="py-3.5 px-4 text-sm text-slate-600">
+                        {user.admin?.jabatan || "-"}
+                      </td>
+                      <td className="py-3.5 px-4 text-sm text-slate-500">
+                        {formatDate(user.createdAt)}
+                      </td>
+                      <td className="py-3.5 px-4">
+                        <div className="flex items-center justify-end gap-1">
+                          <Link
+                            href={`/dashboard/kelola-admin/edit/${user.id}`}
+                            className="p-1.5 text-slate-300 hover:text-amber-500 hover:bg-amber-50 rounded-lg transition-colors"
+                            title="Edit admin"
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </Link>
+                          {/* Hanya SUPER_ADMIN yang bisa hapus, dan tidak bisa hapus diri sendiri */}
+                          {currentRole === "SUPER_ADMIN" && (
+                            <DeleteAdminButton
+                              id={user.id}
+                              nama={user.name || "Admin"}
+                              isSelf={isSelf}
+                            />
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>

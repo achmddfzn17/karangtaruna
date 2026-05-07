@@ -49,6 +49,7 @@ const quickLinks = [
   { label: "Berita", href: "/berita" },
   { label: "Artikel", href: "/artikel" },
   { label: "Galeri", href: "/galeri" },
+  { label: "Kuisioner SUS", href: "/sus" },
   { label: "Login Anggota", href: "/anggota/login" },
 ];
 

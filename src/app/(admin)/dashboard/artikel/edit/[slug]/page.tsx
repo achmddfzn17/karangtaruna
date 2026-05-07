@@ -1,8 +1,10 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
-import { ArrowLeft, Save } from "lucide-react";
+import { ArrowLeft, Save, Eye } from "lucide-react";
 import { notFound, redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import ThumbnailUpload from "@/components/admin/ThumbnailUpload";
+import TagsInput from "@/components/admin/TagsInput";
 
 export const metadata = { title: "Edit Artikel" };
 
@@ -25,6 +27,10 @@ export default async function EditArtikelPage({ params }: EditArtikelPageProps) 
     const status = formData.get("status") as "DRAFT" | "PUBLISHED" | "ARCHIVED";
     const ringkasan = formData.get("ringkasan") as string;
     const isi = formData.get("isi") as string;
+    const thumbnail = formData.get("thumbnail") as string;
+    const tagsRaw = formData.get("tags") as string;
+    let tags: string[] = [];
+    try { tags = tagsRaw ? JSON.parse(tagsRaw) : []; } catch {}
 
     if (!judul || judul.length < 5) throw new Error("Judul minimal 5 karakter");
     if (!isi || isi.length < 10) throw new Error("Isi artikel tidak boleh kosong");
@@ -38,6 +44,8 @@ export default async function EditArtikelPage({ params }: EditArtikelPageProps) 
           status,
           ringkasan: ringkasan || null,
           isi,
+          thumbnail: thumbnail || null,
+          tags,
           publishedAt:
             status === "PUBLISHED" && !artikelPublishedAt ? new Date() : artikelPublishedAt,
         },
@@ -50,6 +58,9 @@ export default async function EditArtikelPage({ params }: EditArtikelPageProps) 
     revalidatePath(`/artikel/${slug}`);
     redirect("/dashboard/artikel");
   }
+
+  const inputCls =
+    "w-full px-4 py-3 rounded-xl border border-slate-200 bg-white text-sm text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 transition-all";
 
   return (
     <div className="space-y-6 max-w-3xl">
@@ -79,11 +90,11 @@ export default async function EditArtikelPage({ params }: EditArtikelPageProps) 
               type="text"
               required
               defaultValue={artikel.judul}
-              className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white text-sm text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 transition-all"
+              className={inputCls}
             />
           </div>
 
-          {/* Row: Kategori & Status */}
+          {/* Kategori & Status */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <label htmlFor="kategori" className="text-[12px] font-bold text-slate-600">
@@ -95,25 +106,31 @@ export default async function EditArtikelPage({ params }: EditArtikelPageProps) 
                 type="text"
                 defaultValue={artikel.kategori || ""}
                 placeholder="Contoh: Pendidikan, Sosial"
-                className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white text-sm text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 transition-all"
+                className={inputCls}
               />
             </div>
             <div className="space-y-1.5">
               <label htmlFor="status" className="text-[12px] font-bold text-slate-600">
                 Status Publikasi
               </label>
-              <select
-                id="status"
-                name="status"
-                defaultValue={artikel.status}
-                className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white text-sm text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 transition-all"
-              >
+              <select id="status" name="status" defaultValue={artikel.status} className={inputCls}>
                 <option value="DRAFT">Draft</option>
                 <option value="PUBLISHED">Published</option>
                 <option value="ARCHIVED">Archived</option>
               </select>
             </div>
           </div>
+
+          {/* Thumbnail */}
+          <ThumbnailUpload
+            name="thumbnail"
+            defaultUrl={artikel.thumbnail}
+            folder="artikel"
+            label="Thumbnail Artikel (Opsional)"
+          />
+
+          {/* Tags */}
+          <TagsInput name="tags" defaultTags={artikel.tags} placeholder="Contoh: edukasi, inspirasi..." />
 
           {/* Ringkasan */}
           <div className="space-y-1.5">
@@ -126,7 +143,7 @@ export default async function EditArtikelPage({ params }: EditArtikelPageProps) 
               rows={2}
               defaultValue={artikel.ringkasan || ""}
               placeholder="Ringkasan singkat artikel..."
-              className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white text-sm text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 transition-all resize-none"
+              className={`${inputCls} resize-none`}
             />
           </div>
 
@@ -142,25 +159,35 @@ export default async function EditArtikelPage({ params }: EditArtikelPageProps) 
               required
               defaultValue={artikel.isi}
               placeholder="Tulis isi artikel di sini..."
-              className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white text-sm text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 transition-all resize-y"
+              className={`${inputCls} resize-y`}
             />
           </div>
 
           {/* Actions */}
-          <div className="flex items-center justify-end gap-3 pt-2 border-t border-slate-100">
+          <div className="flex items-center justify-between gap-4 flex-wrap">
             <Link
-              href="/dashboard/artikel"
-              className="px-5 py-2.5 rounded-xl border border-slate-200 text-sm font-bold text-slate-600 hover:bg-slate-50 transition-colors"
+              href={`/artikel/${slug}`}
+              target="_blank"
+              className="inline-flex items-center gap-2 px-5 py-2.5 border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-sm font-bold rounded-xl transition-colors"
             >
-              Batal
+              <Eye className="w-4 h-4" />
+              Lihat di Website
             </Link>
-            <button
-              type="submit"
-              className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-xl shadow-sm transition-colors"
-            >
-              <Save className="w-4 h-4" />
-              Simpan Perubahan
-            </button>
+            <div className="flex items-center gap-3">
+              <Link
+                href="/dashboard/artikel"
+                className="px-5 py-2.5 rounded-xl border border-slate-200 text-sm font-bold text-slate-600 hover:bg-slate-50 transition-colors"
+              >
+                Batal
+              </Link>
+              <button
+                type="submit"
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-xl shadow-sm transition-colors"
+              >
+                <Save className="w-4 h-4" />
+                Simpan Perubahan
+              </button>
+            </div>
           </div>
         </form>
       </div>

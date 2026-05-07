@@ -124,6 +124,7 @@ model Anggota {
   status        StatusAnggota @default(AKTIF)
   tanggalGabung DateTime      @default(now())
   kegiatan      AnggotaKegiatan[]
+  iuran         IuranAnggota[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -406,4 +407,42 @@ model Vote {
 
   @@unique([userId, pollingId])
   @@map("votes")
+}
+
+// ===== IURAN ANGGOTA =====
+
+model IuranAnggota {
+  id          String   @id @default(cuid())
+  anggotaId   String
+  anggota     Anggota  @relation(fields: [anggotaId], references: [id], onDelete: Cascade)
+  bulan       Int      // 1-12
+  tahun       Int
+  jumlah      Float
+  tanggalBayar DateTime @default(now())
+  keterangan  String?
+
+  createdAt DateTime @default(now())
+
+  @@unique([anggotaId, bulan, tahun])
+  @@index([bulan, tahun])
+  @@map("iuran_anggota")
+}
+
+// ===== AUDIT LOG =====
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  userId     String?
+  userName   String?
+  action     String   // CREATE, UPDATE, DELETE, LOGIN, etc.
+  module     String   // anggota, kegiatan, keuangan, etc.
+  targetId   String?
+  targetName String?
+  detail     String?  @db.Text
+  ipAddress  String?
+  createdAt  DateTime @default(now())
+
+  @@index([module, createdAt(sort: Desc)])
+  @@index([userId, createdAt(sort: Desc)])
+  @@map("audit_logs")
 }

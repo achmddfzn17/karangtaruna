@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { formatDate } from "@/lib/utils";
 import { Image as ImageIcon, Plus, Video } from "lucide-react";
 import Link from "next/link";
+import DeleteGaleriButton from "@/components/admin/DeleteGaleriButton";
 
 export const metadata = { title: "Kelola Galeri" };
 
@@ -16,7 +17,7 @@ export default async function KelolaGaleriPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-extrabold text-slate-900">Data Galeri</h1>
-          <p className="text-sm text-slate-400 mt-1">Kelola dokumentasi foto dan video</p>
+          <p className="text-sm text-slate-500 mt-1">Kelola dokumentasi foto dan video</p>
         </div>
         <Link
           href="/dashboard/galeri/tambah"
@@ -28,7 +29,7 @@ export default async function KelolaGaleriPage() {
       </div>
 
       {galeriList.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-gray-100 p-12 text-center">
+        <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center shadow-sm">
           <ImageIcon className="w-12 h-12 text-slate-300 mx-auto mb-4" />
           <h3 className="text-lg font-bold text-slate-900 mb-1">Belum ada dokumentasi</h3>
           <p className="text-sm text-slate-500 mb-6 max-w-sm mx-auto">
@@ -41,7 +42,7 @@ export default async function KelolaGaleriPage() {
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {galeriList.map((item: any) => (
-            <div key={item.id} className="bg-white rounded-2xl border border-gray-100 overflow-hidden group">
+            <div key={item.id} className="bg-white rounded-2xl border border-slate-200 overflow-hidden group shadow-sm">
               <div className="aspect-[4/3] bg-slate-100 relative overflow-hidden">
                 {item.type === "FOTO" ? (
                   <img
@@ -55,7 +56,6 @@ export default async function KelolaGaleriPage() {
                     <span className="text-xs font-bold bg-white/20 px-2 py-1 rounded">VIDEO</span>
                   </div>
                 )}
-                {/* Type badge */}
                 <div className="absolute top-2 right-2 px-2 py-1 bg-black/50 backdrop-blur-sm text-white text-[10px] font-bold rounded-md">
                   {item.type}
                 </div>
@@ -68,8 +68,8 @@ export default async function KelolaGaleriPage() {
                   </p>
                 )}
                 <div className="flex items-center justify-between mt-3">
-                  <span className="text-[10px] text-slate-400 font-medium">{formatDate(item.createdAt)}</span>
-                  <button className="text-[11px] font-bold text-red-500 hover:text-red-600">Hapus</button>
+                  <span className="text-[10px] text-slate-500 font-medium">{formatDate(item.createdAt)}</span>
+                  <DeleteGaleriButton id={item.id} judul={item.judul} />
                 </div>
               </div>
             </div>

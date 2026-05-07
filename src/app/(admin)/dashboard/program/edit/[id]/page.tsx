@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ArrowLeft, Save } from "lucide-react";
 import { notFound, redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import ThumbnailUpload from "@/components/admin/ThumbnailUpload";
 
 export const metadata = { title: "Edit Program" };
 
@@ -21,6 +22,7 @@ export default async function EditProgramPage({ params }: EditProgramPageProps) 
     const nama = formData.get("nama") as string;
     const deskripsi = formData.get("deskripsi") as string;
     const icon = formData.get("icon") as string;
+    const thumbnail = formData.get("thumbnail") as string;
     const statusRaw = formData.get("status") as string;
     const urutanRaw = formData.get("urutan") as string;
 
@@ -36,6 +38,7 @@ export default async function EditProgramPage({ params }: EditProgramPageProps) 
           nama,
           deskripsi: deskripsi || null,
           icon: icon || null,
+          thumbnail: thumbnail || null,
           status,
           urutan,
         },
@@ -114,33 +117,27 @@ export default async function EditProgramPage({ params }: EditProgramPageProps) 
           {/* Row: Urutan & Status */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <label htmlFor="urutan" className="text-[12px] font-bold text-slate-600">
-                Urutan Tampil
-              </label>
-              <input
-                id="urutan"
-                name="urutan"
-                type="number"
-                defaultValue={program.urutan}
-                min="0"
-                className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white text-sm text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 transition-all"
-              />
+              <label htmlFor="urutan" className="text-[12px] font-bold text-slate-600">Urutan Tampil</label>
+              <input id="urutan" name="urutan" type="number" defaultValue={program.urutan} min="0"
+                className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white text-sm text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 transition-all" />
             </div>
             <div className="space-y-1.5">
-              <label htmlFor="status" className="text-[12px] font-bold text-slate-600">
-                Status Aktif
-              </label>
-              <select
-                id="status"
-                name="status"
-                defaultValue={String(program.status)}
-                className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white text-sm text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 transition-all"
-              >
+              <label htmlFor="status" className="text-[12px] font-bold text-slate-600">Status Aktif</label>
+              <select id="status" name="status" defaultValue={String(program.status)}
+                className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white text-sm text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 transition-all">
                 <option value="true">Aktif</option>
                 <option value="false">Nonaktif</option>
               </select>
             </div>
           </div>
+
+          {/* Thumbnail */}
+          <ThumbnailUpload
+            name="thumbnail"
+            defaultUrl={program.thumbnail}
+            folder="program"
+            label="Thumbnail Program (Opsional)"
+          />
 
           {/* Actions */}
           <div className="flex items-center justify-end gap-3 pt-2 border-t border-slate-100">
