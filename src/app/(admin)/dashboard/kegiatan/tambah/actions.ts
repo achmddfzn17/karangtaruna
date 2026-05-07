@@ -5,6 +5,8 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { deleteFileFromStorage, deleteFilesFromStorage } from "@/lib/supabase";
+import { auditCreate, auditDelete } from "@/lib/audit";
+import { auth } from "@/auth";
 
 const kegiatanSchema = z.object({
   nama: z.string().min(5, "Nama kegiatan minimal 5 karakter"),
@@ -16,9 +18,21 @@ const kegiatanSchema = z.object({
   anggaran: z.string().optional(),
   status: z.enum(["UPCOMING", "ONGOING", "SELESAI", "DIBATALKAN"]),
   thumbnail: z.string().optional(),
+}).refine((data) => {
+  // Validate date range: tanggalSelesai must be after tanggalMulai
+  if (data.tanggalSelesai && data.tanggalMulai) {
+    const mulai = new Date(data.tanggalMulai);
+    const selesai = new Date(data.tanggalSelesai);
+    return selesai >= mulai;
+  }
+  return true;
+}, {
+  message: "Tanggal selesai harus setelah atau sama dengan tanggal mulai",
+  path: ["tanggalSelesai"],
 });
 
 export async function createKegiatan(formData: FormData) {
+  const session = await auth();
   const parsed = kegiatanSchema.safeParse({
     nama: formData.get("nama"),
     deskripsi: formData.get("deskripsi"),
@@ -38,7 +52,7 @@ export async function createKegiatan(formData: FormData) {
   const { nama, deskripsi, jenis, tanggalMulai, tanggalSelesai, lokasi, anggaran, status, thumbnail } = parsed.data;
 
   try {
-    await prisma.kegiatan.create({
+    const kegiatan = await prisma.kegiatan.create({
       data: {
         nama,
         deskripsi: deskripsi || null,
@@ -51,6 +65,16 @@ export async function createKegiatan(formData: FormData) {
         thumbnail: thumbnail || null,
       },
     });
+
+    // Audit log
+    await auditCreate(
+      "kegiatan",
+      kegiatan.id,
+      nama,
+      session?.user?.id,
+      session?.user?.name || undefined,
+      `Created kegiatan: ${nama} (${jenis}, ${status})`
+    );
   } catch (error: any) {
     throw new Error("Gagal menyimpan data kegiatan");
   }
@@ -60,12 +84,15 @@ export async function createKegiatan(formData: FormData) {
 }
 
 export async function deleteKegiatan(id: string) {
+  const session = await auth();
+  
   try {
     // Ambil data kegiatan untuk hapus thumbnail dan galeri dari Supabase
     const kegiatan = await prisma.kegiatan.findUnique({
       where: { id },
       select: { 
         thumbnail: true,
+        nama: true,
         galeri: {
           select: { url: true }
         }
@@ -94,6 +121,17 @@ export async function deleteKegiatan(id: string) {
 
     // Hapus data kegiatan dari database (cascade akan hapus galeri juga)
     await prisma.kegiatan.delete({ where: { id } });
+
+    // Audit log
+    await auditDelete(
+      "kegiatan",
+      id,
+      kegiatan.nama,
+      session?.user?.id,
+      session?.user?.name || undefined,
+      `Deleted kegiatan: ${kegiatan.nama} (with ${kegiatan.galeri.length} galeri items)`
+    );
+
     revalidatePath("/dashboard/kegiatan");
     revalidatePath("/dashboard/galeri");
     revalidatePath("/");

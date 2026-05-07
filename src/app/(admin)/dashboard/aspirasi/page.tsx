@@ -46,13 +46,35 @@ export default async function AdminAspirasiPage({
     const balasan = formData.get("balasan") as string;
     const status = formData.get("status") as any;
 
-    if (!id || !balasan) return;
+    // Input validation
+    if (!id || typeof id !== "string" || !id.match(/^[a-z0-9]+$/i)) {
+      throw new Error("ID aspirasi tidak valid");
+    }
+    
+    if (!balasan || typeof balasan !== "string" || balasan.trim().length < 5) {
+      throw new Error("Balasan minimal 5 karakter");
+    }
+    
+    if (balasan.length > 2000) {
+      throw new Error("Balasan maksimal 2000 karakter");
+    }
+    
+    const validStatuses = ["DIPROSES", "SELESAI", "DITOLAK"];
+    if (status && !validStatuses.includes(status)) {
+      throw new Error("Status tidak valid");
+    }
 
     try {
+      // Verify aspirasi exists
+      const aspirasi = await prisma.aspirasi.findUnique({ where: { id } });
+      if (!aspirasi) {
+        throw new Error("Aspirasi tidak ditemukan");
+      }
+
       await prisma.aspirasi.update({
         where: { id },
         data: {
-          balasan,
+          balasan: balasan.trim(),
           status: status || "SELESAI",
         },
       });

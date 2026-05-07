@@ -5,8 +5,11 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import bcrypt from "bcryptjs";
 import { deleteFileFromStorage } from "@/lib/supabase";
+import { auditUpdate, auditDelete, auditCreate } from "@/lib/audit";
+import { auth } from "@/auth";
 
 export async function updateAnggota(id: string, formData: FormData) {
+  const session = await auth();
   const namaLengkap = formData.get("namaLengkap") as string;
   const nik = formData.get("nik") as string;
   const tempatLahir = formData.get("tempatLahir") as string;
@@ -56,6 +59,16 @@ export async function updateAnggota(id: string, formData: FormData) {
         data: { name: namaLengkap },
       }).catch(() => {});
     }
+
+    // Audit log
+    await auditUpdate(
+      "anggota",
+      id,
+      namaLengkap,
+      session?.user?.id,
+      session?.user?.name || undefined,
+      `Updated anggota: ${namaLengkap} (${nik})`
+    );
   } catch (error: any) {
     if (error.code === "P2002") {
       throw new Error("NIK sudah terdaftar oleh anggota lain");
@@ -68,15 +81,21 @@ export async function updateAnggota(id: string, formData: FormData) {
 }
 
 export async function deleteAnggota(id: string) {
+  const session = await auth();
+  
   // Cari data anggota sebelum hapus untuk ambil foto dan userId
   const anggota = await prisma.anggota.findUnique({
     where: { id },
-    select: { userId: true, foto: true },
+    select: { userId: true, foto: true, namaLengkap: true, nik: true },
   });
+
+  if (!anggota) {
+    throw new Error("Anggota tidak ditemukan");
+  }
 
   try {
     // Hapus foto dari Supabase Storage jika ada
-    if (anggota?.foto) {
+    if (anggota.foto) {
       await deleteFileFromStorage(anggota.foto);
     }
 
@@ -84,11 +103,21 @@ export async function deleteAnggota(id: string) {
     await prisma.anggota.delete({ where: { id } });
 
     // Hapus User terkait jika ada
-    if (anggota?.userId) {
+    if (anggota.userId) {
       await prisma.user
         .delete({ where: { id: anggota.userId } })
         .catch(() => {});
     }
+
+    // Audit log
+    await auditDelete(
+      "anggota",
+      id,
+      anggota.namaLengkap,
+      session?.user?.id,
+      session?.user?.name || undefined,
+      `Deleted anggota: ${anggota.namaLengkap} (${anggota.nik})`
+    );
   } catch (error) {
     console.error("[DELETE_ANGGOTA_ERROR]", error);
     throw new Error("Gagal menghapus data anggota");
@@ -101,6 +130,7 @@ export async function deleteAnggota(id: string) {
  * Buat akun login untuk anggota yang belum punya akun
  */
 export async function buatAkunAnggota(anggotaId: string, formData: FormData) {
+  const session = await auth();
   const loginEmail = formData.get("loginEmail") as string;
   const loginPassword = formData.get("loginPassword") as string;
 
@@ -120,6 +150,7 @@ export async function buatAkunAnggota(anggotaId: string, formData: FormData) {
 
   const hashedPassword = await bcrypt.hash(loginPassword, 12);
 
+  let newUserId: string;
   await prisma.$transaction(async (tx) => {
     const user = await tx.user.create({
       data: {
@@ -129,11 +160,22 @@ export async function buatAkunAnggota(anggotaId: string, formData: FormData) {
         role: "ANGGOTA",
       },
     });
+    newUserId = user.id;
     await tx.anggota.update({
       where: { id: anggotaId },
       data: { userId: user.id },
     });
   });
+
+  // Audit log
+  await auditCreate(
+    "anggota",
+    anggotaId,
+    anggota.namaLengkap,
+    session?.user?.id,
+    session?.user?.name || undefined,
+    `Created login account for anggota: ${anggota.namaLengkap} (${loginEmail})`
+  );
 
   revalidatePath("/dashboard/anggota");
   redirect(`/dashboard/anggota/akun/${anggotaId}`);

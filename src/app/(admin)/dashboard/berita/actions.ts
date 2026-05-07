@@ -5,6 +5,8 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { deleteFileFromStorage } from "@/lib/supabase";
+import { auditCreate, auditDelete, auditUpdate } from "@/lib/audit";
+import { auth } from "@/auth";
 
 const beritaSchema = z.object({
   judul: z.string().min(5, "Judul berita minimal 5 karakter"),
@@ -15,6 +17,7 @@ const beritaSchema = z.object({
 });
 
 export async function createBerita(formData: FormData) {
+  const session = await auth();
   const parsed = beritaSchema.safeParse({
     judul: formData.get("judul"),
     kategori: formData.get("kategori"),
@@ -36,7 +39,7 @@ export async function createBerita(formData: FormData) {
   const slug = judul.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, "") + "-" + Date.now();
 
   try {
-    await prisma.berita.create({
+    const berita = await prisma.berita.create({
       data: {
         judul,
         slug,
@@ -49,6 +52,16 @@ export async function createBerita(formData: FormData) {
         publishedAt: status === "PUBLISHED" ? new Date() : null,
       },
     });
+
+    // Audit log
+    await auditCreate(
+      "berita",
+      berita.id,
+      judul,
+      session?.user?.id,
+      session?.user?.name || undefined,
+      `Created berita: ${judul} (${status})`
+    );
   } catch (error: any) {
     throw new Error("Gagal menyimpan data berita");
   }
@@ -58,20 +71,37 @@ export async function createBerita(formData: FormData) {
 }
 
 export async function deleteBerita(id: string) {
+  const session = await auth();
+  
   try {
     // Ambil data berita untuk hapus thumbnail dari Supabase
     const berita = await prisma.berita.findUnique({
       where: { id },
-      select: { thumbnail: true },
+      select: { thumbnail: true, judul: true },
     });
 
+    if (!berita) {
+      throw new Error("Berita tidak ditemukan");
+    }
+
     // Hapus thumbnail dari Supabase Storage jika ada
-    if (berita?.thumbnail) {
+    if (berita.thumbnail) {
       await deleteFileFromStorage(berita.thumbnail);
     }
 
     // Hapus data berita dari database
     await prisma.berita.delete({ where: { id } });
+
+    // Audit log
+    await auditDelete(
+      "berita",
+      id,
+      berita.judul,
+      session?.user?.id,
+      session?.user?.name || undefined,
+      `Deleted berita: ${berita.judul}`
+    );
+
     revalidatePath("/dashboard/berita");
     revalidatePath("/");
   } catch (error) {
@@ -81,6 +111,7 @@ export async function deleteBerita(id: string) {
 }
 
 export async function updateBerita(id: string, formData: FormData) {
+  const session = await auth();
   const parsed = beritaSchema.safeParse({
     judul: formData.get("judul"),
     kategori: formData.get("kategori"),
@@ -100,6 +131,16 @@ export async function updateBerita(id: string, formData: FormData) {
       where: { id },
       data: { judul, kategori: kategori || null, status, ringkasan: ringkasan || null, isi },
     });
+
+    // Audit log
+    await auditUpdate(
+      "berita",
+      id,
+      judul,
+      session?.user?.id,
+      session?.user?.name || undefined,
+      `Updated berita: ${judul} (${status})`
+    );
   } catch (error) {
     throw new Error("Gagal mengupdate berita");
   }

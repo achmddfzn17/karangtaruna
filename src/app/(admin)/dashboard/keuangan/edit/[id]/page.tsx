@@ -1,9 +1,10 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { ArrowLeft, Save, FileImage } from "lucide-react";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { updateTransaksi } from "../../actions";
 import ThumbnailUpload from "@/components/admin/ThumbnailUpload";
+import { auth } from "@/auth";
 
 export const metadata = { title: "Edit Transaksi" };
 
@@ -12,6 +13,15 @@ export default async function EditTransaksiPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  // Auth check
+  const session = await auth();
+  if (!session?.user) redirect("/login");
+
+  const userRole = (session.user as any).role;
+  if (userRole !== "ADMIN" && userRole !== "SUPER_ADMIN") {
+    redirect("/login");
+  }
+
   const { id } = await params;
 
   const [transaksi, kategoriList] = await Promise.all([

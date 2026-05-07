@@ -109,7 +109,7 @@ enum StatusAnggota {
 model Anggota {
   id            String        @id @default(cuid())
   userId        String?       @unique
-  user          User?         @relation(fields: [userId], references: [id])
+  user          User?         @relation(fields: [userId], references: [id], onDelete: Cascade)
   namaLengkap   String
   nik           String        @unique
   tempatLahir   String?
@@ -117,7 +117,7 @@ model Anggota {
   jenisKelamin  JenisKelamin
   alamat        String?       @db.Text
   noHp          String?
-  email         String?
+  email         String?       @unique
   foto          String?
   pekerjaan     String?
   pendidikan    String?
@@ -262,7 +262,7 @@ model GaleriItem {
   url        String
   type       GaleriType @default(FOTO)
   kegiatanId String?
-  kegiatan   Kegiatan?  @relation(fields: [kegiatanId], references: [id])
+  kegiatan   Kegiatan?  @relation(fields: [kegiatanId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -296,7 +296,7 @@ model TransaksiKeuangan {
   jumlah     Float
   jenis      JenisTransaksi
   kategoriId String?
-  kategori   KategoriTransaksi? @relation(fields: [kategoriId], references: [id])
+  kategori   KategoriTransaksi? @relation(fields: [kategoriId], references: [id], onDelete: SetNull)
   bukti      String?
 
   createdAt DateTime @default(now())
@@ -310,7 +310,7 @@ model TransaksiKeuangan {
 model SusResponse {
   id        String  @id @default(cuid())
   userId    String?
-  user      User?   @relation(fields: [userId], references: [id])
+  user      User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
   responden String?
   q1        Int
   q2        Int
@@ -339,7 +339,7 @@ model Notification {
   type    String  @default("info")
   isRead  Boolean @default(false)
   userId  String?
-  user    User?   @relation(fields: [userId], references: [id])
+  user    User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
 
@@ -358,7 +358,7 @@ enum StatusAspirasi {
 model Aspirasi {
   id        String         @id @default(cuid())
   userId    String?
-  user      User?          @relation(fields: [userId], references: [id])
+  user      User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
   nama      String?
   judul     String
   pesan     String         @db.Text

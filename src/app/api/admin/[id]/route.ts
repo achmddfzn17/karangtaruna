@@ -24,14 +24,23 @@ export async function DELETE(
   }
 
   try {
-    const user = await prisma.user.findUnique({ where: { id } });
+    const user = await prisma.user.findUnique({ 
+      where: { id },
+      include: { admin: true, anggota: true }
+    });
+    
     if (!user || (user.role !== "ADMIN" && user.role !== "SUPER_ADMIN")) {
       return NextResponse.json({ error: "Admin tidak ditemukan" }, { status: 404 });
     }
 
+    // Note: Admin biasanya tidak punya foto profil
+    // Tapi jika ada anggota yang di-promote jadi admin, foto akan tetap ada
+    // Cascade delete akan handle relasi admin dan anggota
+
     await prisma.user.delete({ where: { id } });
     return NextResponse.json({ success: true });
-  } catch {
+  } catch (error) {
+    console.error("[DELETE_ADMIN_ERROR]", error);
     return NextResponse.json({ error: "Gagal menghapus admin" }, { status: 500 });
   }
 }

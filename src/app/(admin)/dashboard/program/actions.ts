@@ -3,22 +3,41 @@
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { deleteFileFromStorage } from "@/lib/supabase";
+import { auditDelete, auditCreate } from "@/lib/audit";
+import { auth } from "@/auth";
 
 export async function deleteProgram(id: string) {
+  const session = await auth();
+  
   try {
     // Ambil data program untuk hapus thumbnail dari Supabase
     const program = await prisma.program.findUnique({
       where: { id },
-      select: { thumbnail: true },
+      select: { thumbnail: true, nama: true },
     });
 
+    if (!program) {
+      throw new Error("Program tidak ditemukan");
+    }
+
     // Hapus thumbnail dari Supabase Storage jika ada
-    if (program?.thumbnail) {
+    if (program.thumbnail) {
       await deleteFileFromStorage(program.thumbnail);
     }
 
     // Hapus data program dari database
     await prisma.program.delete({ where: { id } });
+
+    // Audit log
+    await auditDelete(
+      "program",
+      id,
+      program.nama,
+      session?.user?.id,
+      session?.user?.name || undefined,
+      `Deleted program: ${program.nama}`
+    );
+
     revalidatePath("/dashboard/program");
     revalidatePath("/");
   } catch (error) {
@@ -40,6 +59,7 @@ const programSchema = z.object({
 });
 
 export async function createProgram(formData: FormData) {
+  const session = await auth();
   const parsed = programSchema.safeParse({
     nama: formData.get("nama"),
     deskripsi: formData.get("deskripsi"),
@@ -56,7 +76,7 @@ export async function createProgram(formData: FormData) {
   const { nama, deskripsi, icon, thumbnail, status, urutan } = parsed.data;
 
   try {
-    await prisma.program.create({
+    const program = await prisma.program.create({
       data: {
         nama,
         deskripsi: deskripsi || null,
@@ -66,6 +86,16 @@ export async function createProgram(formData: FormData) {
         urutan,
       },
     });
+
+    // Audit log
+    await auditCreate(
+      "program",
+      program.id,
+      nama,
+      session?.user?.id,
+      session?.user?.name || undefined,
+      `Created program: ${nama}`
+    );
   } catch (error: any) {
     throw new Error("Gagal menyimpan data program");
   }

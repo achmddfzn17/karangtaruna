@@ -32,20 +32,36 @@ export function getPublicUrl(path: string): string {
  * Contoh: https://xxx.supabase.co/storage/v1/object/public/galeri/foto.jpg -> foto.jpg
  */
 export function extractPathFromUrl(url: string): string | null {
-  if (!url) return null;
+  if (!url || typeof url !== "string") return null;
+  
+  // Security: Validate URL format
+  if (!url.startsWith("http://") && !url.startsWith("https://")) {
+    console.warn("[EXTRACT_PATH] Invalid URL protocol:", url);
+    return null;
+  }
   
   try {
-    // Pattern: /storage/v1/object/public/{bucket}/{path}
-    const match = url.match(/\/storage\/v1\/object\/public\/[^/]+\/(.+)$/);
-    if (match && match[1]) {
-      return decodeURIComponent(match[1]);
+    const urlObj = new URL(url);
+    
+    // Security: Validate domain matches Supabase URL
+    const expectedDomain = new URL(supabaseUrl).hostname;
+    if (urlObj.hostname !== expectedDomain) {
+      console.warn("[EXTRACT_PATH] Domain mismatch:", urlObj.hostname, "expected:", expectedDomain);
+      return null;
     }
     
-    // Fallback: ambil setelah bucket name
-    const bucketPattern = new RegExp(`/${STORAGE_BUCKET}/(.+)$`);
-    const bucketMatch = url.match(bucketPattern);
-    if (bucketMatch && bucketMatch[1]) {
-      return decodeURIComponent(bucketMatch[1]);
+    // Pattern: /storage/v1/object/public/{bucket}/{path}
+    const match = urlObj.pathname.match(/^\/storage\/v1\/object\/public\/([^/]+)\/(.+)$/);
+    if (match && match[1] === STORAGE_BUCKET && match[2]) {
+      const path = decodeURIComponent(match[2]);
+      
+      // Security: Prevent path traversal
+      if (path.includes("..") || path.startsWith("/")) {
+        console.warn("[EXTRACT_PATH] Path traversal attempt detected:", path);
+        return null;
+      }
+      
+      return path;
     }
     
     return null;

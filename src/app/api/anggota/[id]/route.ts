@@ -11,6 +11,21 @@ export async function GET(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const userRole = (session.user as any).role;
+  const userId = (session.user as any).id;
+  
+  // Only ADMIN/SUPER_ADMIN can fetch any anggota
+  // ANGGOTA can only fetch their own data
+  if (userRole === "ANGGOTA") {
+    const userAnggota = await prisma.anggota.findUnique({ where: { userId } });
+    const { id } = await params;
+    if (!userAnggota || userAnggota.id !== id) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+  } else if (userRole !== "ADMIN" && userRole !== "SUPER_ADMIN") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
   const { id } = await params;
 
   const anggota = await prisma.anggota.findUnique({ where: { id } });
