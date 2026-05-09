@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { motion } from "framer-motion";
 import { Shield } from "lucide-react";
 
@@ -88,9 +89,11 @@ export default function HeroSection({ statsData }: HeroSectionProps) {
             transition={{ duration: 0.8, delay: 0.2 }}
             className="flex items-center justify-center relative"
           >
-            <img 
+            <Image 
               src="/hero-logo.png" 
               alt="Karang Taruna Logo" 
+              width={500}
+              height={500}
               className="w-full max-w-[500px] h-auto object-contain"
               onError={(e) => {
                 // Fallback UI if hero-logo.png doesn't exist

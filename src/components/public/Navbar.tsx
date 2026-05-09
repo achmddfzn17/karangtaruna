@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
@@ -39,10 +39,14 @@ const navLinks: NavLink[] = [
 export default function Navbar({ session }: { session: Session | null }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = usePathname();
+  const prevPathnameRef = useRef<string | undefined>(undefined);
 
   // Close mobile menu on route change
   useEffect(() => {
-    setMobileOpen(false);
+    if (prevPathnameRef.current !== pathname) {
+      setMobileOpen(false);
+      prevPathnameRef.current = pathname;
+    }
   }, [pathname]);
 
   const isActive = (href: string) => {
