@@ -219,7 +219,7 @@ export default function TentangPage() {
                   Hari ini, dengan lebih dari 247 anggota aktif dan puluhan
                   program yang telah dijalankan, Karang Taruna Generasi Emas
                   berdiri kokoh sebagai salah satu organisasi kepemudaan terbaik
-                  dan paling berpengaruh di wilayah Jawa Barat.
+                  dan paling berpengaruh di wilayah Jakarta.
                 </p>
               </div>
             </div>

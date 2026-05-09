@@ -60,8 +60,8 @@ export default function AboutSection({ statsData }: AboutSectionProps) {
 
             <p className="text-slate-600 leading-relaxed text-[15px] md:text-[16px] mt-2">
               Karang Taruna Generasi Emas adalah organisasi kepemudaan yang
-              berdiri sejak tahun 2020, berkedudukan di Kota Bandung, Jawa
-              Barat. Kami hadir dengan komitmen penuh untuk memberdayakan
+              berdiri sejak tahun 2020, berkedudukan di Kota Jakarta, Jakarta
+              Pusat. Kami hadir dengan komitmen penuh untuk memberdayakan
               generasi muda agar menjadi pribadi yang mandiri, inovatif, dan
               berdaya saing tinggi dalam menghadapi tantangan zaman.
             </p>
@@ -142,7 +142,7 @@ export default function AboutSection({ statsData }: AboutSectionProps) {
               {/* Footer info */}
               <div className="mt-5 pt-5 border-t border-slate-100">
                 <p className="text-[11px] font-medium text-slate-500 text-center leading-relaxed">
-                  Terdaftar resmi di Dinas Sosial Kota Bandung
+                  Terdaftar resmi di Dinas Sosial Kota Jakarta
                 </p>
               </div>
             </div>
