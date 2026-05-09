@@ -2,9 +2,11 @@ import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import Link from "next/link";
-import { ArrowLeft, UserPlus, Trash2, Users, CheckCircle2, XCircle } from "lucide-react";
+import { ArrowLeft, UserPlus, Trash2, Users, CheckCircle2, XCircle, Award } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import ExportAbsensiButton from "@/components/admin/ExportAbsensiButton";
+import { generateCertificatePDFDataUrl } from "@/lib/certificate-pdf";
+import { sendCertificateEmail } from "@/lib/email";
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -23,7 +25,10 @@ export default async function PesertaKegiatanPage({
     where: { id },
     include: {
       peserta: {
-        include: { anggota: true },
+        include: {
+          anggota: true,
+          sertifikat: { select: { id: true, nomorSertifikat: true } },
+        },
         orderBy: { createdAt: "asc" },
       },
     },
@@ -71,7 +76,7 @@ export default async function PesertaKegiatanPage({
     }
   }
 
-  // Server Action: Toggle kehadiran
+  // Server Action: Toggle kehadiran + auto-generate sertifikat with PDF & Email
   async function toggleHadir(formData: FormData) {
     "use server";
     const pesertaId = formData.get("pesertaId") as string;
@@ -79,10 +84,66 @@ export default async function PesertaKegiatanPage({
     if (!pesertaId) return;
 
     try {
-      await prisma.anggotaKegiatan.update({
+      const updated = await prisma.anggotaKegiatan.update({
         where: { id: pesertaId },
         data: { hadir: !currentHadir },
+        include: { anggota: true, kegiatan: true },
       });
+
+      // Auto-generate sertifikat when marking as hadir
+      if (!currentHadir) {
+        const existing = await prisma.sertifikat.findUnique({
+          where: { anggotaKegiatanId: pesertaId },
+        });
+        if (!existing) {
+          const year = new Date().getFullYear();
+          const count = await prisma.sertifikat.count();
+          const nomorSertifikat = `CERT-${year}-${String(count + 1).padStart(5, "0")}`;
+          const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(nomorSertifikat)}`;
+          
+          // Generate PDF
+          let pdfUrl: string | null = null;
+          try {
+            pdfUrl = await generateCertificatePDFDataUrl({
+              nomorSertifikat,
+              namaAnggota: updated.anggota.namaLengkap,
+              namaKegiatan: updated.kegiatan.nama,
+              tanggalKegiatan: updated.kegiatan.tanggalMulai,
+              qrCodeUrl,
+            });
+          } catch (error) {
+            console.error("[PDF_GENERATION_ERROR]", error);
+          }
+          
+          await prisma.sertifikat.create({
+            data: {
+              anggotaKegiatanId: pesertaId,
+              nomorSertifikat,
+              namaAnggota: updated.anggota.namaLengkap,
+              namaKegiatan: updated.kegiatan.nama,
+              tanggalKegiatan: updated.kegiatan.tanggalMulai,
+              qrCode: qrCodeUrl,
+              pdfUrl,
+            },
+          });
+          
+          // Send email notification (async)
+          const anggotaEmail = updated.anggota.email || updated.anggota.noHp;
+          if (anggotaEmail && anggotaEmail.includes("@")) {
+            sendCertificateEmail(
+              anggotaEmail,
+              updated.anggota.namaLengkap,
+              nomorSertifikat,
+              updated.kegiatan.nama,
+              qrCodeUrl,
+              pdfUrl || undefined
+            ).catch((error) => {
+              console.error("[CERTIFICATE_EMAIL_ERROR]", error);
+            });
+          }
+        }
+      }
+
       revalidatePath(`/dashboard/kegiatan/peserta/${id}`);
     } catch {
       throw new Error("Gagal mengupdate kehadiran");
@@ -90,6 +151,63 @@ export default async function PesertaKegiatanPage({
   }
 
   const totalHadir = kegiatan.peserta.filter((p) => p.hadir).length;
+  const totalSertifikat = kegiatan.peserta.filter((p) => p.sertifikat).length;
+
+  // Server Action: Generate sertifikat for all hadir peserta with PDF & Email
+  async function generateAllSertifikat() {
+    "use server";
+    const pesertaHadir = kegiatan!.peserta.filter((p) => p.hadir && !p.sertifikat);
+    
+    for (const p of pesertaHadir) {
+      const year = new Date().getFullYear();
+      const count = await prisma.sertifikat.count();
+      const nomorSertifikat = `CERT-${year}-${String(count + 1).padStart(5, "0")}`;
+      const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(nomorSertifikat)}`;
+      
+      // Generate PDF
+      let pdfUrl: string | null = null;
+      try {
+        pdfUrl = await generateCertificatePDFDataUrl({
+          nomorSertifikat,
+          namaAnggota: p.anggota.namaLengkap,
+          namaKegiatan: kegiatan!.nama,
+          tanggalKegiatan: kegiatan!.tanggalMulai,
+          qrCodeUrl,
+        });
+      } catch (error) {
+        console.error("[PDF_GENERATION_ERROR]", error);
+      }
+      
+      await prisma.sertifikat.create({
+        data: {
+          anggotaKegiatanId: p.id,
+          nomorSertifikat,
+          namaAnggota: p.anggota.namaLengkap,
+          namaKegiatan: kegiatan!.nama,
+          tanggalKegiatan: kegiatan!.tanggalMulai,
+          qrCode: qrCodeUrl,
+          pdfUrl,
+        },
+      });
+      
+      // Send email notification (async)
+      const anggotaEmail = p.anggota.email || p.anggota.noHp;
+      if (anggotaEmail && anggotaEmail.includes("@")) {
+        sendCertificateEmail(
+          anggotaEmail,
+          p.anggota.namaLengkap,
+          nomorSertifikat,
+          kegiatan!.nama,
+          qrCodeUrl,
+          pdfUrl || undefined
+        ).catch((error) => {
+          console.error("[CERTIFICATE_EMAIL_ERROR]", error);
+        });
+      }
+    }
+    
+    revalidatePath(`/dashboard/kegiatan/peserta/${id}`);
+  }
 
   return (
     <div className="space-y-6 max-w-4xl">
@@ -108,12 +226,12 @@ export default async function PesertaKegiatanPage({
         <ExportAbsensiButton
           namaKegiatan={kegiatan.nama}
           tanggal={formatDate(kegiatan.tanggalMulai)}
-          peserta={kegiatan.peserta as any}
+          peserta={kegiatan.peserta as unknown as Parameters<typeof ExportAbsensiButton>[0]["peserta"]}
         />
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-4 gap-4">
         <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm text-center">
           <p className="text-xs text-slate-500 font-semibold mb-1">Total Peserta</p>
           <p className="text-2xl font-extrabold text-slate-900">{kegiatan.peserta.length}</p>
@@ -126,7 +244,46 @@ export default async function PesertaKegiatanPage({
           <p className="text-xs text-slate-500 font-semibold mb-1">Belum Hadir</p>
           <p className="text-2xl font-extrabold text-slate-600">{kegiatan.peserta.length - totalHadir}</p>
         </div>
+        <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm text-center">
+          <p className="text-xs text-blue-600 font-semibold mb-1">Sertifikat</p>
+          <p className="text-2xl font-extrabold text-blue-600">{totalSertifikat}</p>
+        </div>
       </div>
+
+      {/* Generate Sertifikat Banner */}
+      {totalHadir > totalSertifikat && (
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <Award className="w-5 h-5 text-amber-600 shrink-0" />
+            <div>
+              <p className="text-sm font-bold text-amber-900">
+                {totalHadir - totalSertifikat} peserta hadir belum memiliki sertifikat
+              </p>
+              <p className="text-xs text-amber-700 mt-0.5">
+                Generate sertifikat otomatis untuk semua peserta yang hadir
+              </p>
+            </div>
+          </div>
+          <form action={generateAllSertifikat}>
+            <button
+              type="submit"
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-amber-600 text-white hover:bg-amber-700 transition-colors text-sm font-bold shrink-0"
+            >
+              <Award className="w-4 h-4" />
+              Generate Semua
+            </button>
+          </form>
+        </div>
+      )}
+
+      {totalSertifikat > 0 && totalHadir === totalSertifikat && (
+        <div className="bg-green-50 border border-green-200 rounded-xl p-4 flex items-center gap-3">
+          <CheckCircle2 className="w-5 h-5 text-green-600 shrink-0" />
+          <p className="text-sm font-bold text-green-800">
+            Semua peserta yang hadir sudah memiliki sertifikat ({totalSertifikat} sertifikat)
+          </p>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Form Tambah Peserta */}
@@ -204,6 +361,18 @@ export default async function PesertaKegiatanPage({
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
+                      {/* Sertifikat badge */}
+                      {p.sertifikat ? (
+                        <span className="flex items-center gap-1 px-2 py-1 rounded-lg bg-blue-50 text-blue-600 text-[10px] font-bold" title={p.sertifikat.nomorSertifikat}>
+                          <Award className="w-3 h-3" />
+                          Sertifikat
+                        </span>
+                      ) : p.hadir ? (
+                        <span className="flex items-center gap-1 px-2 py-1 rounded-lg bg-amber-50 text-amber-600 text-[10px] font-bold">
+                          <Award className="w-3 h-3" />
+                          Belum
+                        </span>
+                      ) : null}
                       {/* Toggle Kehadiran */}
                       <form action={toggleHadir}>
                         <input type="hidden" name="pesertaId" value={p.id} />

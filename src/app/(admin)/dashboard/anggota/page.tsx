@@ -1,37 +1,41 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
+import Image from "next/image";
 import { formatDate } from "@/lib/utils";
-import { Users, Plus, Phone, Mail, Pencil, Search, ShieldCheck } from "lucide-react";
+import { Users, Plus, Phone, Mail, Pencil, Search } from "lucide-react";
 import { ExportAnggotaButton } from "@/components/admin/ExportAnggotaButton";
 import DeleteAnggotaButton from "@/components/admin/DeleteAnggotaButton";
 import Pagination from "@/components/admin/Pagination";
+import { Prisma, StatusAnggota } from "@prisma/client";
 
 export const metadata = { title: "Data Anggota" };
 
 const PER_PAGE = 15;
 
-export default async function DataAnggotaPage({
-  searchParams,
-}: {
+interface PageProps {
   searchParams: Promise<{ q?: string; status?: string; page?: string }>;
-}) {
+}
+
+export default async function DataAnggotaPage({ searchParams }: PageProps) {
   const params = await searchParams;
   const q = params.q?.trim() ?? "";
-  const statusFilter = params.status ?? "SEMUA";
+  const statusFilter = (params.status as StatusAnggota | "SEMUA") ?? "SEMUA";
   const page = Math.max(1, parseInt(params.page ?? "1") || 1);
 
-  const where: any = {
-    ...(q
-      ? {
-          OR: [
-            { namaLengkap: { contains: q, mode: "insensitive" } },
-            { nik: { contains: q, mode: "insensitive" } },
-            { noHp: { contains: q, mode: "insensitive" } },
-            { email: { contains: q, mode: "insensitive" } },
-          ],
-        }
-      : {}),
-    ...(statusFilter !== "SEMUA" ? { status: statusFilter } : {}),
+  const where: Prisma.AnggotaWhereInput = {
+    AND: [
+      q
+        ? {
+            OR: [
+              { namaLengkap: { contains: q, mode: "insensitive" } },
+              { nik: { contains: q, mode: "insensitive" } },
+              { noHp: { contains: q, mode: "insensitive" } },
+              { email: { contains: q, mode: "insensitive" } },
+            ],
+          }
+        : {},
+      statusFilter !== "SEMUA" ? { status: statusFilter } : {},
+    ],
   };
 
   const [anggotaList, totalFiltered, totalAktif, totalNonAktif, totalAlumni] = await Promise.all([
@@ -52,7 +56,7 @@ export default async function DataAnggotaPage({
   const totalPages = Math.ceil(totalFiltered / PER_PAGE);
   const baseUrl = `/dashboard/anggota?status=${statusFilter}${q ? `&q=${encodeURIComponent(q)}` : ""}`;
 
-  const statusColor: Record<string, string> = {
+  const statusColor: Record<StatusAnggota, string> = {
     AKTIF: "bg-green-100 text-green-700",
     NON_AKTIF: "bg-red-100 text-red-700",
     ALUMNI: "bg-slate-200 text-slate-700",
@@ -175,7 +179,6 @@ export default async function DataAnggotaPage({
                 <th className="text-left text-[11px] text-slate-500 font-bold uppercase tracking-wider py-3 px-4">Jenis Kelamin</th>
                 <th className="text-left text-[11px] text-slate-500 font-bold uppercase tracking-wider py-3 px-4">Kontak</th>
                 <th className="text-left text-[11px] text-slate-500 font-bold uppercase tracking-wider py-3 px-4">Status</th>
-                <th className="text-left text-[11px] text-slate-500 font-bold uppercase tracking-wider py-3 px-4">Akun</th>
                 <th className="text-left text-[11px] text-slate-500 font-bold uppercase tracking-wider py-3 px-4">Tanggal Gabung</th>
                 <th className="text-right text-[11px] text-slate-500 font-bold uppercase tracking-wider py-3 px-4">Aksi</th>
               </tr>
@@ -193,16 +196,20 @@ export default async function DataAnggotaPage({
                   </td>
                 </tr>
               ) : (
-                anggotaList.map((a: any) => (
+                anggotaList.map((a) => (
                   <tr key={a.id} className="border-b border-slate-100 last:border-0 hover:bg-blue-50/40 transition-colors">
                     <td className="py-3.5 px-4">
                       <div className="flex items-center gap-3">
                         {a.foto ? (
-                          <img
-                            src={a.foto}
-                            alt={a.namaLengkap}
-                            className="w-9 h-9 rounded-full object-cover shrink-0 border border-slate-200"
-                          />
+                          <div className="relative w-9 h-9">
+                            <Image
+                              src={a.foto}
+                              alt={a.namaLengkap}
+                              fill
+                              className="rounded-full object-cover border border-slate-200"
+                              sizes="36px"
+                            />
+                          </div>
                         ) : (
                           <div className="w-9 h-9 bg-blue-100 text-blue-700 rounded-full flex items-center justify-center font-bold text-sm shrink-0">
                             {a.namaLengkap.charAt(0)}

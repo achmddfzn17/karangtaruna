@@ -6,10 +6,11 @@ import MemberHeader from "./MemberHeader";
 
 interface MemberLayoutClientProps {
   user: { name: string; image?: string | null };
+  unreadCount: number;
   children: React.ReactNode;
 }
 
-export default function MemberLayoutClient({ user, children }: MemberLayoutClientProps) {
+export default function MemberLayoutClient({ user, unreadCount, children }: MemberLayoutClientProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
@@ -17,10 +18,12 @@ export default function MemberLayoutClient({ user, children }: MemberLayoutClien
       <MemberSidebar
         mobileOpen={mobileOpen}
         onMobileClose={() => setMobileOpen(false)}
+        unreadCount={unreadCount}
       />
       <div className="flex-1 flex flex-col min-w-0">
         <MemberHeader
           user={user}
+          unreadCount={unreadCount}
           onMenuClick={() => setMobileOpen(true)}
         />
         <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">

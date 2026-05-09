@@ -5,50 +5,55 @@ import Link from "next/link";
 import DeleteTransaksiButton from "@/components/admin/DeleteTransaksiButton";
 import ExportKeuanganButton from "@/components/admin/ExportKeuanganButton";
 import Pagination from "@/components/admin/Pagination";
+import { Prisma, JenisTransaksi } from "@prisma/client";
 
 export const metadata = { title: "Keuangan" };
 
 const PER_PAGE = 20;
 
-export default async function KeuanganPage({
-  searchParams,
-}: {
+interface PageProps {
   searchParams: Promise<{ jenis?: string; bulan?: string; tahun?: string; page?: string }>;
-}) {
+}
+
+export default async function KeuanganPage({ searchParams }: PageProps) {
   const params = await searchParams;
-  const jenisFilter = params.jenis ?? "SEMUA";
+  const jenisFilter = (params.jenis as JenisTransaksi | "SEMUA") ?? "SEMUA";
   const bulanFilter = params.bulan ? parseInt(params.bulan) : null;
   const tahunFilter = params.tahun ? parseInt(params.tahun) : null;
   const page = Math.max(1, parseInt(params.page ?? "1") || 1);
 
-  const where: any = {
-    ...(jenisFilter !== "SEMUA" ? { jenis: jenisFilter } : {}),
-    ...(bulanFilter && tahunFilter
-      ? {
-          tanggal: {
-            gte: new Date(tahunFilter, bulanFilter - 1, 1),
-            lt: new Date(tahunFilter, bulanFilter, 1),
-          },
-        }
-      : tahunFilter
-      ? {
-          tanggal: {
-            gte: new Date(tahunFilter, 0, 1),
-            lt: new Date(tahunFilter + 1, 0, 1),
-          },
-        }
-      : {}),
+  const where: Prisma.TransaksiKeuanganWhereInput = {
+    AND: [
+      jenisFilter !== "SEMUA" ? { jenis: jenisFilter } : {},
+      bulanFilter && tahunFilter
+        ? {
+            tanggal: {
+              gte: new Date(tahunFilter, bulanFilter - 1, 1),
+              lt: new Date(tahunFilter, bulanFilter, 1),
+            },
+          }
+        : tahunFilter
+        ? {
+            tanggal: {
+              gte: new Date(tahunFilter, 0, 1),
+              lt: new Date(tahunFilter + 1, 0, 1),
+            },
+          }
+        : {},
+    ],
   };
 
-  const transaksiList = await prisma.transaksiKeuangan.findMany({
-    where,
-    orderBy: { tanggal: "desc" },
-    skip: (page - 1) * PER_PAGE,
-    take: PER_PAGE,
-    include: { kategori: true },
-  });
+  const [transaksiList, totalFiltered] = await Promise.all([
+    prisma.transaksiKeuangan.findMany({
+      where,
+      orderBy: { tanggal: "desc" },
+      skip: (page - 1) * PER_PAGE,
+      take: PER_PAGE,
+      include: { kategori: true },
+    }),
+    prisma.transaksiKeuangan.count({ where }),
+  ]);
 
-  const totalFiltered = await prisma.transaksiKeuangan.count({ where });
   const totalPages = Math.ceil(totalFiltered / PER_PAGE);
   const baseUrl = `/dashboard/keuangan?jenis=${jenisFilter}${bulanFilter ? `&bulan=${bulanFilter}` : ""}${tahunFilter ? `&tahun=${tahunFilter}` : ""}`;
 
@@ -76,7 +81,7 @@ export default async function KeuanganPage({
     .filter((t) => t.jenis === "KELUAR")
     .reduce((sum, t) => sum + t.jumlah, 0);
 
-  const isFiltered = jenisFilter !== "SEMUA" || bulanFilter || tahunFilter;
+  const isFiltered = jenisFilter !== "SEMUA" || !!bulanFilter || !!tahunFilter;
 
   // Tahun tersedia untuk filter
   const tahunList = Array.from(
@@ -102,7 +107,7 @@ export default async function KeuanganPage({
         </div>
         <div className="flex items-center gap-3 flex-wrap">
           <ExportKeuanganButton
-            transaksi={transaksiList as any}
+            transaksi={transaksiList}
             totalPemasukan={filteredPemasukan}
             totalPengeluaran={filteredPengeluaran}
             saldo={filteredPemasukan - filteredPengeluaran}
@@ -133,30 +138,30 @@ export default async function KeuanganPage({
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white rounded-2xl border border-slate-200 p-6 flex flex-col justify-between h-32 shadow-sm">
+        <div className="bg-white rounded-2xl border border-slate-200 p-6 flex flex-col justify-between h-32 shadow-sm transition-shadow hover:shadow-md">
           <p className="text-sm font-semibold text-slate-600">Saldo Kas Saat Ini</p>
           <p className={`text-3xl font-extrabold ${saldo >= 0 ? "text-blue-600" : "text-red-600"}`}>
             {formatCurrency(saldo)}
           </p>
         </div>
-        <div className="bg-emerald-50 rounded-2xl border border-emerald-200 p-6 flex flex-col justify-between h-32">
+        <div className="bg-emerald-50 rounded-2xl border border-emerald-200 p-6 flex flex-col justify-between h-32 transition-shadow hover:shadow-md">
           <p className="text-sm font-semibold text-emerald-800">Total Pemasukan</p>
           <p className="text-3xl font-extrabold text-emerald-600">{formatCurrency(totalPemasukan)}</p>
         </div>
-        <div className="bg-red-50 rounded-2xl border border-red-200 p-6 flex flex-col justify-between h-32">
+        <div className="bg-red-50 rounded-2xl border border-red-200 p-6 flex flex-col justify-between h-32 transition-shadow hover:shadow-md">
           <p className="text-sm font-semibold text-red-800">Total Pengeluaran</p>
           <p className="text-3xl font-extrabold text-red-600">{formatCurrency(totalPengeluaran)}</p>
         </div>
       </div>
 
       {/* Filter */}
-      <form method="GET" className="flex flex-wrap gap-3 items-end">
+      <form method="GET" className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 flex flex-wrap gap-3 items-end">
         <div className="space-y-1">
           <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Jenis</label>
           <select
             name="jenis"
             defaultValue={jenisFilter}
-            className="px-3 py-2.5 rounded-xl border border-slate-200 bg-white text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 transition-all"
+            className="px-3 py-2.5 rounded-xl border border-slate-300 bg-white text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 transition-all"
           >
             <option value="SEMUA">Semua Jenis</option>
             <option value="MASUK">Pemasukan</option>
@@ -168,7 +173,7 @@ export default async function KeuanganPage({
           <select
             name="bulan"
             defaultValue={bulanFilter ?? ""}
-            className="px-3 py-2.5 rounded-xl border border-slate-200 bg-white text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 transition-all"
+            className="px-3 py-2.5 rounded-xl border border-slate-300 bg-white text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 transition-all"
           >
             <option value="">Semua Bulan</option>
             {bulanList.map((b) => (
@@ -181,7 +186,7 @@ export default async function KeuanganPage({
           <select
             name="tahun"
             defaultValue={tahunFilter ?? ""}
-            className="px-3 py-2.5 rounded-xl border border-slate-200 bg-white text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 transition-all"
+            className="px-3 py-2.5 rounded-xl border border-slate-300 bg-white text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 transition-all"
           >
             <option value="">Semua Tahun</option>
             {tahunList.map((t) => (
@@ -209,7 +214,7 @@ export default async function KeuanganPage({
       {isFiltered && (
         <div className="flex items-center gap-4 text-sm text-slate-500 bg-blue-50 border border-blue-100 rounded-xl px-4 py-3">
           <span>
-            Menampilkan <strong className="text-blue-700">{transaksiList.length}</strong> transaksi
+            Menampilkan <strong className="text-blue-700">{totalFiltered}</strong> transaksi
           </span>
           <span>·</span>
           <span>
@@ -244,8 +249,8 @@ export default async function KeuanganPage({
                   </td>
                 </tr>
               ) : (
-                transaksiList.map((t: any) => (
-                  <tr key={t.id} className="border-b border-slate-100 last:border-0 hover:bg-blue-50/30 transition-colors">
+                transaksiList.map((t) => (
+                  <tr key={t.id} className="border-b border-slate-100 last:border-0 hover:bg-blue-50/40 transition-colors">
                     <td className="py-3.5 px-4 text-sm text-slate-600">{formatDate(t.tanggal)}</td>
                     <td className="py-3.5 px-4">
                       <p className="text-sm font-semibold text-slate-800">{t.keterangan}</p>

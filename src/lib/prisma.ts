@@ -2,40 +2,51 @@ import { PrismaClient } from "@prisma/client";
 import { Pool } from "pg";
 import { PrismaPg } from "@prisma/adapter-pg";
 
+/**
+ * Prisma Client singleton pattern
+ * Prevents multiple instances in development mode
+ * Reference: https://www.prisma.io/docs/orm/more/help-and-troubleshooting/help-articles/nextjs-prisma-client-monorepo
+ */
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
 };
 
-function createPrismaClient() {
+function createPrismaClient(): PrismaClient {
   const connectionString = process.env.DATABASE_URL;
-  
-  // During build time on Vercel, DATABASE_URL might not be available
-  // We need to provide a dummy connection string for build to succeed
+
   if (!connectionString) {
-    console.warn("⚠️  DATABASE_URL not set, using placeholder for build");
-    
-    // Use a dummy connection string for build time
-    // This won't actually connect to any database during build
-    const dummyConnectionString = "postgresql://user:pass@localhost:5432/db";
-    const pool = new Pool({ connectionString: dummyConnectionString });
-    const adapter = new PrismaPg(pool);
-    
-    return new PrismaClient({
-      adapter,
-      log: [],
-    });
+    throw new Error(
+      "DATABASE_URL environment variable is not set. " +
+      "Please check your .env.local file or environment configuration."
+    );
   }
-  
-  // Production runtime with real DATABASE_URL
-  const pool = new Pool({ connectionString });
+
+  const pool = new Pool({ 
+    connectionString,
+    // Optional: configure pool for better performance
+    max: 20, // Max connections
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 2000,
+  });
+
   const adapter = new PrismaPg(pool);
+
+  const logLevel = process.env.NODE_ENV === "development" 
+    ? (["warn", "error"] as const)
+    : (["error"] as const);
 
   return new PrismaClient({
     adapter,
-    log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
+    log: [...logLevel],
   });
 }
 
-export const prisma = globalForPrisma.prisma ?? createPrismaClient();
+const prisma = globalForPrisma.prisma ?? createPrismaClient();
 
-if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
+// Ensure we only have one Prisma instance in development
+if (process.env.NODE_ENV !== "production") {
+  globalForPrisma.prisma = prisma;
+}
+
+export { prisma };
+export default prisma;

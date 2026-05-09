@@ -6,8 +6,10 @@ import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
+import { Anggota, JenisKelamin, StatusAnggota } from "@prisma/client";
+
 interface ExportAnggotaButtonProps {
-  data: any[];
+  data: (Anggota & { user: { id: string; email: string } | null })[];
 }
 
 export function ExportAnggotaButton({ data }: ExportAnggotaButtonProps) {
@@ -15,11 +17,11 @@ export function ExportAnggotaButton({ data }: ExportAnggotaButtonProps) {
   const [isExporting, setIsExporting] = useState(false);
 
   const formatDataForExport = () => {
-    return data.map((a: any, index: number) => ({
+    return data.map((a, index: number) => ({
       No: index + 1,
       NIK: a.nik,
       "Nama Lengkap": a.namaLengkap,
-      "Jenis Kelamin": a.jenisKelamin === "LAKI_LAKI" ? "Laki-laki" : "Perempuan",
+      "Jenis Kelamin": a.jenisKelamin === JenisKelamin.LAKI_LAKI ? "Laki-laki" : "Perempuan",
       "No HP": a.noHp || "-",
       Email: a.email || "-",
       Pekerjaan: a.pekerjaan || "-",

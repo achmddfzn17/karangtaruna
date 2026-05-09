@@ -134,7 +134,7 @@ export default function Footer() {
               Menu Utama
             </h4>
             <ul className="space-y-2">
-              {quickLinks.map((link: any) => (
+              {quickLinks.map((link) => (
                 <li key={link.href}>
                   <Link
                     href={link.href}

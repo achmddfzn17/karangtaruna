@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Distribusi Skor SUS per Responden</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 20px;
+            background: #f8fafc;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #1e293b;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            color: #64748b;
+            margin-bottom: 30px;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: #f1f5f9;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #3b82f6;
+        }
+        .stat-label {
+            font-size: 12px;
+            color: #64748b;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .stat-value {
+            font-size: 24px;
+            color: #1e293b;
+            font-weight: 700;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Gambar 4.7 — Distribusi Skor SUS per Responden</h1>
+        <p class="subtitle">System Usability Scale (SUS) — Karang Taruna RW 10 Mangga Dua Selatan (n=25)</p>
+        
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-label">Mean</div>
+                <div class="stat-value">73.9</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Median</div>
+                <div class="stat-value">75.0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Min - Max</div>
+                <div class="stat-value">62.5 - 87.5</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Grade</div>
+                <div class="stat-value">B</div>
+            </div>
+        </div>
+
+        <canvas id="susChart"></canvas>
+    </div>
+
+    <script>
+        const data = [
+            65.00, 67.50, 72.50, 70.00, 70.00, 72.50, 72.50, 72.50, 72.50, 72.50,
+            72.50, 75.00, 75.00, 75.00, 75.00, 75.00, 75.00, 75.00, 75.00, 77.50,
+            77.50, 77.50, 77.50, 77.50, 80.00
+        ];
+
+        const labels = data.map((_, i) => `R-${String(i + 1).padStart(2, '0')}`);
+
+        // Color coding berdasarkan kategori SUS
+        const colors = data.map(score => {
+            if (score >= 80.3) return '#10b981'; // Excellent (A) - hijau
+            if (score >= 71.4) return '#3b82f6'; // Good (B) - biru
+            if (score >= 62.7) return '#f59e0b'; // OK (C) - kuning
+            if (score >= 51.7) return '#ef4444'; // Poor (D) - merah
+            return '#991b1b'; // Awful (F) - merah tua
+        });
+
+        const ctx = document.getElementById('susChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Skor SUS',
+                    data: data,
+                    backgroundColor: colors,
+                    borderColor: colors.map(c => c),
+                    borderWidth: 1,
+                    borderRadius: 4,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                aspectRatio: 2.5,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    title: {
+                        display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = 'Skor: ' + context.parsed.y;
+                                const score = context.parsed.y;
+                                let category = '';
+                                if (score >= 80.3) category = ' (Grade A - Excellent)';
+                                else if (score >= 71.4) category = ' (Grade B - Good)';
+                                else if (score >= 62.7) category = ' (Grade C - OK)';
+                                else if (score >= 51.7) category = ' (Grade D - Poor)';
+                                else category = ' (Grade F - Awful)';
+                                return label + category;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        ticks: {
+                            stepSize: 10,
+                            callback: function(value) {
+                                return value;
+                            }
+                        },
+                        title: {
+                            display: true,
+                            text: 'Skor SUS (0-100)',
+                            font: {
+                                size: 14,
+                                weight: 'bold'
+                            }
+                        },
+                        grid: {
+                            color: '#e2e8f0'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Responden',
+                            font: {
+                                size: 14,
+                                weight: 'bold'
+                            }
+                        },
+                        ticks: {
+                            maxRotation: 45,
+                            minRotation: 45,
+                            font: {
+                                size: 10
+                            }
+                        },
+                        grid: {
+                            display: false
+                        }
+                    }
+                }
+            }
+        });
+
+        // Tambahkan garis referensi untuk mean
+        const meanLine = {
+            id: 'meanLine',
+            afterDatasetsDraw(chart) {
+                const { ctx, chartArea: { left, right }, scales: { y } } = chart;
+                const meanY = y.getPixelForValue(73.9);
+                
+                ctx.save();
+                ctx.strokeStyle = '#dc2626';
+                ctx.lineWidth = 2;
+                ctx.setLineDash([5, 5]);
+                ctx.beginPath();
+                ctx.moveTo(left, meanY);
+                ctx.lineTo(right, meanY);
+                ctx.stroke();
+                
+                ctx.fillStyle = '#dc2626';
+                ctx.font = 'bold 12px sans-serif';
+                ctx.fillText('Mean: 73.9', right - 80, meanY - 5);
+                ctx.restore();
+            }
+        };
+
+        Chart.register(meanLine);
+    </script>
+</body>
+</html>

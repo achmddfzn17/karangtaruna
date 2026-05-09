@@ -1,10 +1,13 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
-import { prisma } from "@/lib/prisma";
-import { 
-  Calendar, CheckCircle2, User as UserIcon, Star, 
-  Cake, Users, Check, ClipboardCheck, QrCode, CreditCard 
+import prisma from "@/lib/prisma";
+import Link from "next/link";
+import {
+  Calendar, CheckCircle2, Star,
+  Users, Check, ClipboardCheck, CreditCard, AlertCircle,
 } from "lucide-react";
+// Use relative import to avoid @/ alias resolution issue with stale TS server
+import KartuAnggotaModal from "../../../components/member/KartuAnggotaModal";
 
 export const metadata = {
   title: "Dashboard Anggota",
@@ -13,34 +16,23 @@ export const metadata = {
 export default async function MemberDashboard() {
   const session = await auth();
 
-  if (!session || !session.user) {
-    redirect("/anggota/login");
-  }
+  if (!session || !session.user) redirect("/anggota/login");
 
-  const userRole = (session.user as any).role;
-  if (userRole !== "ANGGOTA") {
-    redirect("/anggota/login");
-  }
+  const userRole = session.user.role;
+  if (userRole !== "ANGGOTA") redirect("/anggota/login");
 
-  const userId = (session.user as any).id;
-  
-  // Get Anggota data
+  const userId = session.user.id;
+
   const anggotaData = await prisma.anggota.findUnique({
-    where: { userId: userId },
+    where: { userId },
     include: {
-      kegiatan: {
-        include: {
-          kegiatan: true,
-        },
-      },
+      kegiatan: { include: { kegiatan: true } },
+      iuran: { orderBy: [{ tahun: "desc" }, { bulan: "desc" }], take: 1 },
     },
   });
 
-  const totalAnggota = await prisma.anggota.count({
-    where: { status: "AKTIF" }
-  });
+  const totalAnggota = await prisma.anggota.count({ where: { status: "AKTIF" } });
 
-  // Fetch New Update Feature Data (Upcoming Events & Latest News)
   const upcomingKegiatan = await prisma.kegiatan.findMany({
     where: { status: "UPCOMING" },
     orderBy: { tanggalMulai: "asc" },
@@ -53,32 +45,32 @@ export default async function MemberDashboard() {
     take: 2,
   });
 
-  // Calculations
-  const calculateAge = (dob: Date | null | undefined) => {
-    if (!dob) return "N/A";
-    const diff_ms = Date.now() - new Date(dob).getTime();
-    const age_dt = new Date(diff_ms); 
-    return Math.abs(age_dt.getUTCFullYear() - 1970);
-  };
+  const isProfileLengkap =
+    anggotaData?.nik && anggotaData?.noHp && anggotaData?.alamat && anggotaData?.tanggalLahir;
+  const totalKegiatan = anggotaData?.kegiatan.length || 0;
+  const kegiatanHadir = anggotaData?.kegiatan.filter((k) => k.hadir).length || 0;
+  const tingkatKehadiran =
+    totalKegiatan > 0 ? Math.round((kegiatanHadir / totalKegiatan) * 100) : 0;
 
-  const calculateMonthsJoined = (joinDate: Date) => {
-    const now = new Date();
-    const months = (now.getFullYear() - joinDate.getFullYear()) * 12 + (now.getMonth() - joinDate.getMonth());
-    return months === 0 ? 1 : months;
-  };
-
-  const umur = calculateAge(anggotaData?.tanggalLahir);
-  const bulanBergabung = anggotaData ? calculateMonthsJoined(anggotaData.tanggalGabung) : 0;
-  const isProfileLengkap = anggotaData?.nik && anggotaData?.noHp && anggotaData?.alamat && anggotaData?.tanggalLahir;
-  const kegiatanDiikuti = anggotaData?.kegiatan.length || 0;
+  const now = new Date();
+  const currentMonth = now.getMonth() + 1;
+  const currentYear = now.getFullYear();
+  const iuranBulanIni = anggotaData?.iuran.find(
+    (i) => i.bulan === currentMonth && i.tahun === currentYear
+  );
 
   return (
     <div className="space-y-6">
-      
-      {/* Alert Bar */}
-      <div className="bg-green-100 border border-green-200 text-green-700 px-4 py-3 rounded-xl text-sm font-medium">
-        Selamat datang!
-      </div>
+      {/* Profile incomplete warning */}
+      {!isProfileLengkap && (
+        <div className="bg-amber-50 border border-amber-200 text-amber-800 px-4 py-3 rounded-xl text-sm font-medium flex items-center gap-2">
+          <AlertCircle className="w-4 h-4 shrink-0" />
+          <span>Profil Anda belum lengkap. </span>
+          <Link href="/member/profile" className="underline font-bold hover:text-amber-900">
+            Lengkapi sekarang →
+          </Link>
+        </div>
+      )}
 
       {/* Welcome Banner */}
       <div className="bg-blue-600 rounded-2xl p-8 shadow-sm shadow-blue-600/20 text-white relative overflow-hidden">
@@ -93,7 +85,30 @@ export default async function MemberDashboard() {
 
       {/* 4 Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Status */}
+        <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
+          <div>
+            <p className="text-[11px] text-slate-500 font-semibold uppercase mb-1">Kegiatan Diikuti</p>
+            <p className="text-xl font-extrabold text-blue-600">{totalKegiatan}</p>
+            <p className="text-[10px] text-slate-400 mt-0.5">Total partisipasi</p>
+          </div>
+          <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
+            <Calendar className="w-5 h-5 text-blue-600" />
+          </div>
+        </div>
+
+        <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
+          <div>
+            <p className="text-[11px] text-slate-500 font-semibold uppercase mb-1">Tingkat Kehadiran</p>
+            <p className={`text-xl font-extrabold ${tingkatKehadiran >= 80 ? "text-green-500" : tingkatKehadiran >= 50 ? "text-orange-500" : "text-red-500"}`}>
+              {tingkatKehadiran}%
+            </p>
+            <p className="text-[10px] text-slate-400 mt-0.5">{kegiatanHadir} dari {totalKegiatan} hadir</p>
+          </div>
+          <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${tingkatKehadiran >= 80 ? "bg-green-100" : tingkatKehadiran >= 50 ? "bg-orange-100" : "bg-red-100"}`}>
+            <CheckCircle2 className={`w-5 h-5 ${tingkatKehadiran >= 80 ? "text-green-500" : tingkatKehadiran >= 50 ? "text-orange-500" : "text-red-500"}`} />
+          </div>
+        </div>
+
         <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
           <div>
             <p className="text-[11px] text-slate-500 font-semibold uppercase mb-1">Status</p>
@@ -106,50 +121,21 @@ export default async function MemberDashboard() {
           </div>
         </div>
 
-        {/* Umur */}
-        <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
-          <div>
-            <p className="text-[11px] text-slate-500 font-semibold uppercase mb-1">Umur</p>
-            <p className="text-xl font-extrabold text-blue-500">{umur === "N/A" ? "N/A" : `${umur} Th`}</p>
-          </div>
-          <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
-            <Cake className="w-5 h-5 text-blue-500" />
-          </div>
-        </div>
-
-        {/* Bergabung */}
-        <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
-          <div>
-            <p className="text-[11px] text-slate-500 font-semibold uppercase mb-1">Bergabung</p>
-            <div className="flex items-baseline gap-2">
-              <p className="text-xl font-extrabold text-purple-600">{bulanBergabung} Bulan</p>
-            </div>
-            <p className="text-[10px] text-slate-400 mt-0.5">
-              {anggotaData?.tanggalGabung ? anggotaData.tanggalGabung.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : "-"}
-            </p>
-          </div>
-          <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center">
-            <Calendar className="w-5 h-5 text-purple-600" />
-          </div>
-        </div>
-
-        {/* Total Anggota */}
         <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
           <div>
             <p className="text-[11px] text-slate-500 font-semibold uppercase mb-1">Total Anggota</p>
-            <p className="text-xl font-extrabold text-orange-500">{totalAnggota}</p>
+            <p className="text-xl font-extrabold text-purple-600">{totalAnggota}</p>
+            <p className="text-[10px] text-slate-400 mt-0.5">Anggota aktif</p>
           </div>
-          <div className="w-10 h-10 rounded-lg bg-orange-100 flex items-center justify-center">
-            <Users className="w-5 h-5 text-orange-500" />
+          <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center">
+            <Users className="w-5 h-5 text-purple-600" />
           </div>
         </div>
       </div>
 
       {/* Achievement & Badges */}
       <div>
-        <h3 className="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2">
-          🏆 Achievement & Badges
-        </h3>
+        <h3 className="text-sm font-bold text-slate-800 mb-3">🏆 Achievement & Badges</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className={`p-5 rounded-2xl border ${anggotaData?.status === "AKTIF" ? "bg-green-50 border-green-200" : "bg-slate-50 border-slate-200"} flex flex-col items-center justify-center text-center`}>
             <div className={`w-8 h-8 rounded-full flex items-center justify-center mb-2 ${anggotaData?.status === "AKTIF" ? "bg-green-500" : "bg-slate-300"}`}>
@@ -164,14 +150,15 @@ export default async function MemberDashboard() {
               <ClipboardCheck className="w-5 h-5 text-white" />
             </div>
             <h4 className={`font-bold text-sm ${isProfileLengkap ? "text-purple-700" : "text-slate-500"}`}>Profile Lengkap</h4>
-            <p className={`text-[11px] ${isProfileLengkap ? "text-purple-600" : "text-slate-400"}`}>Semua data profile terisi</p>
+            <p className={`text-[11px] ${isProfileLengkap ? "text-purple-600" : "text-slate-400"}`}>
+              {isProfileLengkap ? "Semua data profile terisi" : "Profil belum lengkap"}
+            </p>
           </div>
         </div>
       </div>
 
       {/* Profile & Quick Actions */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Informasi Profile */}
         <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
           <h3 className="text-sm font-bold text-slate-800 mb-4">Informasi Profile</h3>
           <div className="grid grid-cols-2 gap-y-6">
@@ -181,7 +168,7 @@ export default async function MemberDashboard() {
             </div>
             <div>
               <p className="text-[11px] text-slate-500 font-medium mb-1">Email</p>
-              <p className="text-sm font-semibold text-slate-900">{anggotaData?.email || session.user.email || "-"}</p>
+              <p className="text-sm font-semibold text-slate-900 truncate">{anggotaData?.email || session.user.email || "-"}</p>
             </div>
             <div>
               <p className="text-[11px] text-slate-500 font-medium mb-1">No. HP</p>
@@ -190,66 +177,79 @@ export default async function MemberDashboard() {
             <div>
               <p className="text-[11px] text-slate-500 font-medium mb-1">Bergabung Sejak</p>
               <p className="text-sm font-semibold text-slate-900">
-                {anggotaData?.tanggalGabung ? anggotaData.tanggalGabung.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : "-"}
+                {anggotaData?.tanggalGabung
+                  ? anggotaData.tanggalGabung.toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })
+                  : "-"}
               </p>
             </div>
           </div>
         </div>
 
-        {/* Quick Actions */}
         <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex flex-col">
           <h3 className="text-sm font-bold text-slate-800 mb-4">Quick Actions</h3>
           <div className="flex-1 flex flex-col gap-3">
-            <button className="w-full bg-purple-50 hover:bg-purple-100 border border-purple-100 rounded-xl p-4 flex items-center gap-4 transition-colors text-left">
-              <div className="w-10 h-10 rounded-lg bg-purple-200 flex items-center justify-center shrink-0">
-                <QrCode className="w-5 h-5 text-purple-700" />
+            <KartuAnggotaModal
+              namaLengkap={anggotaData?.namaLengkap || session.user.name || ""}
+              nik={anggotaData?.nik || ""}
+              status={anggotaData?.status || "AKTIF"}
+              tanggalGabung={anggotaData?.tanggalGabung?.toISOString() || ""}
+              foto={anggotaData?.foto || null}
+            />
+
+            <Link
+              href="/member/iuran"
+              className={`w-full border rounded-xl p-4 flex items-center gap-4 transition-colors text-left ${
+                iuranBulanIni
+                  ? "bg-emerald-50 hover:bg-emerald-100 border-emerald-100"
+                  : "bg-orange-50 hover:bg-orange-100 border-orange-100"
+              }`}
+            >
+              <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${iuranBulanIni ? "bg-emerald-200" : "bg-orange-200"}`}>
+                <CreditCard className={`w-5 h-5 ${iuranBulanIni ? "text-emerald-700" : "text-orange-700"}`} />
               </div>
               <div>
-                <h4 className="text-sm font-bold text-purple-900">Kartu Anggota Digital</h4>
-                <p className="text-[11px] text-purple-700">QR Code & Info</p>
+                <h4 className={`text-sm font-bold ${iuranBulanIni ? "text-emerald-900" : "text-orange-900"}`}>
+                  Iuran Bulan Ini
+                </h4>
+                <p className={`text-[11px] ${iuranBulanIni ? "text-emerald-700" : "text-orange-700"}`}>
+                  {iuranBulanIni ? "✓ Sudah Lunas" : "Belum Dibayar — Klik untuk bayar"}
+                </p>
               </div>
-            </button>
-            <button className="w-full bg-emerald-50 hover:bg-emerald-100 border border-emerald-100 rounded-xl p-4 flex items-center gap-4 transition-colors text-left">
-              <div className="w-10 h-10 rounded-lg bg-emerald-200 flex items-center justify-center shrink-0">
-                <CreditCard className="w-5 h-5 text-emerald-700" />
-              </div>
-              <div>
-                <h4 className="text-sm font-bold text-emerald-900">Bayar Iuran Kas</h4>
-                <p className="text-[11px] text-emerald-700">Bulan ini: Belum Lunas</p>
-              </div>
-            </button>
+            </Link>
           </div>
         </div>
       </div>
 
-      {/* Fitur Update: Informasi & Kegiatan Terkini */}
+      {/* Update Terkini */}
       <div className="mt-8 pt-8 border-t border-slate-200">
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-lg font-bold text-slate-900">Update Terkini</h3>
-          <span className="text-[11px] font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-full">BARU</span>
-        </div>
-        
+        <h3 className="text-lg font-bold text-slate-900 mb-6">Update Terkini</h3>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Kegiatan Terdekat */}
           <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
             <h4 className="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2">
               <Calendar className="w-4 h-4 text-orange-500" />
               Kegiatan Terdekat
             </h4>
-            
             {upcomingKegiatan.length > 0 ? (
               <div className="space-y-4">
                 {upcomingKegiatan.map((kegiatan) => (
-                  <div key={kegiatan.id} className="flex gap-4 p-4 rounded-xl border border-slate-50 bg-slate-50 hover:bg-orange-50 hover:border-orange-100 transition-colors group cursor-pointer">
+                  <Link
+                    key={kegiatan.id}
+                    href="/member/kegiatan"
+                    className="flex gap-4 p-4 rounded-xl border border-slate-50 bg-slate-50 hover:bg-orange-50 hover:border-orange-100 transition-colors group"
+                  >
                     <div className="w-12 h-12 rounded-lg bg-orange-100 flex flex-col items-center justify-center shrink-0">
-                      <span className="text-[10px] font-bold text-orange-600 uppercase">{new Date(kegiatan.tanggalMulai).toLocaleDateString('id-ID', { month: 'short' })}</span>
-                      <span className="text-lg font-extrabold text-orange-600 leading-none">{new Date(kegiatan.tanggalMulai).getDate()}</span>
+                      <span className="text-[10px] font-bold text-orange-600 uppercase">
+                        {new Date(kegiatan.tanggalMulai).toLocaleDateString("id-ID", { month: "short" })}
+                      </span>
+                      <span className="text-lg font-extrabold text-orange-600 leading-none">
+                        {new Date(kegiatan.tanggalMulai).getDate()}
+                      </span>
                     </div>
                     <div>
                       <h5 className="text-sm font-bold text-slate-900 group-hover:text-orange-700 transition-colors">{kegiatan.nama}</h5>
                       <p className="text-[11px] text-slate-500 mt-1 line-clamp-1">{kegiatan.lokasi || "Lokasi belum ditentukan"}</p>
                     </div>
-                  </div>
+                  </Link>
                 ))}
               </div>
             ) : (
@@ -259,23 +259,27 @@ export default async function MemberDashboard() {
             )}
           </div>
 
-          {/* Pengumuman / Berita Terbaru */}
           <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
             <h4 className="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2">
               <ClipboardCheck className="w-4 h-4 text-blue-500" />
               Pengumuman & Berita
             </h4>
-            
             {latestBerita.length > 0 ? (
               <div className="space-y-4">
                 {latestBerita.map((berita) => (
-                  <div key={berita.id} className="p-4 rounded-xl border border-slate-50 bg-slate-50 hover:bg-blue-50 hover:border-blue-100 transition-colors group cursor-pointer">
+                  <Link
+                    key={berita.id}
+                    href={`/member/berita/${berita.slug}`}
+                    className="block p-4 rounded-xl border border-slate-50 bg-slate-50 hover:bg-blue-50 hover:border-blue-100 transition-colors group"
+                  >
                     <h5 className="text-sm font-bold text-slate-900 group-hover:text-blue-700 transition-colors mb-1">{berita.judul}</h5>
                     <p className="text-[11px] text-slate-500 line-clamp-2">{berita.ringkasan || "Baca selengkapnya..."}</p>
                     <div className="mt-3 text-[10px] font-bold text-slate-400 uppercase tracking-wide">
-                      {berita.publishedAt ? new Date(berita.publishedAt).toLocaleDateString('id-ID', { dateStyle: 'long' }) : "-"}
+                      {berita.publishedAt
+                        ? new Date(berita.publishedAt).toLocaleDateString("id-ID", { dateStyle: "long" })
+                        : "-"}
                     </div>
-                  </div>
+                  </Link>
                 ))}
               </div>
             ) : (
@@ -286,7 +290,6 @@ export default async function MemberDashboard() {
           </div>
         </div>
       </div>
-
     </div>
   );
 }

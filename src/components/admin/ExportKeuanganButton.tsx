@@ -8,17 +8,14 @@ import autoTable from "jspdf-autotable";
 import { toast } from "sonner";
 import { formatCurrency } from "@/lib/utils";
 
-interface Transaksi {
-  id: string;
-  tanggal: Date;
-  keterangan: string;
-  jumlah: number;
-  jenis: "MASUK" | "KELUAR";
+import { TransaksiKeuangan, JenisTransaksi } from "@prisma/client";
+
+interface TransaksiWithKategori extends TransaksiKeuangan {
   kategori: { nama: string } | null;
 }
 
 interface Props {
-  transaksi: Transaksi[];
+  transaksi: TransaksiWithKategori[];
   totalPemasukan: number;
   totalPengeluaran: number;
   saldo: number;
@@ -41,13 +38,22 @@ export default function ExportKeuanganButton({
     }),
     keterangan: t.keterangan,
     kategori: t.kategori?.nama || "Umum",
-    jenis: t.jenis === "MASUK" ? "Pemasukan" : "Pengeluaran",
+    jenis: t.jenis === JenisTransaksi.MASUK ? "Pemasukan" : "Pengeluaran",
     jumlah: t.jumlah,
     jumlahFmt: formatCurrency(t.jumlah),
   }));
 
   const exportExcel = () => {
-    const data = rows.map((r) => ({
+    type ExcelRow = {
+      No?: number | string;
+      Tanggal?: string;
+      Keterangan?: string;
+      Kategori?: string;
+      Jenis?: string;
+      "Jumlah (Rp)"?: number | string;
+    };
+
+    const data: ExcelRow[] = rows.map((r) => ({
       No: r.no,
       Tanggal: r.tanggal,
       Keterangan: r.keterangan,
@@ -57,11 +63,11 @@ export default function ExportKeuanganButton({
     }));
 
     // Tambah baris ringkasan
-    data.push({} as any);
-    data.push({ No: "" as any, Tanggal: "RINGKASAN", Keterangan: "", Kategori: "", Jenis: "", "Jumlah (Rp)": "" as any });
-    data.push({ No: "" as any, Tanggal: "Total Pemasukan", Keterangan: "", Kategori: "", Jenis: "", "Jumlah (Rp)": totalPemasukan });
-    data.push({ No: "" as any, Tanggal: "Total Pengeluaran", Keterangan: "", Kategori: "", Jenis: "", "Jumlah (Rp)": totalPengeluaran });
-    data.push({ No: "" as any, Tanggal: "Saldo Akhir", Keterangan: "", Kategori: "", Jenis: "", "Jumlah (Rp)": saldo });
+    data.push({});
+    data.push({ No: "", Tanggal: "RINGKASAN", Keterangan: "", Kategori: "", Jenis: "", "Jumlah (Rp)": "" });
+    data.push({ No: "", Tanggal: "Total Pemasukan", Keterangan: "", Kategori: "", Jenis: "", "Jumlah (Rp)": totalPemasukan });
+    data.push({ No: "", Tanggal: "Total Pengeluaran", Keterangan: "", Kategori: "", Jenis: "", "Jumlah (Rp)": totalPengeluaran });
+    data.push({ No: "", Tanggal: "Saldo Akhir", Keterangan: "", Kategori: "", Jenis: "", "Jumlah (Rp)": saldo });
 
     const ws = XLSX.utils.json_to_sheet(data);
     ws["!cols"] = [{ wch: 5 }, { wch: 20 }, { wch: 35 }, { wch: 18 }, { wch: 14 }, { wch: 18 }];
@@ -105,7 +111,10 @@ export default function ExportKeuanganButton({
     });
 
     // Ringkasan
-    const finalY = (doc as any).lastAutoTable.finalY + 8;
+    interface AutoTableDoc extends jsPDF {
+      lastAutoTable?: { finalY: number };
+    }
+    const finalY = ((doc as unknown) as AutoTableDoc).lastAutoTable?.finalY ?? 60;
     autoTable(doc, {
       startY: finalY,
       head: [["Ringkasan", "Jumlah"]],

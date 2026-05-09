@@ -19,9 +19,10 @@ export default async function ProgramSection() {
   });
 
   // Helper function to dynamically render Lucide icons
-  const getIcon = (iconName: string | null) => {
-    if (!iconName) return LucideIcons.ShoppingBag;
-    return (LucideIcons as any)[iconName] || LucideIcons.ShoppingBag;
+  const getIcon = (iconName: string | null): React.ElementType => {
+    if (!iconName) return LucideIcons.ShoppingBag as unknown as React.ElementType;
+    const icon = (LucideIcons as unknown as Record<string, unknown>)[iconName];
+    return (typeof icon === 'function' ? icon : LucideIcons.ShoppingBag) as React.ElementType;
   };
   return (
     <section className="py-20 md:py-28 bg-[#f4f9ff]">
@@ -46,7 +47,7 @@ export default async function ProgramSection() {
           {programs.length === 0 ? (
             <p className="text-slate-500 col-span-full text-center">Belum ada program unggulan.</p>
           ) : (
-            programs.map((program: any) => {
+            programs.map((program) => {
               const Icon = getIcon(program.icon);
               return (
                 <div

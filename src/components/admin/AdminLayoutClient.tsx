@@ -7,14 +7,12 @@ import AdminHeader from "./AdminHeader";
 interface AdminLayoutClientProps {
   userName: string;
   userRole: string;
-  signOutAction: () => Promise<void>;
   children: React.ReactNode;
 }
 
 export default function AdminLayoutClient({
   userName,
   userRole,
-  signOutAction,
   children,
 }: AdminLayoutClientProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -24,7 +22,6 @@ export default function AdminLayoutClient({
       <AdminSidebar
         userName={userName}
         userRole={userRole}
-        signOutAction={signOutAction}
         mobileOpen={mobileOpen}
         onMobileClose={() => setMobileOpen(false)}
       />
@@ -34,7 +31,6 @@ export default function AdminLayoutClient({
           userName={userName}
           userRole={userRole}
           onMenuClick={() => setMobileOpen(true)}
-          signOutAction={signOutAction}
         />
         <main className="flex-1 p-4 sm:p-6 lg:p-8">
           {children}

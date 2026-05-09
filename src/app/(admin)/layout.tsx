@@ -8,19 +8,13 @@ export default async function AdminLayout({ children }: { children: ReactNode })
 
   if (!session?.user) redirect("/login");
 
-  const userRole = (session.user as any).role;
+  const userRole = session.user.role;
   if (userRole !== "ADMIN" && userRole !== "SUPER_ADMIN") redirect("/login");
 
   const userName = session.user.name || "Admin";
 
-  async function handleSignOut() {
-    "use server";
-    const { signOut } = await import("@/auth");
-    await signOut();
-  }
-
   return (
-    <AdminLayoutClient userName={userName} userRole={userRole} signOutAction={handleSignOut}>
+    <AdminLayoutClient userName={userName} userRole={userRole}>
       {children}
     </AdminLayoutClient>
   );

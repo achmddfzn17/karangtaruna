@@ -1,8 +1,8 @@
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { formatCurrency, formatDate } from "@/lib/utils";
-import { Wallet, CheckCircle2, XCircle, Plus, Search } from "lucide-react";
+import { Wallet, CheckCircle2, Plus, Search } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import DeleteIuranButton from "@/components/admin/DeleteIuranButton";
 
@@ -170,7 +170,9 @@ export default async function IuranPage({
                 <div key={a.id} className="flex items-center gap-4 px-6 py-4 hover:bg-slate-50/50 transition-colors">
                   {/* Avatar */}
                   {a.foto ? (
-                    <img src={a.foto} alt={a.namaLengkap} className="w-9 h-9 rounded-full object-cover shrink-0 border border-slate-200" />
+                    <div className="relative w-9 h-9 shrink-0">
+                      <Image src={a.foto} alt={a.namaLengkap} fill className="rounded-full object-cover border border-slate-200" sizes="36px" />
+                    </div>
                   ) : (
                     <div className="w-9 h-9 bg-blue-100 text-blue-700 rounded-full flex items-center justify-center font-bold text-sm shrink-0">
                       {a.namaLengkap.charAt(0)}
@@ -195,7 +197,7 @@ export default async function IuranPage({
                         <span className="flex items-center gap-1 px-2.5 py-1 bg-green-100 text-green-700 text-[11px] font-bold rounded-lg">
                           <CheckCircle2 className="w-3.5 h-3.5" /> Lunas
                         </span>
-                        {iuran && <DeleteIuranButton id={iuran.id} />}
+                        {iuran && <DeleteIuranButton id={iuran.id} data={iuran} />}
                       </>
                     ) : (
                       <form action={bayarIuran} className="flex items-center gap-2">

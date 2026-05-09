@@ -12,7 +12,7 @@ import {
   Search,
   Filter,
 } from "lucide-react";
-import DeleteAspirasiButton from "@/components/admin/DeleteAsirasiButton";
+import { DeleteConfirmButton } from "@/components/admin/DeleteConfirmButton";
 
 export const metadata = {
   title: "Kelola Aspirasi",
@@ -26,7 +26,7 @@ export default async function AdminAspirasiPage({
   const session = await auth();
   if (!session?.user) redirect("/login");
 
-  const userRole = (session.user as any).role;
+  const userRole = session.user.role;
   if (userRole !== "ADMIN" && userRole !== "SUPER_ADMIN") redirect("/login");
 
   const params = await searchParams;
@@ -44,7 +44,7 @@ export default async function AdminAspirasiPage({
     "use server";
     const id = formData.get("id") as string;
     const balasan = formData.get("balasan") as string;
-    const status = formData.get("status") as any;
+    const status = formData.get("status") as string | null;
 
     // Input validation
     if (!id || typeof id !== "string" || !id.match(/^[a-z0-9]+$/i)) {
@@ -75,7 +75,7 @@ export default async function AdminAspirasiPage({
         where: { id },
         data: {
           balasan: balasan.trim(),
-          status: status || "SELESAI",
+          status: (status || "SELESAI") as any,
         },
       });
       revalidatePath("/dashboard/aspirasi");
@@ -209,8 +209,9 @@ export default async function AdminAspirasiPage({
                 <form action={replyAspirasi} className="space-y-4">
                   <input type="hidden" name="id" value={asp.id} />
                   <div className="space-y-1.5">
-                    <label className="text-[11px] font-bold text-slate-600">Berikan Balasan</label>
+                    <label htmlFor={`balasan-${asp.id}`} className="text-[11px] font-bold text-slate-600">Berikan Balasan</label>
                     <textarea
+                      id={`balasan-${asp.id}`}
                       name="balasan"
                       rows={3}
                       required
@@ -219,9 +220,11 @@ export default async function AdminAspirasiPage({
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-[11px] font-bold text-slate-600">Update Status</label>
+                    <label htmlFor={`status-${asp.id}`} className="text-[11px] font-bold text-slate-600">Update Status</label>
                     <select
+                      id={`status-${asp.id}`}
                       name="status"
+                      title="Update Status Aspirasi"
                       className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
                     >
                       <option value="DIPROSES">Diproses</option>
@@ -238,7 +241,13 @@ export default async function AdminAspirasiPage({
                   </button>
                 </form>
 
-                <DeleteAspirasiButton action={deleteAspirasi} aspirasiId={asp.id} />
+                <DeleteConfirmButton
+                  action={deleteAspirasi}
+                  itemId={asp.id}
+                  message="Hapus aspirasi ini?"
+                  formChildren={<input type="hidden" name="id" value={asp.id} />}
+                  className="w-full flex items-center justify-center gap-2 py-2 text-red-500 hover:bg-red-50 text-xs font-bold rounded-xl transition-all"
+                />
               </div>
             </div>
           ))

@@ -76,7 +76,7 @@ export default async function AdminDashboard() {
     { name: "Aktif", value: anggotaAktif, color: "#3b82f6" },
     { name: "Non-Aktif", value: anggotaNonAktif, color: "#f59e0b" },
     { name: "Alumni", value: anggotaAlumni, color: "#94a3b8" },
-  ].filter((d: any) => d.value > 0);
+  ].filter((d) => d.value > 0);
 
   // 2. Kegiatan bar chart
   const jenisLabels: Record<string, string> = {
@@ -87,7 +87,7 @@ export default async function AdminDashboard() {
     SENI_BUDAYA: "Seni & Budaya",
     LAINNYA: "Lainnya",
   };
-  const kegiatanChartData = kegiatanByJenis.map((k: any) => ({
+  const kegiatanChartData = kegiatanByJenis.map((k) => ({
     name: jenisLabels[k.jenis] || k.jenis,
     jumlah: k._count.id,
   }));
@@ -100,12 +100,12 @@ export default async function AdminDashboard() {
   });
   const monthNames = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
   const kontenTrenData = months.map(({ year, month }) => {
-    const beritaCount = allBerita.filter((b: any) => {
+    const beritaCount = allBerita.filter((b) => {
       if (!b.publishedAt) return false;
       const d = new Date(b.publishedAt);
       return d.getFullYear() === year && d.getMonth() === month;
     }).length;
-    const artikelCount = allArtikel.filter((a: any) => {
+    const artikelCount = allArtikel.filter((a) => {
       if (!a.publishedAt) return false;
       const d = new Date(a.publishedAt);
       return d.getFullYear() === year && d.getMonth() === month;
@@ -336,7 +336,7 @@ export default async function AdminDashboard() {
                   </tr>
                 </thead>
                 <tbody>
-                  {recentKegiatan.map((k: any) => (
+                  {recentKegiatan.map((k) => (
                     <tr
                       key={k.id}
                       className="border-b border-gray-50 last:border-0 hover:bg-slate-50/50 transition-colors"

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { auth } from "@/auth";
 import { z } from "zod";
 
 const susSchema = z.object({
@@ -18,6 +19,34 @@ const susSchema = z.object({
 
 export async function POST(req: Request) {
   try {
+    // SECURITY: Add authentication to prevent spam/DoS
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized - login diperlukan" }, { status: 401 });
+    }
+
+    const userId = session.user.id;
+
+    // SECURITY: Check if user already submitted SUS today
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const existingToday = await prisma.susResponse.findFirst({
+      where: {
+        userId,
+        createdAt: {
+          gte: today,
+        },
+      },
+    });
+
+    if (existingToday) {
+      return NextResponse.json(
+        { error: "Anda sudah mengisi survey SUS hari ini" },
+        { status: 400 }
+      );
+    }
+
     const body = await req.json();
     const parsed = susSchema.safeParse(body);
 
@@ -66,6 +95,7 @@ export async function POST(req: Request) {
 
     const susResponse = await prisma.susResponse.create({
       data: {
+        userId,
         responden: data.responden,
         q1: data.q1,
         q2: data.q2,
@@ -84,7 +114,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ success: true, data: susResponse });
   } catch (error) {
-    console.error("SUS Error:", error);
+    console.error("[SUS_ERROR]", error);
     return NextResponse.json(
       { error: "Gagal menyimpan evaluasi" },
       { status: 500 }

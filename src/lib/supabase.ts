@@ -95,7 +95,6 @@ export async function deleteFileFromStorage(url: string): Promise<boolean> {
       return false;
     }
     
-    console.log("[DELETE_FILE_SUCCESS]", path);
     return true;
   } catch (error) {
     console.error("[DELETE_FILE_EXCEPTION]", error);
@@ -127,7 +126,6 @@ export async function deleteFilesFromStorage(urls: string[]): Promise<number> {
       return 0;
     }
     
-    console.log("[DELETE_FILES_SUCCESS]", paths.length, "files deleted");
     return paths.length;
   } catch (error) {
     console.error("[DELETE_FILES_EXCEPTION]", error);

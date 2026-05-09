@@ -72,18 +72,21 @@ export default async function LaporanKeuanganPage({
         </div>
         <div className="flex items-center gap-3">
           {/* Pilih tahun */}
-          <form method="GET">
-            <select
-              name="tahun"
-              defaultValue={tahunAktif}
-              onChange={(e) => (e.target.form as HTMLFormElement).submit()}
-              className="px-3 py-2.5 rounded-xl border border-slate-200 bg-white text-sm font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 transition-all"
-            >
-              {tahunList.map((t) => (
-                <option key={t} value={t}>{t}</option>
-              ))}
-            </select>
-          </form>
+          <div className="flex gap-2">
+            {tahunList.map((t) => (
+              <Link
+                key={t}
+                href={`/dashboard/keuangan/laporan?tahun=${t}`}
+                className={`px-3 py-2.5 rounded-xl border text-sm font-bold transition-all ${
+                  tahunAktif === t
+                    ? "bg-blue-600 text-white border-blue-600 shadow-sm"
+                    : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
+                }`}
+              >
+                {t}
+              </Link>
+            ))}
+          </div>
           <ExportKeuanganButton
             transaksi={transaksiTahun as any}
             totalPemasukan={totalMasuk}

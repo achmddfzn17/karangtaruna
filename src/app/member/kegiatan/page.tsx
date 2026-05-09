@@ -1,6 +1,7 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
-import { prisma } from "@/lib/prisma";
+import prisma from "@/lib/prisma";
+import Link from "next/link";
 import {
   Calendar, MapPin, CheckCircle2, XCircle, Clock,
   TrendingUp, Award, Activity, Plus,
@@ -32,48 +33,92 @@ const statusLabel: Record<string, string> = {
   DIBATALKAN: "Dibatalkan",
 };
 
-export default async function RiwayatKegiatanPage() {
+export default async function RiwayatKegiatanPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ jenis?: string }>;
+}) {
   const session = await auth();
   if (!session?.user) redirect("/anggota/login");
   const userRole = (session.user as any).role;
   if (userRole !== "ANGGOTA") redirect("/anggota/login");
   const userId = (session.user as any).id;
 
+  const params = await searchParams;
+  const jenisFilter = params.jenis as string | undefined;
+
   const anggota = await prisma.anggota.findUnique({
     where: { userId },
     include: {
       kegiatan: {
-        include: { kegiatan: true },
+        include: {
+          kegiatan: true,
+          sertifikat: true,
+        },
         orderBy: { createdAt: "desc" },
       },
     },
   });
 
+  type AnggotaWithKegiatan = NonNullable<typeof anggota>;
+  type AnggotaKegiatanItem = AnggotaWithKegiatan["kegiatan"][number];
+
   // Kegiatan yang bisa didaftar (UPCOMING/ONGOING) dan belum terdaftar
-  const terdaftarIds = anggota?.kegiatan.map((k) => k.kegiatanId) ?? [];
+  const terdaftarIds = anggota?.kegiatan.map((k: AnggotaKegiatanItem) => k.kegiatanId) ?? [];
   const kegiatanTersedia = await prisma.kegiatan.findMany({
     where: {
       status: { in: ["UPCOMING", "ONGOING"] },
       id: { notIn: terdaftarIds },
+      ...(jenisFilter && { jenis: jenisFilter as any }),
     },
     orderBy: { tanggalMulai: "asc" },
     take: 10,
   });
 
-  const allKegiatan = anggota?.kegiatan ?? [];
+  const allKegiatan: AnggotaKegiatanItem[] = anggota?.kegiatan ?? [];
+  const filteredKegiatan = jenisFilter
+    ? allKegiatan.filter((k: AnggotaKegiatanItem) => k.kegiatan.jenis === jenisFilter)
+    : allKegiatan;
   const totalTerdaftar = allKegiatan.length;
-  const totalHadir = allKegiatan.filter((k) => k.hadir).length;
+  const totalHadir = allKegiatan.filter((k: AnggotaKegiatanItem) => k.hadir).length;
   const totalTidakHadir = allKegiatan.filter(
-    (k) => k.kegiatan.status === "SELESAI" && !k.hadir
+    (k: AnggotaKegiatanItem) => k.kegiatan.status === "SELESAI" && !k.hadir
   ).length;
   const persentaseHadir =
     totalTerdaftar > 0 ? Math.round((totalHadir / totalTerdaftar) * 100) : 0;
+
+  const jenisOptions = [
+    { value: "", label: "Semua" },
+    { value: "SOSIAL", label: "Sosial" },
+    { value: "PENDIDIKAN", label: "Pendidikan" },
+    { value: "EKONOMI", label: "Ekonomi" },
+    { value: "OLAHRAGA", label: "Olahraga" },
+    { value: "SENI_BUDAYA", label: "Seni Budaya" },
+    { value: "LAINNYA", label: "Lainnya" },
+  ];
 
   return (
     <div className="space-y-6 max-w-5xl">
       <div>
         <h1 className="text-2xl font-extrabold text-slate-900">Kegiatan</h1>
         <p className="text-sm text-slate-500 mt-1">Daftar kegiatan dan rekam jejak partisipasi Anda</p>
+      </div>
+
+      {/* Filter by Jenis */}
+      <div className="flex gap-2 flex-wrap">
+        {jenisOptions.map((opt) => (
+          <Link
+            key={opt.value}
+            href={opt.value ? `/member/kegiatan?jenis=${opt.value}` : "/member/kegiatan"}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+              (jenisFilter ?? "") === opt.value
+                ? "bg-blue-600 text-white shadow-sm"
+                : "bg-white text-slate-600 hover:bg-slate-50 border border-slate-200"
+            }`}
+          >
+            {opt.label}
+          </Link>
+        ))}
       </div>
 
       {/* Stats */}
@@ -150,10 +195,12 @@ export default async function RiwayatKegiatanPage() {
       {/* Riwayat Kegiatan */}
       <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
         <div className="px-6 py-5 border-b border-slate-100">
-          <h2 className="text-sm font-bold text-slate-800">Riwayat Kegiatan Saya ({totalTerdaftar})</h2>
+          <h2 className="text-sm font-bold text-slate-800">
+            Riwayat Kegiatan Saya ({filteredKegiatan.length}{jenisFilter ? ` · ${jenisFilter.replace("_", " ")}` : ""})
+          </h2>
         </div>
 
-        {allKegiatan.length === 0 ? (
+        {filteredKegiatan.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center px-6">
             <div className="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center mb-4">
               <Calendar className="w-8 h-8 text-slate-400" />
@@ -165,7 +212,7 @@ export default async function RiwayatKegiatanPage() {
           </div>
         ) : (
           <div className="divide-y divide-slate-50">
-            {allKegiatan.map((ak) => {
+            {filteredKegiatan.map((ak: AnggotaKegiatanItem) => {
               const kg = ak.kegiatan;
               const isSelesai = kg.status === "SELESAI";
               const bisaBatal = kg.status === "UPCOMING";
@@ -222,6 +269,17 @@ export default async function RiwayatKegiatanPage() {
                             <CheckCircle2 className="w-5 h-5 text-green-600" />
                           </div>
                           <span className="text-[10px] font-bold text-green-600">Hadir</span>
+                          {ak.sertifikat ? (
+                            <Link
+                              href="/member/sertifikat"
+                              className="flex items-center gap-1 px-2 py-1 rounded-lg bg-blue-50 text-blue-600 text-[10px] font-bold hover:bg-blue-100 transition-colors"
+                            >
+                              <Award className="w-3 h-3" />
+                              Sertifikat
+                            </Link>
+                          ) : (
+                            <span className="text-[10px] text-slate-400">Belum ada sertifikat</span>
+                          )}
                         </>
                       ) : (
                         <>

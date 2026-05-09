@@ -14,7 +14,7 @@ import {
   ToggleRight,
   CalendarClock,
 } from "lucide-react";
-import DeletePollingButton from "@/components/admin/DeletePollingButton";
+import { DeleteConfirmButton } from "@/components/admin/DeleteConfirmButton";
 import { createPolling, togglePollingStatus, deletePolling } from "./actions";
 
 export const metadata = { title: "Kelola E-Voting" };
@@ -26,7 +26,7 @@ export default async function AdminVotingPage({
 }) {
   const session = await auth();
   if (!session?.user) redirect("/login");
-  const userRole = (session.user as any).role;
+  const userRole = session.user.role;
   if (userRole !== "ADMIN" && userRole !== "SUPER_ADMIN") redirect("/login");
 
   const params = await searchParams;
@@ -241,7 +241,12 @@ export default async function AdminVotingPage({
                             </button>
                           </form>
                         )}
-                        <DeletePollingButton action={deletePolling} pollingId={poll.id} />
+                        <DeleteConfirmButton
+                          action={deletePolling}
+                          itemId={poll.id}
+                          message="Hapus voting ini?"
+                          title="Hapus voting"
+                        />
                       </div>
                     </div>
 

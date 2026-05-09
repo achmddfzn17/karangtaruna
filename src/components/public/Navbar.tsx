@@ -18,7 +18,15 @@ import {
   ClipboardList,
 } from "lucide-react";
 
-const navLinks = [
+import { Session } from "next-auth";
+
+interface NavLink {
+  label: string;
+  href: string;
+  icon: React.ElementType;
+}
+
+const navLinks: NavLink[] = [
   { label: "Beranda", href: "/", icon: Home },
   { label: "Tentang", href: "/tentang", icon: Info },
   { label: "Kegiatan", href: "/kegiatan", icon: Calendar },
@@ -28,7 +36,7 @@ const navLinks = [
   { label: "Kuisioner", href: "/sus", icon: ClipboardList },
 ];
 
-export default function Navbar({ session }: { session: any }) {
+export default function Navbar({ session }: { session: Session | null }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = usePathname();
 
@@ -42,6 +50,11 @@ export default function Navbar({ session }: { session: any }) {
     return pathname.startsWith(href);
   };
 
+  const userRole = session?.user?.role as string | undefined;
+  const isAdmin = userRole === "ADMIN" || userRole === "SUPER_ADMIN";
+  const dashboardLink = isAdmin ? "/dashboard" : "/member/dashboard";
+  const dashboardText = isAdmin ? "Dashboard Admin" : "Dashboard Anggota";
+
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-100 shadow-sm">
       <nav className="w-full max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
@@ -49,6 +62,7 @@ export default function Navbar({ session }: { session: any }) {
           
           {/* Logo Area */}
           <Link href="/" className="flex items-center gap-3">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img 
               src="/logo.png" 
               alt="Logo" 
@@ -82,7 +96,7 @@ export default function Navbar({ session }: { session: any }) {
 
           {/* Desktop Nav Links */}
           <div className="hidden lg:flex items-center gap-1">
-            {navLinks.map((link: any) => {
+            {navLinks.map((link) => {
               const active = isActive(link.href);
               const Icon = link.icon;
               return (
@@ -106,11 +120,11 @@ export default function Navbar({ session }: { session: any }) {
           <div className="hidden lg:flex items-center">
             {session ? (
               <Link
-                href={(session.user as any)?.role === "ADMIN" || (session.user as any)?.role === "SUPER_ADMIN" ? "/dashboard" : "/member/dashboard"}
+                href={dashboardLink}
                 className="flex items-center gap-2 px-5 py-2.5 text-[13px] font-bold text-white bg-green-600 hover:bg-green-700 rounded-lg transition-colors shadow-sm shadow-green-500/20"
               >
                 <Home className="w-4 h-4" />
-                {(session.user as any)?.role === "ADMIN" || (session.user as any)?.role === "SUPER_ADMIN" ? "Dashboard Admin" : "Dashboard Anggota"}
+                {dashboardText}
               </Link>
             ) : (
               <Link
@@ -148,7 +162,7 @@ export default function Navbar({ session }: { session: any }) {
               className="lg:hidden border-t border-gray-100 bg-white"
             >
               <div className="px-2 py-4 flex flex-col gap-1">
-                {navLinks.map((link: any, i: number) => {
+                {navLinks.map((link, i: number) => {
                   const active = isActive(link.href);
                   const Icon = link.icon;
                   return (
@@ -182,11 +196,11 @@ export default function Navbar({ session }: { session: any }) {
                 >
                   {session ? (
                     <Link
-                      href={(session.user as any)?.role === "ADMIN" || (session.user as any)?.role === "SUPER_ADMIN" ? "/dashboard" : "/member/dashboard"}
+                      href={dashboardLink}
                       className="flex items-center justify-center gap-2 w-full px-5 py-3.5 rounded-xl text-sm font-bold text-white bg-green-600 hover:bg-green-700 shadow-sm transition-colors"
                     >
                       <Home className="w-5 h-5" />
-                      {(session.user as any)?.role === "ADMIN" || (session.user as any)?.role === "SUPER_ADMIN" ? "Dashboard Admin" : "Dashboard Anggota"}
+                      {dashboardText}
                     </Link>
                   ) : (
                     <Link

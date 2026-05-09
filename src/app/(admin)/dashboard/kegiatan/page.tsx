@@ -1,29 +1,32 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { formatDate } from "@/lib/utils";
-import { Calendar, Plus, Trash2, Pencil, Users, Search, Filter } from "lucide-react";
+import { Calendar, Plus, Trash2, Pencil, Users, Search } from "lucide-react";
 import { deleteKegiatan } from "./tambah/actions";
 import Pagination from "@/components/admin/Pagination";
+import { Prisma, JenisKegiatan, StatusKegiatan } from "@prisma/client";
 
 export const metadata = { title: "Data Kegiatan" };
 
 const PER_PAGE = 12;
 
-export default async function DataKegiatanPage({
-  searchParams,
-}: {
+interface PageProps {
   searchParams: Promise<{ q?: string; jenis?: string; status?: string; page?: string }>;
-}) {
+}
+
+export default async function DataKegiatanPage({ searchParams }: PageProps) {
   const params = await searchParams;
   const q = params.q?.trim() ?? "";
-  const jenisFilter = params.jenis ?? "SEMUA";
-  const statusFilter = params.status ?? "SEMUA";
+  const jenisFilter = (params.jenis as JenisKegiatan | "SEMUA") ?? "SEMUA";
+  const statusFilter = (params.status as StatusKegiatan | "SEMUA") ?? "SEMUA";
   const page = Math.max(1, parseInt(params.page ?? "1") || 1);
 
-  const where: any = {
-    ...(q ? { nama: { contains: q, mode: "insensitive" as const } } : {}),
-    ...(jenisFilter !== "SEMUA" ? { jenis: jenisFilter } : {}),
-    ...(statusFilter !== "SEMUA" ? { status: statusFilter } : {}),
+  const where: Prisma.KegiatanWhereInput = {
+    AND: [
+      q ? { nama: { contains: q, mode: "insensitive" } } : {},
+      jenisFilter !== "SEMUA" ? { jenis: jenisFilter } : {},
+      statusFilter !== "SEMUA" ? { status: statusFilter } : {},
+    ],
   };
 
   const [kegiatanList, totalFiltered] = await Promise.all([
@@ -40,7 +43,7 @@ export default async function DataKegiatanPage({
   const totalPages = Math.ceil(totalFiltered / PER_PAGE);
   const baseUrl = `/dashboard/kegiatan?jenis=${jenisFilter}&status=${statusFilter}${q ? `&q=${encodeURIComponent(q)}` : ""}`;
 
-  const jenisColor: Record<string, string> = {
+  const jenisColor: Record<JenisKegiatan, string> = {
     SOSIAL: "bg-green-100 text-green-700",
     PENDIDIKAN: "bg-blue-100 text-blue-700",
     EKONOMI: "bg-amber-100 text-amber-700",
@@ -49,7 +52,7 @@ export default async function DataKegiatanPage({
     LAINNYA: "bg-gray-100 text-gray-600",
   };
 
-  const statusColor: Record<string, string> = {
+  const statusColor: Record<StatusKegiatan, string> = {
     UPCOMING: "bg-blue-100 text-blue-700",
     ONGOING: "bg-green-100 text-green-700",
     SELESAI: "bg-gray-100 text-gray-600",
@@ -104,7 +107,7 @@ export default async function DataKegiatanPage({
               defaultValue={q}
               type="text"
               placeholder="Nama kegiatan..."
-              className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 transition-all"
+              className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-300 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 transition-all"
             />
           </div>
         </div>
@@ -113,7 +116,7 @@ export default async function DataKegiatanPage({
           <select
             name="jenis"
             defaultValue={jenisFilter}
-            className="px-3 py-2.5 rounded-xl border border-slate-200 bg-white text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 transition-all"
+            className="px-3 py-2.5 rounded-xl border border-slate-300 bg-white text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 transition-all"
           >
             {jenisOptions.map((o) => (
               <option key={o.value} value={o.value}>{o.label}</option>
@@ -125,7 +128,7 @@ export default async function DataKegiatanPage({
           <select
             name="status"
             defaultValue={statusFilter}
-            className="px-3 py-2.5 rounded-xl border border-slate-200 bg-white text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 transition-all"
+            className="px-3 py-2.5 rounded-xl border border-slate-300 bg-white text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 transition-all"
           >
             {statusOptions.map((o) => (
               <option key={o.value} value={o.value}>{o.label}</option>
@@ -148,18 +151,18 @@ export default async function DataKegiatanPage({
         )}
       </form>
 
-      <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm">
+      <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="bg-slate-50 border-b border-gray-100">
-                <th className="text-left text-[11px] text-slate-400 font-bold uppercase tracking-wider py-3 px-4">Kegiatan</th>
-                <th className="text-left text-[11px] text-slate-400 font-bold uppercase tracking-wider py-3 px-4">Jenis</th>
-                <th className="text-left text-[11px] text-slate-400 font-bold uppercase tracking-wider py-3 px-4">Tanggal</th>
-                <th className="text-left text-[11px] text-slate-400 font-bold uppercase tracking-wider py-3 px-4">Lokasi</th>
-                <th className="text-left text-[11px] text-slate-400 font-bold uppercase tracking-wider py-3 px-4">Peserta</th>
-                <th className="text-left text-[11px] text-slate-400 font-bold uppercase tracking-wider py-3 px-4">Status</th>
-                <th className="text-right text-[11px] text-slate-400 font-bold uppercase tracking-wider py-3 px-4">Aksi</th>
+              <tr className="bg-slate-50 border-b border-slate-200">
+                <th className="text-left text-[11px] text-slate-500 font-bold uppercase tracking-wider py-3 px-4">Kegiatan</th>
+                <th className="text-left text-[11px] text-slate-500 font-bold uppercase tracking-wider py-3 px-4">Jenis</th>
+                <th className="text-left text-[11px] text-slate-500 font-bold uppercase tracking-wider py-3 px-4">Tanggal</th>
+                <th className="text-left text-[11px] text-slate-500 font-bold uppercase tracking-wider py-3 px-4">Lokasi</th>
+                <th className="text-left text-[11px] text-slate-500 font-bold uppercase tracking-wider py-3 px-4">Peserta</th>
+                <th className="text-left text-[11px] text-slate-500 font-bold uppercase tracking-wider py-3 px-4">Status</th>
+                <th className="text-right text-[11px] text-slate-500 font-bold uppercase tracking-wider py-3 px-4">Aksi</th>
               </tr>
             </thead>
             <tbody>
@@ -171,10 +174,10 @@ export default async function DataKegiatanPage({
                   </td>
                 </tr>
               ) : (
-                kegiatanList.map((k: any) => (
+                kegiatanList.map((k) => (
                   <tr
                     key={k.id}
-                    className="border-b border-gray-50 last:border-0 hover:bg-blue-50/30 transition-colors"
+                    className="border-b border-slate-100 last:border-0 hover:bg-blue-50/40 transition-colors"
                   >
                     <td className="py-3.5 px-4">
                       <p className="text-sm font-semibold text-slate-800">{k.nama}</p>
@@ -185,7 +188,7 @@ export default async function DataKegiatanPage({
                     <td className="py-3.5 px-4">
                       <span
                         className={`inline-block px-2.5 py-1 rounded-lg text-[11px] font-bold ${
-                          jenisColor[k.jenis] || jenisColor.LAINNYA
+                          jenisColor[k.jenis]
                         }`}
                       >
                         {k.jenis.replace("_", " ")}
@@ -207,7 +210,7 @@ export default async function DataKegiatanPage({
                     <td className="py-3.5 px-4">
                       <span
                         className={`inline-block px-2.5 py-1 rounded-lg text-[11px] font-bold ${
-                          statusColor[k.status] || "bg-gray-100 text-gray-600"
+                          statusColor[k.status]
                         }`}
                       >
                         {k.status}
@@ -218,7 +221,7 @@ export default async function DataKegiatanPage({
                         <Link
                           href={`/dashboard/kegiatan/edit/${k.id}`}
                           title="Edit Kegiatan"
-                          className="p-2 text-slate-400 hover:text-amber-500 hover:bg-amber-50 rounded-lg transition-colors"
+                          className="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
                         >
                           <Pencil className="w-4 h-4" />
                         </Link>
@@ -226,7 +229,7 @@ export default async function DataKegiatanPage({
                           <button
                             type="submit"
                             title="Hapus Kegiatan"
-                            className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                            className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>

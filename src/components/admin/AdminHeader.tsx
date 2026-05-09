@@ -4,19 +4,18 @@ import { useState, useRef, useEffect } from "react";
 import { Menu, UserCircle, LogOut, ChevronDown, ExternalLink } from "lucide-react";
 import Link from "next/link";
 import NotificationBell from "./NotificationBell";
+import { signOut } from "next-auth/react";
 
 interface AdminHeaderProps {
   userName: string;
   userRole: string;
   onMenuClick: () => void;
-  signOutAction: () => Promise<void>;
 }
 
 export default function AdminHeader({
   userName,
   userRole,
   onMenuClick,
-  signOutAction,
 }: AdminHeaderProps) {
   const [open, setOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -117,15 +116,14 @@ export default function AdminHeader({
 
             {/* Logout */}
             <div className="border-t border-slate-100 py-1.5">
-              <form action={signOutAction}>
-                <button
-                  type="submit"
-                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-semibold text-red-500 hover:bg-red-50 hover:text-red-600 transition-colors"
-                >
-                  <LogOut className="w-4 h-4" />
-                  Logout Akun
-                </button>
-              </form>
+              <button
+                type="button"
+                onClick={() => signOut({ callbackUrl: "/login" })}
+                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-semibold text-red-500 hover:bg-red-50 hover:text-red-600 transition-colors"
+              >
+                <LogOut className="w-4 h-4" />
+                Logout Akun
+              </button>
             </div>
           </div>
         )}

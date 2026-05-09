@@ -1,6 +1,6 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
-import { prisma } from "@/lib/prisma";
+import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import {
   Vote as VoteIcon,
@@ -25,10 +25,10 @@ export default async function MemberVotingPage({
   const session = await auth();
   if (!session?.user) redirect("/anggota/login");
 
-  const userId = (session.user as any).id;
+  const userId = session.user.id;
   const params = await searchParams;
 
-  // Optimized: Single query to get polls with user votes
+  // Fetch polls with user votes AND total vote counts per option
   const polls = await prisma.polling.findMany({
     where: { 
       isActive: true,
@@ -44,6 +44,7 @@ export default async function MemberVotingPage({
             where: { userId },
             select: { id: true, userId: true },
           },
+          _count: { select: { votes: true } },
         },
       },
     },
@@ -55,7 +56,7 @@ export default async function MemberVotingPage({
     "use server";
     const session = await auth();
     if (!session?.user) redirect("/anggota/login");
-    const userId = (session.user as any).id;
+    const userId = session.user.id;
 
     const pollingId = formData.get("pollingId") as string;
     const optionId = formData.get("optionId") as string;
@@ -246,25 +247,54 @@ export default async function MemberVotingPage({
                   {hasVoted ? (
                     <div className="space-y-3">
                       <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">
-                        Pilihan Anda:
+                        Hasil Voting:
                       </p>
-                      {poll.options.map((opt) => (
-                        <div
-                          key={opt.id}
-                          className={`p-4 rounded-xl border flex items-center justify-between ${
-                            opt.votes.length > 0
-                              ? "bg-blue-600 border-blue-600 text-white shadow-md shadow-blue-600/20"
-                              : "bg-slate-50 border-slate-100 text-slate-500 opacity-60"
-                          }`}
-                        >
-                          <span className="text-sm font-bold">{opt.label}</span>
-                          {opt.votes.length > 0 && <CheckCircle2 className="w-5 h-5" />}
+                      {(() => {
+                        const totalVotes = poll.options.reduce((s, o) => s + o._count.votes, 0);
+                        return poll.options.map((opt) => {
+                          const isMyVote = opt.votes.length > 0;
+                          const count = opt._count.votes;
+                          const pct = totalVotes > 0 ? Math.round((count / totalVotes) * 100) : 0;
+                          return (
+                            <div key={opt.id} className="space-y-1">
+                              <div className={`p-4 rounded-xl border flex items-center justify-between ${
+                                isMyVote
+                                  ? "bg-blue-600 border-blue-600 text-white shadow-md shadow-blue-600/20"
+                                  : "bg-slate-50 border-slate-100 text-slate-700"
+                              }`}>
+                                <div className="flex items-center gap-2 flex-1 min-w-0">
+                                  {isMyVote && <CheckCircle2 className="w-4 h-4 shrink-0" />}
+                                  <span className="text-sm font-bold truncate">{opt.label}</span>
+                                </div>
+                                <div className="flex items-center gap-3 shrink-0 ml-3">
+                                  <span className={`text-xs font-bold ${isMyVote ? "text-blue-100" : "text-slate-500"}`}>
+                                    {count} suara
+                                  </span>
+                                  <span className={`text-sm font-extrabold ${isMyVote ? "text-white" : "text-slate-700"}`}>
+                                    {pct}%
+                                  </span>
+                                </div>
+                              </div>
+                              {/* Progress bar */}
+                              <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                <div
+                                  className={`h-full rounded-full transition-all duration-500 ${isMyVote ? "bg-blue-600" : "bg-slate-300"}`}
+                                  style={{ width: `${pct}%` }}
+                                />
+                              </div>
+                            </div>
+                          );
+                        });
+                      })()}
+                      <div className="flex items-center justify-between mt-4 pt-3 border-t border-slate-100">
+                        <div className="flex items-center gap-2 p-3 bg-white border border-blue-100 rounded-xl flex-1">
+                          <Lock className="w-4 h-4 text-blue-500 shrink-0" />
+                          <p className="text-[11px] text-slate-500 font-medium italic">
+                            Suara Anda telah terkunci dan tidak dapat diubah.
+                          </p>
                         </div>
-                      ))}
-                      <div className="flex items-center gap-2 mt-6 p-3 bg-white border border-blue-100 rounded-xl">
-                        <Lock className="w-4 h-4 text-blue-500" />
-                        <p className="text-[11px] text-slate-500 font-medium italic">
-                          Suara Anda telah terkunci dan tidak dapat diubah.
+                        <p className="text-xs text-slate-400 font-semibold ml-4 shrink-0">
+                          {poll.options.reduce((s, o) => s + o._count.votes, 0)} total suara
                         </p>
                       </div>
                     </div>

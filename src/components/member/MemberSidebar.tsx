@@ -1,48 +1,203 @@
 "use client";
 
-import { useEffect } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import {
   Home,
-  User,
   Clock,
   Wallet,
   MessageSquare,
   Vote as VoteIcon,
-  ExternalLink,
-  LogOut,
+  Bell,
+  Newspaper,
+  BookOpen,
+  Calendar as CalendarIcon,
+  Image as ImageIcon,
+  CreditCard,
+  Award,
+  Layers,
   X,
+  ChevronDown,
+  Info,
+  Zap,
 } from "lucide-react";
-import { signOut } from "next-auth/react";
 
-const navLinks = [
-  { href: "/member/dashboard", label: "Dashboard", icon: Home },
-  { href: "/member/profile", label: "Profil Saya", icon: User },
-  { href: "/member/kegiatan", label: "Riwayat Kegiatan", icon: Clock },
-  { href: "/member/keuangan", label: "Transparansi Keuangan", icon: Wallet },
-  { href: "/member/aspirasi", label: "Papan Aspirasi", icon: MessageSquare },
-  { href: "/member/voting", label: "E-Voting", icon: VoteIcon },
+interface NavLink {
+  href: string;
+  label: string;
+  icon: React.ElementType;
+  badge?: number;
+}
+
+interface MenuGroup {
+  label: string;
+  icon: React.ElementType;
+  items: NavLink[];
+  defaultOpen?: boolean;
+}
+
+const getMenuGroups = (unreadCount: number): MenuGroup[] => [
+  {
+    label: "Dashboard",
+    icon: Home,
+    items: [{ href: "/member/dashboard", label: "Dashboard", icon: Home }],
+    defaultOpen: true,
+  },
+  {
+    label: "Informasi",
+    icon: Info,
+    items: [
+      { href: "/member/notifikasi", label: "Notifikasi", icon: Bell, badge: unreadCount },
+      { href: "/member/kalender", label: "Kalender Kegiatan", icon: CalendarIcon },
+      { href: "/member/kegiatan", label: "Riwayat Kegiatan", icon: Clock },
+    ],
+  },
+  {
+    label: "Konten",
+    icon: BookOpen,
+    items: [
+      { href: "/member/berita", label: "Berita", icon: Newspaper },
+      { href: "/member/artikel", label: "Artikel", icon: BookOpen },
+      { href: "/member/galeri", label: "Galeri Kegiatan", icon: ImageIcon },
+      { href: "/member/program", label: "Program Kerja", icon: Layers },
+    ],
+  },
+  {
+    label: "Keuangan",
+    icon: Wallet,
+    items: [
+      { href: "/member/keuangan", label: "Transparansi Keuangan", icon: Wallet },
+      { href: "/member/iuran", label: "Iuran Anggota", icon: CreditCard },
+    ],
+  },
+  {
+    label: "Engagement",
+    icon: Zap,
+    items: [
+      { href: "/member/sertifikat", label: "Sertifikat Digital", icon: Award },
+      { href: "/member/aspirasi", label: "Papan Aspirasi", icon: MessageSquare },
+      { href: "/member/voting", label: "E-Voting", icon: VoteIcon },
+    ],
+  },
 ];
 
 interface MemberSidebarProps {
   mobileOpen?: boolean;
   onMobileClose?: () => void;
+  unreadCount?: number;
 }
 
 export default function MemberSidebar({
   mobileOpen = false,
   onMobileClose,
+  unreadCount = 0,
 }: MemberSidebarProps) {
   const pathname = usePathname();
+  const menuGroups = getMenuGroups(unreadCount);
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(
+    new Set(menuGroups.filter((g) => g.defaultOpen).map((g) => g.label))
+  );
 
-  // Close on route change
   useEffect(() => {
     onMobileClose?.();
   }, [pathname]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Auto-expand group if active item is in it
+  useEffect(() => {
+    for (const group of menuGroups) {
+      if (group.items.some((item) => item.href === pathname)) {
+        setExpandedGroups((prev) => new Set(prev).add(group.label));
+      }
+    }
+  }, [pathname]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const isActive = (href: string) => pathname === href;
+
+  const toggleGroup = (groupLabel: string) => {
+    setExpandedGroups((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(groupLabel)) {
+        newSet.delete(groupLabel);
+      } else {
+        newSet.add(groupLabel);
+      }
+      return newSet;
+    });
+  };
+
+  const NavItemComponent = ({ link }: { link: NavLink }) => {
+    const active = isActive(link.href);
+    const Icon = link.icon;
+    return (
+      <Link
+        href={link.href}
+        className={cn(
+          "flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] font-medium transition-all duration-150 group",
+          active
+            ? "bg-blue-600 text-white shadow-sm shadow-blue-500/20"
+            : "text-slate-500 hover:bg-slate-50 hover:text-slate-800"
+        )}
+      >
+        <Icon
+          className={cn(
+            "w-[16px] h-[16px] shrink-0",
+            active ? "text-white" : "text-slate-400 group-hover:text-slate-600"
+          )}
+        />
+        <span className="truncate flex-1">{link.label}</span>
+        {link.badge && link.badge > 0 && (
+          <span
+            className={cn(
+              "text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center shrink-0",
+              active ? "bg-white/20 text-white" : "bg-red-500 text-white"
+            )}
+          >
+            {link.badge > 99 ? "99+" : link.badge}
+          </span>
+        )}
+      </Link>
+    );
+  };
+
+  const MenuGroupComponent = ({ group }: { group: MenuGroup }) => {
+    const isExpanded = expandedGroups.has(group.label);
+    const GroupIcon = group.icon;
+
+    // Single item groups (like Dashboard) don't need expand/collapse
+    if (group.items.length === 1) {
+      return <NavItemComponent link={group.items[0]} />;
+    }
+
+    return (
+      <div className="space-y-0.5">
+        {/* Group header button */}
+        <button
+          onClick={() => toggleGroup(group.label)}
+          className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] font-medium transition-all duration-150 group text-slate-600 hover:bg-slate-50 hover:text-slate-800"
+        >
+          <GroupIcon className="w-[16px] h-[16px] shrink-0 text-slate-400 group-hover:text-slate-600" />
+          <span className="truncate flex-1 text-left">{group.label}</span>
+          <ChevronDown
+            className={cn(
+              "w-4 h-4 shrink-0 text-slate-400 transition-transform duration-200",
+              isExpanded && "rotate-180"
+            )}
+          />
+        </button>
+
+        {/* Group items */}
+        {isExpanded && (
+          <div className="pl-2 space-y-0.5 border-l border-slate-200 ml-3">
+            {group.items.map((item) => (
+              <NavItemComponent key={item.href} link={item} />
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
 
   const SidebarContent = () => (
     <>
@@ -64,7 +219,6 @@ export default function MemberSidebar({
             Generasi Emas
           </p>
         </div>
-        {/* Close — mobile only */}
         <button
           onClick={onMobileClose}
           className="lg:hidden p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
@@ -74,54 +228,11 @@ export default function MemberSidebar({
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
-        <p className="px-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">
-          Menu
-        </p>
-        {navLinks.map((link) => {
-          const active = isActive(link.href);
-          const Icon = link.icon;
-          return (
-            <Link
-              key={link.href}
-              href={link.href}
-              className={cn(
-                "flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-semibold transition-all duration-150 group",
-                active
-                  ? "bg-blue-600 text-white shadow-sm shadow-blue-500/20"
-                  : "text-slate-500 hover:bg-slate-50 hover:text-slate-800"
-              )}
-            >
-              <Icon
-                className={cn(
-                  "w-[17px] h-[17px] shrink-0",
-                  active ? "text-white" : "text-slate-400 group-hover:text-slate-600"
-                )}
-              />
-              <span className="truncate">{link.label}</span>
-            </Link>
-          );
-        })}
+      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+        {menuGroups.map((group) => (
+          <MenuGroupComponent key={group.label} group={group} />
+        ))}
       </nav>
-
-      {/* Bottom */}
-      <div className="border-t border-slate-100 px-3 py-3 space-y-0.5 shrink-0">
-        <Link
-          href="/"
-          target="_blank"
-          className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-semibold text-slate-500 hover:bg-slate-50 hover:text-slate-800 transition-all"
-        >
-          <ExternalLink className="w-[17px] h-[17px] shrink-0 text-slate-400" />
-          <span>Lihat Website</span>
-        </Link>
-        <button
-          onClick={() => signOut({ callbackUrl: "/anggota/login" })}
-          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-semibold text-red-500 hover:bg-red-50 hover:text-red-600 transition-all"
-        >
-          <LogOut className="w-[17px] h-[17px] shrink-0" />
-          <span>Logout</span>
-        </button>
-      </div>
     </>
   );
 

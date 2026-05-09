@@ -341,38 +341,49 @@ export default function TentangPage() {
       </section>
 
       {/* Struktur Pengurus */}
-      <section className="py-20 md:py-28 bg-white border-t border-slate-100">
-        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-50 rounded-full text-[11px] font-extrabold text-blue-600 uppercase tracking-wide mb-4">
-              Kepengurusan
-            </span>
-            <h2 className="text-3xl md:text-[40px] font-extrabold text-slate-900 mb-4 leading-tight">
-              Struktur <span className="text-blue-500">Pengurus</span>
+      <section className="py-24 md:py-32 bg-white relative overflow-hidden">
+        <div className="absolute top-0 left-0 w-full h-24 bg-gradient-to-b from-[#f4f9ff] to-transparent" />
+        
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="text-center mb-20">
+            <div className="flex items-center justify-center gap-2 mb-4">
+              <div className="w-10 h-0.5 bg-blue-600 rounded-full" />
+              <span className="text-[11px] font-black text-blue-600 uppercase tracking-[0.2em]">
+                Leadership
+              </span>
+              <div className="w-10 h-0.5 bg-blue-600 rounded-full" />
+            </div>
+            <h2 className="text-3xl md:text-[44px] font-black text-slate-900 mb-6 leading-tight tracking-tight">
+              Struktur <span className="text-blue-600 text-glow">Kepengurusan</span>
             </h2>
-            <p className="text-[15px] text-slate-600 max-w-xl mx-auto">
-              Para pemimpin muda yang berdedikasi dalam menjalankan roda
-              organisasi untuk periode 2023–2026.
+            <p className="text-[16px] md:text-lg text-slate-500 max-w-2xl mx-auto font-medium leading-relaxed">
+              Para pemimpin muda visioner yang berdedikasi tinggi dalam menggerakkan 
+              roda organisasi menuju visi Karang Taruna yang unggul dan inklusif.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {pengurus.map((p: any) => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+            {pengurus.map((p) => (
               <div
                 key={p.nama}
-                className="bg-white border border-slate-100 rounded-2xl p-6 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 text-center flex flex-col items-center"
+                className="group bg-white border border-slate-100 rounded-[32px] p-8 shadow-sm hover:shadow-2xl hover:shadow-blue-500/10 hover:-translate-y-2 transition-all duration-500 text-center flex flex-col items-center relative overflow-hidden"
               >
-                {/* Avatar */}
+                <div className="absolute inset-0 bg-gradient-to-b from-blue-50/0 to-blue-50/50 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                
+                {/* Avatar / Icon Container */}
                 <div
-                  className={`w-16 h-16 ${p.bg} rounded-2xl flex items-center justify-center mb-5`}
+                  className={`relative z-10 w-24 h-24 ${p.bg} rounded-[28px] flex items-center justify-center mb-8 shadow-xl shadow-blue-500/10 group-hover:scale-110 transition-transform duration-500`}
                 >
-                  <p.icon className={`w-8 h-8 ${p.textColor}`} />
+                  <p.icon className={`w-10 h-10 ${p.textColor}`} />
                 </div>
-                <h4 className="font-extrabold text-[16px] text-slate-900 mb-1">{p.nama}</h4>
-                <p className="text-[13px] text-blue-500 font-bold mb-3">
+                
+                <h4 className="relative z-10 font-black text-lg text-slate-900 mb-2 group-hover:text-blue-600 transition-colors tracking-tight">
+                  {p.nama}
+                </h4>
+                <p className="relative z-10 text-[13px] font-black uppercase tracking-widest text-blue-500 mb-5">
                   {p.jabatan}
                 </p>
-                <span className="text-[11px] font-bold text-slate-500 bg-slate-50 rounded-md px-3 py-1">
+                <span className="relative z-10 text-[11px] font-black text-slate-400 border border-slate-100 rounded-xl px-4 py-1.5 bg-slate-50 uppercase tracking-widest">
                   {p.periode}
                 </span>
               </div>

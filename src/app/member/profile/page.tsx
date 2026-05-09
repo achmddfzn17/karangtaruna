@@ -1,23 +1,15 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
-import { prisma } from "@/lib/prisma";
+import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import {
-  User,
-  Phone,
-  MapPin,
-  Briefcase,
-  GraduationCap,
-  Calendar,
-  BadgeCheck,
-  Save,
-  AlertCircle,
-  CheckCircle2,
+  User, Phone, MapPin, Briefcase,
+  GraduationCap, Calendar, BadgeCheck,
+  Save, AlertCircle, CheckCircle2,
 } from "lucide-react";
+import FotoUpload from "@/components/member/FotoUpload";
 
-export const metadata = {
-  title: "Profile Saya",
-};
+export const metadata = { title: "Profile Saya" };
 
 export default async function ProfilePage({
   searchParams,
@@ -26,25 +18,19 @@ export default async function ProfilePage({
 }) {
   const session = await auth();
   if (!session?.user) redirect("/anggota/login");
-
-  const userRole = (session.user as any).role;
+  const userRole = session.user.role;
   if (userRole !== "ANGGOTA") redirect("/anggota/login");
 
-  const userId = (session.user as any).id;
+  const userId = session.user.id;
   const params = await searchParams;
 
-  const anggota = await prisma.anggota.findUnique({
-    where: { userId },
-  });
+  const anggota = await prisma.anggota.findUnique({ where: { userId } });
 
-  // Server Action: Update Profile
   async function updateProfile(formData: FormData) {
     "use server";
-
     const session = await auth();
     if (!session?.user) redirect("/anggota/login");
-    const userId = (session.user as any).id;
-
+    const userId = session.user.id;
     const anggota = await prisma.anggota.findUnique({ where: { userId } });
     if (!anggota) return;
 
@@ -80,17 +66,17 @@ export default async function ProfilePage({
     return new Date(date).toISOString().split("T")[0];
   };
 
+  const avatarUrl =
+    anggota?.foto ||
+    `https://ui-avatars.com/api/?name=${encodeURIComponent(anggota?.namaLengkap || session.user.name || "A")}&background=2563eb&color=fff&size=200`;
+
   return (
     <div className="space-y-6 max-w-4xl">
-      {/* Page Header */}
       <div>
         <h1 className="text-2xl font-extrabold text-slate-900">Profile Saya</h1>
-        <p className="text-sm text-slate-500 mt-1">
-          Perbarui data diri Anda secara mandiri
-        </p>
+        <p className="text-sm text-slate-500 mt-1">Perbarui data diri Anda secara mandiri</p>
       </div>
 
-      {/* Success / Error Alert */}
       {params.success && (
         <div className="flex items-center gap-3 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-xl text-sm font-medium">
           <CheckCircle2 className="w-5 h-5 shrink-0" />
@@ -105,19 +91,20 @@ export default async function ProfilePage({
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left: Identity Card */}
+        {/* Left */}
         <div className="space-y-4">
-          {/* Avatar Card */}
+          {/* Avatar + Upload */}
           <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 flex flex-col items-center text-center">
-            <div className="w-20 h-20 rounded-2xl bg-blue-600 flex items-center justify-center text-white text-3xl font-extrabold mb-4 shadow-lg shadow-blue-500/20">
-              {(session.user.name || "A").charAt(0).toUpperCase()}
-            </div>
-            <h2 className="text-base font-extrabold text-slate-900">
+            <FotoUpload
+              currentFoto={anggota?.foto || null}
+              avatarUrl={avatarUrl}
+              namaLengkap={anggota?.namaLengkap || session.user.name || ""}
+              anggotaId={anggota?.id || ""}
+            />
+            <h2 className="text-base font-extrabold text-slate-900 mt-4">
               {session.user.name}
             </h2>
             <p className="text-xs text-slate-500 mt-1">{session.user.email}</p>
-
-            {/* Status badge */}
             <span
               className={`mt-3 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold ${
                 anggota?.status === "AKTIF"
@@ -125,28 +112,20 @@ export default async function ProfilePage({
                   : "bg-slate-100 text-slate-600"
               }`}
             >
-              <span
-                className={`w-1.5 h-1.5 rounded-full ${
-                  anggota?.status === "AKTIF" ? "bg-green-500" : "bg-slate-400"
-                }`}
-              />
+              <span className={`w-1.5 h-1.5 rounded-full ${anggota?.status === "AKTIF" ? "bg-green-500" : "bg-slate-400"}`} />
               {anggota?.status === "AKTIF" ? "Anggota Aktif" : "Non-Aktif"}
             </span>
           </div>
 
           {/* Read-only info */}
           <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 space-y-4">
-            <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-              Data Keanggotaan
-            </h3>
+            <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Data Keanggotaan</h3>
             <div className="space-y-3">
               <div className="flex items-start gap-3">
                 <BadgeCheck className="w-4 h-4 text-blue-500 mt-0.5 shrink-0" />
                 <div>
                   <p className="text-[10px] text-slate-400 font-medium uppercase">NIK</p>
-                  <p className="text-sm font-bold text-slate-800">
-                    {anggota?.nik || "Belum diisi"}
-                  </p>
+                  <p className="text-sm font-bold text-slate-800">{anggota?.nik || "Belum diisi"}</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
@@ -155,15 +134,22 @@ export default async function ProfilePage({
                   <p className="text-[10px] text-slate-400 font-medium uppercase">Bergabung</p>
                   <p className="text-sm font-bold text-slate-800">
                     {anggota?.tanggalGabung
-                      ? new Date(anggota.tanggalGabung).toLocaleDateString("id-ID", {
-                          day: "numeric",
-                          month: "long",
-                          year: "numeric",
-                        })
+                      ? new Date(anggota.tanggalGabung).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })
                       : "-"}
                   </p>
                 </div>
               </div>
+              {anggota?.jenisKelamin && (
+                <div className="flex items-start gap-3">
+                  <User className="w-4 h-4 text-pink-500 mt-0.5 shrink-0" />
+                  <div>
+                    <p className="text-[10px] text-slate-400 font-medium uppercase">Jenis Kelamin</p>
+                    <p className="text-sm font-bold text-slate-800">
+                      {anggota.jenisKelamin === "LAKI_LAKI" ? "Laki-laki" : "Perempuan"}
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
             <p className="text-[11px] text-slate-400 pt-2 border-t border-slate-50">
               NIK dan tanggal bergabung hanya dapat diubah oleh Admin.
@@ -175,11 +161,8 @@ export default async function ProfilePage({
         <div className="lg:col-span-2">
           <form action={updateProfile}>
             <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 space-y-6">
-              <h3 className="text-sm font-bold text-slate-800 pb-4 border-b border-slate-100">
-                Edit Data Diri
-              </h3>
+              <h3 className="text-sm font-bold text-slate-800 pb-4 border-b border-slate-100">Edit Data Diri</h3>
 
-              {/* Nama (readonly) */}
               <div className="space-y-1.5">
                 <label className="text-[12px] font-bold text-slate-600 flex items-center gap-1.5">
                   <User className="w-3.5 h-3.5" />
@@ -194,7 +177,6 @@ export default async function ProfilePage({
                 <p className="text-[11px] text-slate-400">Nama hanya dapat diubah oleh Admin.</p>
               </div>
 
-              {/* Row: Tempat & Tanggal Lahir */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <label htmlFor="tempatLahir" className="text-[12px] font-bold text-slate-600 flex items-center gap-1.5">
@@ -202,9 +184,7 @@ export default async function ProfilePage({
                     Tempat Lahir
                   </label>
                   <input
-                    id="tempatLahir"
-                    name="tempatLahir"
-                    type="text"
+                    id="tempatLahir" name="tempatLahir" type="text"
                     defaultValue={anggota?.tempatLahir || ""}
                     placeholder="Contoh: Jakarta"
                     className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white text-sm text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 transition-all"
@@ -216,32 +196,26 @@ export default async function ProfilePage({
                     Tanggal Lahir
                   </label>
                   <input
-                    id="tanggalLahir"
-                    name="tanggalLahir"
-                    type="date"
+                    id="tanggalLahir" name="tanggalLahir" type="date"
                     defaultValue={formatDate(anggota?.tanggalLahir)}
                     className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white text-sm text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 transition-all"
                   />
                 </div>
               </div>
 
-              {/* No HP */}
               <div className="space-y-1.5">
                 <label htmlFor="noHp" className="text-[12px] font-bold text-slate-600 flex items-center gap-1.5">
                   <Phone className="w-3.5 h-3.5" />
                   No. WhatsApp / HP
                 </label>
                 <input
-                  id="noHp"
-                  name="noHp"
-                  type="tel"
+                  id="noHp" name="noHp" type="tel"
                   defaultValue={anggota?.noHp || ""}
                   placeholder="Contoh: 081234567890"
                   className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white text-sm text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 transition-all"
                 />
               </div>
 
-              {/* Row: Pekerjaan & Pendidikan */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <label htmlFor="pekerjaan" className="text-[12px] font-bold text-slate-600 flex items-center gap-1.5">
@@ -249,9 +223,7 @@ export default async function ProfilePage({
                     Pekerjaan
                   </label>
                   <input
-                    id="pekerjaan"
-                    name="pekerjaan"
-                    type="text"
+                    id="pekerjaan" name="pekerjaan" type="text"
                     defaultValue={anggota?.pekerjaan || ""}
                     placeholder="Contoh: Mahasiswa, Wirausaha"
                     className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white text-sm text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 transition-all"
@@ -263,8 +235,8 @@ export default async function ProfilePage({
                     Pendidikan Terakhir
                   </label>
                   <select
-                    id="pendidikan"
-                    name="pendidikan"
+                    id="pendidikan" name="pendidikan"
+                    title="Pilih Pendidikan Terakhir"
                     defaultValue={anggota?.pendidikan || ""}
                     className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white text-sm text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 transition-all"
                   >
@@ -280,23 +252,19 @@ export default async function ProfilePage({
                 </div>
               </div>
 
-              {/* Alamat */}
               <div className="space-y-1.5">
                 <label htmlFor="alamat" className="text-[12px] font-bold text-slate-600 flex items-center gap-1.5">
                   <MapPin className="w-3.5 h-3.5" />
                   Alamat Lengkap
                 </label>
                 <textarea
-                  id="alamat"
-                  name="alamat"
-                  rows={3}
+                  id="alamat" name="alamat" rows={3}
                   defaultValue={anggota?.alamat || ""}
                   placeholder="Jl. Pisang Batu No. xx, RT/RW ..."
                   className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white text-sm text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 transition-all resize-none"
                 />
               </div>
 
-              {/* Submit */}
               <div className="flex justify-end pt-2 border-t border-slate-100">
                 <button
                   type="submit"

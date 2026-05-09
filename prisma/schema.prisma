@@ -2,7 +2,8 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  output          = "../node_modules/.prisma/client"
 }
 
 datasource db {
@@ -171,16 +172,38 @@ model Kegiatan {
 }
 
 model AnggotaKegiatan {
-  id         String   @id @default(cuid())
-  anggotaId  String
-  kegiatanId String
-  anggota    Anggota  @relation(fields: [anggotaId], references: [id], onDelete: Cascade)
-  kegiatan   Kegiatan @relation(fields: [kegiatanId], references: [id], onDelete: Cascade)
-  hadir      Boolean  @default(false)
-  createdAt  DateTime @default(now())
+  id          String      @id @default(cuid())
+  anggotaId   String
+  kegiatanId  String
+  anggota     Anggota     @relation(fields: [anggotaId], references: [id], onDelete: Cascade)
+  kegiatan    Kegiatan    @relation(fields: [kegiatanId], references: [id], onDelete: Cascade)
+  hadir       Boolean     @default(false)
+  sertifikat  Sertifikat?
+  createdAt   DateTime    @default(now())
 
   @@unique([anggotaId, kegiatanId])
   @@map("anggota_kegiatan")
+}
+
+// ===== SERTIFIKAT =====
+
+model Sertifikat {
+  id                  String          @id @default(cuid())
+  anggotaKegiatanId   String          @unique
+  anggotaKegiatan     AnggotaKegiatan @relation(fields: [anggotaKegiatanId], references: [id], onDelete: Cascade)
+  nomorSertifikat     String          @unique
+  namaAnggota         String
+  namaKegiatan        String
+  tanggalKegiatan     DateTime
+  tanggalTerbit       DateTime        @default(now())
+  qrCode              String?         // URL to QR code image
+  pdfUrl              String?         // URL to generated PDF (optional)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([nomorSertifikat])
+  @@map("sertifikat")
 }
 
 // ===== PROGRAM =====

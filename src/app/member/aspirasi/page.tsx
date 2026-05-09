@@ -1,6 +1,6 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
-import { prisma } from "@/lib/prisma";
+import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import {
   Send,
@@ -24,7 +24,7 @@ export default async function AspirasiPage({
   const session = await auth();
   if (!session?.user) redirect("/anggota/login");
 
-  const userId = (session.user as any).id;
+  const userId = session.user.id;
   const params = await searchParams;
 
   // Fetch member's own aspirations
@@ -39,7 +39,7 @@ export default async function AspirasiPage({
 
     const session = await auth();
     if (!session?.user) redirect("/anggota/login");
-    const userId = (session.user as any).id;
+    const userId = session.user.id;
 
     const judul = formData.get("judul") as string;
     const kategori = formData.get("kategori") as string;
@@ -133,6 +133,7 @@ export default async function AspirasiPage({
                 <select
                   id="kategori"
                   name="kategori"
+                  title="Pilih Kategori Aspirasi"
                   className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white text-sm text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 transition-all"
                 >
                   <option value="Saran">Saran</option>

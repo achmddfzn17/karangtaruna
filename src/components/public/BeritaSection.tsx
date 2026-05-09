@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Calendar, ArrowRight, Tag, Newspaper } from "lucide-react";
 
 import { prisma } from "@/lib/prisma";
@@ -13,107 +14,142 @@ export default async function BeritaSection() {
 
   const featured = beritaList[0];
   const others = beritaList.slice(1);
+
   return (
-    <section className="py-20 md:py-28 bg-white border-t border-slate-100">
-      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
+    <section className="py-24 bg-white relative overflow-hidden">
+      {/* Decorative Background */}
+      <div className="absolute top-0 right-0 w-1/3 h-full bg-blue-50/30 -skew-x-12 translate-x-1/2 pointer-events-none" />
+
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-12 gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-16 gap-6">
           <div>
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-100 rounded-full text-[11px] font-extrabold text-blue-600 uppercase tracking-wide mb-4">
-              Berita
-            </span>
-            <h2 className="text-3xl md:text-[40px] font-extrabold text-slate-900 leading-tight">
-              Berita <span className="text-blue-500">Terbaru</span>
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-10 h-0.5 bg-blue-600 rounded-full" />
+              <span className="text-[11px] font-black text-blue-600 uppercase tracking-[0.2em]">
+                Info Terkini
+              </span>
+            </div>
+            <h2 className="text-3xl md:text-[44px] font-black text-slate-900 leading-tight tracking-tight">
+              Berita <span className="text-blue-600">Terbaru</span>
             </h2>
-            <p className="text-[15px] md:text-[16px] text-slate-600 mt-2 max-w-lg">
-              Informasi terkini seputar kegiatan, pencapaian, dan program
-              Karang Taruna Generasi Emas.
+            <p className="text-[15px] md:text-lg text-slate-500 mt-4 max-w-xl font-medium leading-relaxed">
+              Dapatkan informasi terkini seputar kegiatan, pencapaian, dan program
+              strategis Karang Taruna Generasi Emas.
             </p>
           </div>
           <Link
             href="/berita"
-            className="inline-flex items-center gap-1.5 text-sm font-bold text-blue-500 hover:text-blue-600 hover:gap-2.5 transition-all whitespace-nowrap"
+            className="inline-flex items-center gap-2.5 px-6 py-3 bg-white border border-slate-200 text-sm font-bold text-slate-700 rounded-2xl hover:bg-slate-50 hover:border-blue-200 hover:text-blue-600 shadow-sm transition-all whitespace-nowrap group"
           >
-            Lihat Semua
-            <ArrowRight className="w-4 h-4" />
+            Semua Berita
+            <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
           </Link>
         </div>
 
         {/* Layout: Featured + Side */}
         {beritaList.length === 0 ? (
-          <p className="text-slate-500 text-center py-10">Belum ada berita yang dipublikasikan.</p>
+          <div className="bg-white rounded-3xl border border-slate-100 p-16 text-center shadow-sm">
+            <Newspaper className="w-16 h-16 text-slate-200 mx-auto mb-4" />
+            <p className="text-slate-400 font-bold text-lg">Belum ada berita yang dipublikasikan.</p>
+          </div>
         ) : (
-          <div className="grid lg:grid-cols-5 gap-6">
+          <div className="grid lg:grid-cols-5 gap-8">
             {/* Featured (large card) */}
-            <article className="lg:col-span-3 group bg-white border border-slate-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1 flex flex-col">
-              <div className="h-56 md:h-72 bg-slate-100 relative overflow-hidden flex items-center justify-center">
-                <div className="absolute inset-0 bg-blue-50/50 mix-blend-multiply opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                <Newspaper className="w-16 h-16 text-slate-300" />
+            <article className="lg:col-span-3 group bg-white border border-slate-100 rounded-[32px] overflow-hidden shadow-sm hover:shadow-2xl hover:shadow-blue-500/10 transition-all duration-500 hover:-translate-y-2 flex flex-col">
+              <div className="h-64 md:h-96 bg-slate-100 relative overflow-hidden">
+                {featured.thumbnail ? (
+                  <Image
+                    src={featured.thumbnail}
+                    alt={featured.judul}
+                    fill
+                    className="object-cover group-hover:scale-110 transition-transform duration-1000"
+                    priority
+                    sizes="(max-width: 1024px) 100vw, 60vw"
+                  />
+                ) : (
+                  <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50">
+                    <Newspaper className="w-20 h-20 text-blue-200" />
+                  </div>
+                )}
                 
-                <div className="absolute inset-0 flex items-end p-5">
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-extrabold uppercase tracking-wide bg-blue-600 text-white">
-                    <Tag className="w-3 h-3" />
-                    {featured?.kategori || "Umum"}
+                <div className="absolute bottom-6 left-6">
+                  <span className="inline-flex items-center gap-1.5 px-5 py-2 rounded-full text-[11px] font-black uppercase tracking-wider bg-blue-600 text-white shadow-xl shadow-blue-600/30">
+                    <Tag className="w-3.5 h-3.5" />
+                    {featured.kategori || "Umum"}
                   </span>
                 </div>
               </div>
-              <div className="p-6 md:p-8 flex flex-col flex-1">
-                <div className="flex items-center gap-2 text-[12px] font-medium text-slate-500 mb-4">
-                  <Calendar className="w-4 h-4 text-blue-500" />
-                  {featured?.publishedAt ? formatDate(featured.publishedAt) : ""}
+              <div className="p-8 md:p-10 flex flex-col flex-1">
+                <div className="flex items-center gap-2 text-[12px] font-black uppercase tracking-widest text-blue-500 mb-5">
+                  <Calendar className="w-4 h-4" />
+                  {featured.publishedAt ? formatDate(featured.publishedAt) : ""}
                 </div>
-                <h3 className="text-xl md:text-2xl font-bold text-slate-900 mb-3 group-hover:text-blue-600 transition-colors leading-snug">
-                  {featured?.judul}
+                <h3 className="text-2xl md:text-3xl font-black text-slate-900 mb-5 group-hover:text-blue-600 transition-colors leading-tight tracking-tight">
+                  {featured.judul}
                 </h3>
-                <p className="text-[13px] md:text-[14px] text-slate-600 leading-relaxed line-clamp-3 flex-1">
-                  {featured?.ringkasan || "Baca berita selengkapnya..."}
+                <p className="text-[15px] md:text-lg text-slate-500 leading-relaxed line-clamp-3 flex-1 font-medium">
+                  {featured.ringkasan || "Baca berita selengkapnya mengenai perkembangan terkini Karang Taruna Generasi Emas."}
                 </p>
                 <Link
-                  href={`/berita/${featured?.slug}`}
-                  className="inline-flex items-center gap-1.5 text-[13px] font-bold text-blue-500 hover:text-blue-600 hover:gap-2.5 transition-all mt-6"
+                  href={`/berita/${featured.slug}`}
+                  className="inline-flex items-center gap-2.5 px-8 py-4 bg-slate-50 text-[13px] font-black text-slate-900 rounded-2xl hover:bg-blue-600 hover:text-white transition-all duration-300 mt-10 group/btn"
                 >
                   Baca Selengkapnya
-                  <ArrowRight className="w-4 h-4" />
+                  <ArrowRight className="w-4 h-4 transition-transform group-hover/btn:translate-x-1" />
                 </Link>
               </div>
             </article>
 
             {/* Other news cards */}
-            <div className="lg:col-span-2 flex flex-col gap-4">
-              {others.map((b: any) => (
+            <div className="lg:col-span-2 flex flex-col gap-6">
+              {others.map((b) => (
                 <Link
                   key={b.id}
                   href={`/berita/${b.slug}`}
-                  className="group bg-white border border-slate-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1 flex gap-4 h-[120px]"
+                  className="group bg-white border border-slate-100 rounded-3xl overflow-hidden shadow-sm hover:shadow-xl hover:shadow-blue-500/5 transition-all duration-500 hover:-translate-y-1 flex gap-5 h-[140px]"
                 >
                   {/* Thumbnail */}
-                  <div className="w-32 shrink-0 bg-slate-100 flex items-center justify-center relative overflow-hidden">
-                    <div className="absolute inset-0 bg-blue-50/50 mix-blend-multiply opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                    <Newspaper className="w-8 h-8 text-slate-300" />
+                  <div className="w-36 shrink-0 bg-slate-100 relative overflow-hidden">
+                    {b.thumbnail ? (
+                      <Image
+                        src={b.thumbnail}
+                        alt={b.judul}
+                        fill
+                        className="object-cover group-hover:scale-110 transition-transform duration-700"
+                        sizes="150px"
+                      />
+                    ) : (
+                      <div className="absolute inset-0 flex items-center justify-center bg-blue-50/50">
+                        <Newspaper className="w-8 h-8 text-blue-200" />
+                      </div>
+                    )}
                   </div>
                   {/* Content */}
-                  <div className="p-4 flex flex-col justify-center min-w-0 pr-5">
-                    <span className="inline-flex items-center gap-1 text-[9px] font-extrabold uppercase tracking-wide px-2 py-0.5 rounded-full w-fit mb-2 bg-blue-100 text-blue-700">
+                  <div className="py-4 pr-6 flex flex-col justify-center min-w-0">
+                    <span className="text-[9px] font-black uppercase tracking-widest text-blue-600 mb-2">
                       {b.kategori || "Umum"}
                     </span>
-                    <h4 className="text-[13px] font-bold text-slate-900 line-clamp-2 mb-2 group-hover:text-blue-600 transition-colors leading-snug">
+                    <h4 className="text-[15px] font-black text-slate-900 line-clamp-2 mb-2 group-hover:text-blue-600 transition-colors leading-snug tracking-tight">
                       {b.judul}
                     </h4>
-                    <div className="flex items-center gap-1.5 text-[11px] font-medium text-slate-500 mt-auto">
-                      <Calendar className="w-3.5 h-3.5 text-blue-500" />
+                    <div className="flex items-center gap-2 text-[11px] font-bold text-slate-400 mt-auto">
+                      <Calendar className="w-3.5 h-3.5" />
                       {b.publishedAt ? formatDate(b.publishedAt) : ""}
                     </div>
                   </div>
                 </Link>
               ))}
 
-              {/* View all */}
+              {/* View all card */}
               <Link
                 href="/berita"
-                className="flex items-center justify-center gap-2 p-4 rounded-2xl border-2 border-dashed border-slate-200 hover:border-blue-500 hover:bg-blue-50 text-slate-500 hover:text-blue-600 transition-colors text-[13px] font-bold mt-auto h-[120px]"
+                className="flex flex-col items-center justify-center gap-3 p-8 rounded-[32px] border-2 border-dashed border-slate-100 hover:border-blue-200 hover:bg-blue-50/50 text-slate-400 hover:text-blue-600 transition-all duration-300 h-[140px] group"
               >
-                Lihat Semua Berita
-                <ArrowRight className="w-4 h-4" />
+                <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center group-hover:bg-blue-100 transition-colors">
+                  <ArrowRight className="w-5 h-5 transition-transform group-hover:rotate-[-45deg]" />
+                </div>
+                <span className="text-sm font-black uppercase tracking-widest">Lihat Semua Berita</span>
               </Link>
             </div>
           </div>
