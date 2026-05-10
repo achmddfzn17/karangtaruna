@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
-import prisma from "@/lib/prisma";
+import { prisma } from "@/lib/prisma";
 import { generateCertificatePDFDataUrl } from "@/lib/certificate-pdf";
 import { sendCertificateEmail } from "@/lib/email";
 
@@ -82,11 +82,11 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Generate certificate number
-    // Ensure uniqueness: use timestamp + count
+    // Generate certificate number with UUID to prevent race conditions
+    // Format: CERT-YEAR-UUID (first 8 chars)
     const year = new Date().getFullYear();
-    const count = await prisma.sertifikat.count();
-    const nomorSertifikat = `CERT-${year}-${String(count + 1).padStart(5, "0")}`;
+    const uniqueId = crypto.randomUUID().slice(0, 8).toUpperCase();
+    const nomorSertifikat = `CERT-${year}-${uniqueId}`;
 
     // Generate QR Code URL pointing to certificate verification endpoint
     const certificateQRData = `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/verify/${nomorSertifikat}`;

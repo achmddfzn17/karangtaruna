@@ -7,25 +7,18 @@ import bcrypt from "bcryptjs";
 import { deleteFileFromStorage } from "@/lib/supabase";
 import { auditUpdate, auditDelete, auditCreate } from "@/lib/audit";
 import { auth } from "@/auth";
+import { 
+  updateAnggotaSchema, 
+  buatAkunSchema, 
+  resetPasswordSchema,
+  validateFormData 
+} from "@/lib/validations";
 
 export async function updateAnggota(id: string, formData: FormData) {
   const session = await auth();
-  const namaLengkap = formData.get("namaLengkap") as string;
-  const nik = formData.get("nik") as string;
-  const tempatLahir = formData.get("tempatLahir") as string;
-  const tanggalLahir = formData.get("tanggalLahir") as string;
-  const jenisKelamin = formData.get("jenisKelamin") as "LAKI_LAKI" | "PEREMPUAN";
-  const alamat = formData.get("alamat") as string;
-  const noHp = formData.get("noHp") as string;
-  const email = formData.get("email") as string;
-  const pekerjaan = formData.get("pekerjaan") as string;
-  const pendidikan = formData.get("pendidikan") as string;
-  const status = formData.get("status") as "AKTIF" | "NON_AKTIF" | "ALUMNI";
-  const foto = formData.get("foto") as string;
-
-  if (!namaLengkap || !nik || !jenisKelamin) {
-    throw new Error("Data tidak lengkap");
-  }
+  
+  // ✅ VALIDATE INPUT with centralized schema
+  const data = validateFormData(formData, updateAnggotaSchema);
 
   // Ambil userId dulu sebelum update
   const existing = await prisma.anggota.findUnique({
@@ -37,42 +30,48 @@ export async function updateAnggota(id: string, formData: FormData) {
     await prisma.anggota.update({
       where: { id },
       data: {
-        namaLengkap,
-        nik,
-        tempatLahir: tempatLahir || null,
-        tanggalLahir: tanggalLahir ? new Date(tanggalLahir) : null,
-        jenisKelamin,
-        alamat: alamat || null,
-        noHp: noHp || null,
-        email: email || null,
-        pekerjaan: pekerjaan || null,
-        pendidikan: pendidikan || null,
-        foto: foto || null,
-        status,
+        namaLengkap: data.namaLengkap,
+        nik: data.nik,
+        tempatLahir: data.tempatLahir || null,
+        tanggalLahir: data.tanggalLahir ? new Date(data.tanggalLahir) : null,
+        jenisKelamin: data.jenisKelamin,
+        alamat: data.alamat || null,
+        noHp: data.noHp || null,
+        email: data.email || null,
+        pekerjaan: data.pekerjaan || null,
+        pendidikan: data.pendidikan || null,
+        foto: data.foto || null,
+        status: data.status,
       },
     });
 
     // Sync nama ke User terkait jika ada
     if (existing?.userId) {
-      await prisma.user.update({
-        where: { id: existing.userId },
-        data: { name: namaLengkap },
-      }).catch(() => {});
+      try {
+        await prisma.user.update({
+          where: { id: existing.userId },
+          data: { name: data.namaLengkap },
+        });
+      } catch (error) {
+        console.error("[UPDATE_USER_NAME_ERROR]", error);
+        // Don't fail the operation if user update fails
+      }
     }
 
     // Audit log
     await auditUpdate(
       "anggota",
       id,
-      namaLengkap,
+      data.namaLengkap,
       session?.user?.id,
       session?.user?.name || undefined,
-      `Updated anggota: ${namaLengkap} (${nik})`
+      `Updated anggota: ${data.namaLengkap} (${data.nik})`
     );
-  } catch (error: any) {
-    if (error.code === "P2002") {
+  } catch (error) {
+    if (error instanceof Error && "code" in error && error.code === "P2002") {
       throw new Error("NIK sudah terdaftar oleh anggota lain");
     }
+    console.error("[UPDATE_ANGGOTA_ERROR]", error);
     throw new Error("Gagal mengupdate data anggota");
   }
 
@@ -131,17 +130,15 @@ export async function deleteAnggota(id: string) {
  */
 export async function buatAkunAnggota(anggotaId: string, formData: FormData) {
   const session = await auth();
-  const loginEmail = formData.get("loginEmail") as string;
-  const loginPassword = formData.get("loginPassword") as string;
-
-  if (!loginEmail) throw new Error("Email login wajib diisi");
-  if (!loginPassword || loginPassword.length < 8)
-    throw new Error("Password minimal 8 karakter");
+  
+  // ✅ VALIDATE INPUT with centralized schema
+  const { loginEmail, loginPassword } = validateFormData(formData, buatAkunSchema);
 
   const anggota = await prisma.anggota.findUnique({
     where: { id: anggotaId },
     select: { namaLengkap: true, userId: true },
   });
+  
   if (!anggota) throw new Error("Anggota tidak ditemukan");
   if (anggota.userId) throw new Error("Anggota sudah memiliki akun login");
 
@@ -150,7 +147,7 @@ export async function buatAkunAnggota(anggotaId: string, formData: FormData) {
 
   const hashedPassword = await bcrypt.hash(loginPassword, 12);
 
-  let newUserId: string;
+  let newUserId: string | undefined;
   await prisma.$transaction(async (tx) => {
     const user = await tx.user.create({
       data: {
@@ -185,16 +182,26 @@ export async function buatAkunAnggota(anggotaId: string, formData: FormData) {
  * Reset password akun anggota
  */
 export async function resetPasswordAnggota(userId: string, formData: FormData) {
-  const newPassword = formData.get("newPassword") as string;
-  if (!newPassword || newPassword.length < 8)
-    throw new Error("Password minimal 8 karakter");
-
+  const session = await auth();
+  
+  // ✅ VALIDATE INPUT with centralized schema
+  const { newPassword } = validateFormData(formData, resetPasswordSchema);
   const hashedPassword = await bcrypt.hash(newPassword, 12);
 
   await prisma.user.update({
     where: { id: userId },
     data: { password: hashedPassword },
   });
+
+  // ✅ AUDIT LOG for sensitive operation
+  await auditUpdate(
+    "auth",
+    userId,
+    "Password Reset",
+    session?.user?.id,
+    session?.user?.name || undefined,
+    `Reset password for user: ${userId}`
+  );
 
   revalidatePath("/dashboard/anggota");
 }

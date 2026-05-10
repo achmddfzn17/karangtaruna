@@ -1,6 +1,7 @@
 import type { NextAuthConfig } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { z } from "zod";
+import type { Role } from "@prisma/client";
 
 const credentialsSchema = z.object({
   email: z.string().email("Email harus valid"),
@@ -42,7 +43,7 @@ export default {
     async jwt({ token, user, account }) {
       // On sign in, add user properties to token
       if (user) {
-        token.role = (user as { role: string }).role;
+        token.role = user.role;
         token.id = user.id;
       }
       
@@ -58,8 +59,7 @@ export default {
     async session({ session, token }) {
       // Add JWT claims to session
       if (token && session.user) {
-        // token.role is a string at runtime; cast to any to satisfy TS Role type
-        session.user.role = token.role as any;
+        session.user.role = token.role as Role;
         session.user.id = token.id as string;
       }
       return session;

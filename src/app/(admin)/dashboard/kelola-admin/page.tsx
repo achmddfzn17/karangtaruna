@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { auth } from "@/auth";
+import { requireSuperAdmin } from "@/lib/auth-helpers";
 import { formatDate } from "@/lib/utils";
 import { UserCog, Plus, ShieldCheck, Pencil } from "lucide-react";
 import Link from "next/link";
@@ -13,9 +13,12 @@ type AdminWithProfile = Prisma.UserGetPayload<{
 }>;
 
 export default async function KelolaAdminPage() {
-  const session = await auth();
-  const currentUserId = (session?.user as { id?: string })?.id;
-  const currentRole = (session?.user as { role?: string })?.role;
+  // ✅ AUTH CHECK: Require SUPER_ADMIN role only
+  // Will redirect to /login if not authenticated
+  // Will redirect to /dashboard if authenticated but not super admin
+  const session = await requireSuperAdmin();
+  const currentUserId = session.user.id;
+  const currentRole = session.user.role;
 
   const adminUsers = await prisma.user.findMany({
     where: { role: { in: ["ADMIN", "SUPER_ADMIN"] } },

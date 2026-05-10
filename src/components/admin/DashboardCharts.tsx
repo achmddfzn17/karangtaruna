@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import {
   PieChart,
   Pie,
@@ -63,7 +64,24 @@ function renderCustomLabel({
 }
 
 export function AnggotaStatusChart({ data }: AnggotaChartProps) {
+  const [mounted, setMounted] = useState(false);
   const total = data.reduce((s, d) => s + d.value, 0);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return (
+      <div className="bg-white rounded-2xl border border-gray-100 p-6">
+        <h3 className="text-[15px] font-bold text-slate-900 mb-1">Distribusi Anggota</h3>
+        <p className="text-[11px] text-slate-400 font-medium mb-4">Berdasarkan status keanggotaan</p>
+        <div className="flex items-center justify-center h-[200px]">
+          <div className="animate-pulse text-slate-400 text-sm">Memuat grafik...</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 p-6">
@@ -80,8 +98,8 @@ export function AnggotaStatusChart({ data }: AnggotaChartProps) {
         </div>
       ) : (
         <>
-          <div className="h-[200px]">
-            <ResponsiveContainer width="100%" height="100%">
+          <div style={{ width: "100%", height: "200px" }}>
+            <ResponsiveContainer width="100%" height="100%" minHeight={200}>
               <PieChart>
                 <Pie
                   data={data}
@@ -140,6 +158,24 @@ interface KegiatanChartProps {
 }
 
 export function KegiatanJenisChart({ data }: KegiatanChartProps) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return (
+      <div className="bg-white rounded-2xl border border-gray-100 p-6">
+        <h3 className="text-[15px] font-bold text-slate-900 mb-1">Kegiatan per Kategori</h3>
+        <p className="text-[11px] text-slate-400 font-medium mb-4">Distribusi jenis kegiatan yang telah dilaksanakan</p>
+        <div className="flex items-center justify-center h-[220px]">
+          <div className="animate-pulse text-slate-400 text-sm">Memuat grafik...</div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-white rounded-2xl border border-gray-100 p-6">
       <h3 className="text-[15px] font-bold text-slate-900 mb-1">
@@ -154,8 +190,8 @@ export function KegiatanJenisChart({ data }: KegiatanChartProps) {
           Belum ada data kegiatan
         </div>
       ) : (
-        <div className="h-[220px]">
-          <ResponsiveContainer width="100%" height="100%">
+        <div style={{ width: "100%", height: "220px" }}>
+          <ResponsiveContainer width="100%" height="100%" minHeight={220}>
             <BarChart data={data} barSize={32}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
               <XAxis
@@ -196,6 +232,24 @@ interface KontenTrenProps {
 }
 
 export function KontenTrenChart({ data }: KontenTrenProps) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return (
+      <div className="bg-white rounded-2xl border border-gray-100 p-6">
+        <h3 className="text-[15px] font-bold text-slate-900 mb-1">Tren Publikasi Konten</h3>
+        <p className="text-[11px] text-slate-400 font-medium mb-4">Jumlah berita &amp; artikel yang dipublikasikan per bulan</p>
+        <div className="flex items-center justify-center h-[220px]">
+          <div className="animate-pulse text-slate-400 text-sm">Memuat grafik...</div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-white rounded-2xl border border-gray-100 p-6">
       <h3 className="text-[15px] font-bold text-slate-900 mb-1">
@@ -210,8 +264,8 @@ export function KontenTrenChart({ data }: KontenTrenProps) {
           Belum ada data publikasi
         </div>
       ) : (
-        <div className="h-[220px]">
-          <ResponsiveContainer width="100%" height="100%">
+        <div style={{ width: "100%", height: "220px" }}>
+          <ResponsiveContainer width="100%" height="100%" minHeight={220}>
             <AreaChart data={data}>
               <defs>
                 <linearGradient id="colorBerita" x1="0" y1="0" x2="0" y2="1">

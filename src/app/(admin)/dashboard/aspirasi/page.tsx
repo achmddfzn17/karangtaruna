@@ -197,7 +197,7 @@ export default async function AdminAspirasiPage({
                       <Reply className="w-3.5 h-3.5 text-blue-600" />
                       <span className="text-[11px] font-extrabold text-blue-600 uppercase">Balasan Terkirim</span>
                     </div>
-                    <p className="text-sm text-slate-700 italic">"{asp.balasan}"</p>
+                    <p className="text-sm text-slate-700 italic">&ldquo;{asp.balasan}&rdquo;</p>
                   </div>
                 )}
               </div>

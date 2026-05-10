@@ -33,7 +33,7 @@ export default function ExportAbsensiButton({ namaKegiatan, tanggal, peserta }: 
     nik: p.anggota.nik,
     noHp: p.anggota.noHp || "-",
     hadir: p.hadir ? "Hadir" : "Tidak Hadir",
-    tanda: p.hadir ? "✓" : "✗",
+    tanda: p.hadir ? "V" : "X",
   }));
 
   const totalHadir = peserta.filter((p) => p.hadir).length;

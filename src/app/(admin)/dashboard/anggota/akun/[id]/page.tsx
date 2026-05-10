@@ -55,7 +55,7 @@ export default async function AkunAnggotaPage({
           <span className={`px-3 py-1.5 rounded-full text-[11px] font-bold ${
             sudahPunyaAkun ? "bg-green-100 text-green-700" : "bg-slate-100 text-slate-500"
           }`}>
-            {sudahPunyaAkun ? "✓ Punya Akun" : "Belum Ada Akun"}
+            {sudahPunyaAkun ? "Punya Akun" : "Belum Ada Akun"}
           </span>
         </div>
       </div>

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ArrowLeft, Calendar, Eye } from "lucide-react";
 import { format } from "date-fns";
 import { id as localeId } from "date-fns/locale";
+import { sanitizeHtml } from "@/lib/sanitize";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -31,6 +32,9 @@ export default async function ArtikelDetailPage({
     where: { id: artikel.id },
     data: { viewCount: { increment: 1 } },
   });
+
+  // Sanitize HTML content
+  const sanitizedContent = await sanitizeHtml(artikel.isi);
 
   const relatedArtikel = await prisma.artikel.findMany({
     where: {
@@ -88,7 +92,7 @@ export default async function ArtikelDetailPage({
 
           <div
             className="prose prose-slate max-w-none"
-            dangerouslySetInnerHTML={{ __html: artikel.isi }}
+            dangerouslySetInnerHTML={{ __html: sanitizedContent }}
           />
 
           {artikel.tags && artikel.tags.length > 0 && (

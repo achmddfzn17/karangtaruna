@@ -8,19 +8,24 @@ export async function DELETE(
 ) {
   const { id } = await params;
 
-  // Cek session — hanya SUPER_ADMIN yang bisa hapus admin
+  // ✅ AUTH CHECK: Require SUPER_ADMIN role
   const session = await auth();
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-  const role = (session.user as any).role;
-  if (role !== "SUPER_ADMIN") {
-    return NextResponse.json({ error: "Hanya Super Admin yang bisa menghapus admin" }, { status: 403 });
+  
+  // Check role with proper typing
+  if (session.user.role !== "SUPER_ADMIN") {
+    return NextResponse.json({ 
+      error: "Hanya Super Admin yang bisa menghapus admin" 
+    }, { status: 403 });
   }
 
   // Tidak bisa hapus diri sendiri
-  if ((session.user as any).id === id) {
-    return NextResponse.json({ error: "Tidak bisa menghapus akun sendiri" }, { status: 400 });
+  if (session.user.id === id) {
+    return NextResponse.json({ 
+      error: "Tidak bisa menghapus akun sendiri" 
+    }, { status: 400 });
   }
 
   try {

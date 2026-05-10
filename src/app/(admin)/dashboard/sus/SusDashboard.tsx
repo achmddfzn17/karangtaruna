@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   Cell,
@@ -59,6 +59,11 @@ function getGrade(score: number) {
 export default function SusDashboard({ responses, stats, distribution, avgPerQ, deleteResponse }: Props) {
   const [deleting, setDeleting] = useState<string | null>(null);
   const [filterKategori, setFilterKategori] = useState<string>("ALL");
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const { grade, label } = getGrade(stats.avgScore);
 
@@ -182,7 +187,7 @@ export default function SusDashboard({ responses, stats, distribution, avgPerQ, 
       </div>
 
       {/* Charts */}
-      {stats.total > 0 && (
+      {stats.total > 0 && mounted && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Distribusi Skor */}
           <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
@@ -190,18 +195,20 @@ export default function SusDashboard({ responses, stats, distribution, avgPerQ, 
               <TrendingUp className="w-4 h-4 text-blue-500" />
               Distribusi Skor
             </h2>
-            <ResponsiveContainer width="100%" height={200}>
-              <BarChart data={distribution} barSize={28}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                <XAxis dataKey="range" tick={{ fontSize: 10, fill: "#94a3b8" }} />
-                <YAxis tick={{ fontSize: 10, fill: "#94a3b8" }} allowDecimals={false} />
-                <Tooltip
-                  contentStyle={{ borderRadius: 12, border: "1px solid #e2e8f0", fontSize: 12 }}
-                  formatter={(v) => [`${v} responden`, "Jumlah"]}
-                />
-                <Bar dataKey="count" fill="#3b82f6" radius={[6, 6, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+            <div style={{ width: "100%", height: "200px" }}>
+              <ResponsiveContainer width="100%" height="100%" minHeight={200}>
+                <BarChart data={distribution} barSize={28}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                  <XAxis dataKey="range" tick={{ fontSize: 10, fill: "#94a3b8" }} />
+                  <YAxis tick={{ fontSize: 10, fill: "#94a3b8" }} allowDecimals={false} />
+                  <Tooltip
+                    contentStyle={{ borderRadius: 12, border: "1px solid #e2e8f0", fontSize: 12 }}
+                    formatter={(v) => [`${v} responden`, "Jumlah"]}
+                  />
+                  <Bar dataKey="count" fill="#3b82f6" radius={[6, 6, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           </div>
 
           {/* Bar chart rata-rata per pertanyaan */}
@@ -220,51 +227,53 @@ export default function SusDashboard({ responses, stats, distribution, avgPerQ, 
                 <span className="w-2.5 h-2.5 rounded-sm bg-slate-400 inline-block" /> Pertanyaan negatif
               </span>
             </p>
-            <ResponsiveContainer width="100%" height={260}>
-              <BarChart
-                data={barData}
-                layout="vertical"
-                margin={{ top: 0, right: 24, left: 8, bottom: 0 }}
-                barSize={14}
-              >
-                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" horizontal={false} />
-                <XAxis
-                  type="number"
-                  domain={[0, 5]}
-                  ticks={[0, 1, 2, 3, 4, 5]}
-                  tick={{ fontSize: 10, fill: "#94a3b8" }}
-                  axisLine={false}
-                  tickLine={false}
-                />
-                <YAxis
-                  type="category"
-                  dataKey="name"
-                  tick={{ fontSize: 11, fill: "#64748b", fontWeight: 600 }}
-                  axisLine={false}
-                  tickLine={false}
-                  width={28}
-                />
-                <Tooltip
-                  contentStyle={{ borderRadius: 10, border: "1px solid #e2e8f0", fontSize: 12 }}
-                  formatter={(v, _name, props: any) => [
-                    `${typeof v === 'number' ? v : 0} / 5`,
-                    props.payload.positif ? "Pertanyaan Positif" : "Pertanyaan Negatif",
-                  ]}
-                  labelFormatter={(label) => {
-                    const idx = parseInt(String(label).replace("Q", "")) - 1;
-                    return susQuestions[idx] || label;
-                  }}
-                />
-                <Bar dataKey="nilai" radius={[0, 4, 4, 0]}>
-                  {barData.map((entry, index) => (
-                    <Cell
-                      key={`cell-${index}`}
-                      fill={entry.positif ? "#3b82f6" : "#94a3b8"}
-                    />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+            <div style={{ width: "100%", height: "260px" }}>
+              <ResponsiveContainer width="100%" height="100%" minHeight={260}>
+                <BarChart
+                  data={barData}
+                  layout="vertical"
+                  margin={{ top: 0, right: 24, left: 8, bottom: 0 }}
+                  barSize={14}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" horizontal={false} />
+                  <XAxis
+                    type="number"
+                    domain={[0, 5]}
+                    ticks={[0, 1, 2, 3, 4, 5]}
+                    tick={{ fontSize: 10, fill: "#94a3b8" }}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <YAxis
+                    type="category"
+                    dataKey="name"
+                    tick={{ fontSize: 11, fill: "#64748b", fontWeight: 600 }}
+                    axisLine={false}
+                    tickLine={false}
+                    width={28}
+                  />
+                  <Tooltip
+                    contentStyle={{ borderRadius: 10, border: "1px solid #e2e8f0", fontSize: 12 }}
+                    formatter={(v, _name, props: any) => [
+                      `${typeof v === 'number' ? v : 0} / 5`,
+                      props.payload.positif ? "Pertanyaan Positif" : "Pertanyaan Negatif",
+                    ]}
+                    labelFormatter={(label) => {
+                      const idx = parseInt(String(label).replace("Q", "")) - 1;
+                      return susQuestions[idx] || label;
+                    }}
+                  />
+                  <Bar dataKey="nilai" radius={[0, 4, 4, 0]}>
+                    {barData.map((entry, index) => (
+                      <Cell
+                        key={`cell-${index}`}
+                        fill={entry.positif ? "#3b82f6" : "#94a3b8"}
+                      />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           </div>
         </div>
       )}

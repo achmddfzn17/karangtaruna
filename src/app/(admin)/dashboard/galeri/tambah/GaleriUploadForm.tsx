@@ -293,7 +293,6 @@ export default function GaleriUploadForm({ kegiatanList, defaultKegiatanId }: Pr
             <option value="">-- Tidak terkait kegiatan --</option>
             {kegiatanList.map((k) => (
               <option key={k.id} value={k.id}>
-                {k.status === "ONGOING" ? "🟢 " : k.status === "UPCOMING" ? "🔵 " : "⚪ "}
                 {k.nama}
               </option>
             ))}

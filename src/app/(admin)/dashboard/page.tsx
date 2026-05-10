@@ -1,15 +1,11 @@
 import { prisma } from "@/lib/prisma";
-import { auth } from "@/auth";
+import { requireAdmin } from "@/lib/auth-helpers";
 import Link from "next/link";
 import {
   Users,
   Calendar,
-  CheckCircle2,
   Newspaper,
-  FileText,
   ChevronRight,
-  Plus,
-  Check,
   MessageSquare,
   Vote as VoteIcon,
   Wallet,
@@ -27,9 +23,11 @@ export const metadata = {
 };
 
 export default async function AdminDashboard() {
-  // Auth is already checked by the parent layout — no redirect here to avoid loops
-  const session = await auth();
-  const userName = session?.user?.name || "Admin";
+  // ✅ AUTH CHECK: Require admin role (ADMIN or SUPER_ADMIN)
+  // Will redirect to /login if not authenticated
+  // Will redirect to /member if authenticated but not admin
+  const session = await requireAdmin();
+  const userName = session.user.name || "Admin";
 
   // Fetch data
   const [
@@ -134,7 +132,7 @@ export default async function AdminDashboard() {
       value: totalAnggota,
       icon: Users,
       color: "bg-blue-600 shadow-blue-500/20",
-      sub: `✓ ${anggotaAktif} Aktif`,
+      sub: `${anggotaAktif} Aktif`,
       subColor: "text-blue-600",
       href: "/dashboard/anggota",
     },

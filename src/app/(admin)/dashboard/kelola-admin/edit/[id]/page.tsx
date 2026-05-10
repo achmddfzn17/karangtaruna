@@ -29,29 +29,32 @@ export default async function EditAdminPage({
 
     if (!name) throw new Error("Nama wajib diisi");
 
-    // Re-fetch user untuk memastikan data terbaru dan type safety
-    const currentUser = await prisma.user.findUnique({
-      where: { id },
-      include: { admin: true },
-    });
+    // Use transaction to prevent race conditions
+    await prisma.$transaction(async (tx) => {
+      // Update user data
+      await tx.user.update({
+        where: { id },
+        data: { name, role },
+      });
 
-    if (!currentUser) throw new Error("User tidak ditemukan");
-
-    await prisma.user.update({
-      where: { id },
-      data: { name, role },
-    });
-
-    if (currentUser.admin) {
-      await prisma.admin.update({
+      // Check if admin record exists
+      const existingAdmin = await tx.admin.findUnique({
         where: { userId: id },
-        data: { jabatan: jabatan || null, phone: phone || null },
       });
-    } else {
-      await prisma.admin.create({
-        data: { userId: id, jabatan: jabatan || null, phone: phone || null },
-      });
-    }
+
+      if (existingAdmin) {
+        // Update existing admin record
+        await tx.admin.update({
+          where: { userId: id },
+          data: { jabatan: jabatan || null, phone: phone || null },
+        });
+      } else {
+        // Create new admin record
+        await tx.admin.create({
+          data: { userId: id, jabatan: jabatan || null, phone: phone || null },
+        });
+      }
+    });
 
     revalidatePath("/dashboard/kelola-admin");
     redirect("/dashboard/kelola-admin");

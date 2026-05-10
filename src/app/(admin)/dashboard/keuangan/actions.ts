@@ -5,6 +5,10 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { auditUpdate, auditDelete } from "@/lib/audit";
 import { auth } from "@/auth";
+import { 
+  updateTransaksiSchema, 
+  validateFormData 
+} from "@/lib/validations";
 
 export async function deleteTransaksi(id: string) {
   const session = await auth();
@@ -39,32 +43,22 @@ export async function deleteTransaksi(id: string) {
 
 export async function updateTransaksi(id: string, formData: FormData) {
   const session = await auth();
-  const keterangan = formData.get("keterangan") as string;
-  const jumlah = formData.get("jumlah") as string;
-  const jenis = formData.get("jenis") as "MASUK" | "KELUAR";
-  const tanggal = formData.get("tanggal") as string;
-  const kategoriId = formData.get("kategoriId") as string;
-  const bukti = formData.get("bukti") as string;
-
-  if (!keterangan || !jumlah || !jenis || !tanggal) {
-    throw new Error("Semua field wajib diisi");
-  }
-
-  const jumlahNum = parseFloat(jumlah);
-  if (isNaN(jumlahNum) || jumlahNum <= 0) {
-    throw new Error("Jumlah harus berupa angka positif");
-  }
+  
+  // ✅ VALIDATE INPUT with centralized schema
+  const data = validateFormData(formData, updateTransaksiSchema);
+  
+  const jumlahNum = parseFloat(data.jumlah);
 
   try {
     await prisma.transaksiKeuangan.update({
       where: { id },
       data: {
-        keterangan,
+        keterangan: data.keterangan,
         jumlah: jumlahNum,
-        jenis,
-        tanggal: new Date(tanggal),
-        kategoriId: kategoriId || null,
-        bukti: bukti || null,
+        jenis: data.jenis,
+        tanggal: new Date(data.tanggal),
+        kategoriId: data.kategoriId || null,
+        bukti: data.bukti || null,
       },
     });
 
@@ -72,12 +66,13 @@ export async function updateTransaksi(id: string, formData: FormData) {
     await auditUpdate(
       "keuangan",
       id,
-      keterangan,
+      data.keterangan,
       session?.user?.id,
       session?.user?.name || undefined,
-      `Updated transaksi: ${keterangan} (${jenis}: Rp ${jumlahNum.toLocaleString("id-ID")})`
+      `Updated transaksi: ${data.keterangan} (${data.jenis}: Rp ${jumlahNum.toLocaleString("id-ID")})`
     );
-  } catch {
+  } catch (error) {
+    console.error("[UPDATE_TRANSAKSI_ERROR]", error);
     throw new Error("Gagal mengupdate transaksi");
   }
 

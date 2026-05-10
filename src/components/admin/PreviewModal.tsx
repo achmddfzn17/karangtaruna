@@ -1,6 +1,7 @@
 "use client";
 
 import { X, Calendar, Eye, Tag } from "lucide-react";
+import { useEffect, useState } from "react";
 
 interface PreviewModalProps {
   isOpen: boolean;
@@ -15,6 +16,30 @@ interface PreviewModalProps {
 }
 
 export default function PreviewModal({ isOpen, onClose, type, data }: PreviewModalProps) {
+  const [sanitizedContent, setSanitizedContent] = useState("");
+
+  useEffect(() => {
+    if (isOpen && data.isi) {
+      // Client-side sanitization
+      import("isomorphic-dompurify").then((module) => {
+        const DOMPurify = module.default;
+        const cleaned = DOMPurify.sanitize(data.isi.replace(/\n/g, "<br/>"), {
+          ALLOWED_TAGS: [
+            "p", "br", "strong", "em", "u", "s", "a", "ul", "ol", "li",
+            "h1", "h2", "h3", "h4", "h5", "h6",
+            "blockquote", "code", "pre",
+            "img", "figure", "figcaption",
+            "table", "thead", "tbody", "tr", "th", "td",
+            "div", "span", "hr",
+          ],
+          ALLOWED_ATTR: ["href", "target", "rel", "src", "alt", "title", "class"],
+          SAFE_FOR_TEMPLATES: true,
+        });
+        setSanitizedContent(cleaned);
+      });
+    }
+  }, [isOpen, data.isi]);
+
   if (!isOpen) return null;
 
   const today = new Date().toLocaleDateString("id-ID", {
@@ -90,7 +115,9 @@ export default function PreviewModal({ isOpen, onClose, type, data }: PreviewMod
             {data.isi ? (
               <div
                 className="text-slate-700 whitespace-pre-wrap"
-                dangerouslySetInnerHTML={{ __html: data.isi.replace(/\n/g, "<br/>") }}
+                dangerouslySetInnerHTML={{ 
+                  __html: sanitizedContent || "Loading..." 
+                }}
               />
             ) : (
               <p className="text-slate-300 italic">Isi konten belum diisi</p>

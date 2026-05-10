@@ -18,11 +18,21 @@ export default async function ProgramSection() {
     orderBy: { urutan: "asc" },
   });
 
-  // Helper function to dynamically render Lucide icons
+  // ✅ SAFE: Helper function to dynamically render Lucide icons with proper type checking
   const getIcon = (iconName: string | null): React.ElementType => {
-    if (!iconName) return LucideIcons.ShoppingBag as unknown as React.ElementType;
-    const icon = (LucideIcons as unknown as Record<string, unknown>)[iconName];
-    return (typeof icon === 'function' ? icon : LucideIcons.ShoppingBag) as React.ElementType;
+    if (!iconName) return ShoppingBag;
+    
+    // Type-safe icon lookup
+    const icon = (LucideIcons as Record<string, unknown>)[iconName];
+    
+    // Validate that the icon exists and is a valid React component
+    if (typeof icon === 'function') {
+      return icon as React.ElementType;
+    }
+    
+    // Fallback to default icon if not found
+    console.warn(`[ICON_NOT_FOUND] Icon "${iconName}" not found in lucide-react, using default`);
+    return ShoppingBag;
   };
   return (
     <section className="py-20 md:py-28 bg-[#f4f9ff]">

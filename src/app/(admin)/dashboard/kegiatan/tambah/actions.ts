@@ -3,66 +3,32 @@
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { z } from "zod";
 import { deleteFileFromStorage, deleteFilesFromStorage } from "@/lib/supabase";
 import { auditCreate, auditDelete } from "@/lib/audit";
 import { auth } from "@/auth";
-
-const kegiatanSchema = z.object({
-  nama: z.string().min(5, "Nama kegiatan minimal 5 karakter"),
-  deskripsi: z.string().optional(),
-  jenis: z.enum(["SOSIAL", "PENDIDIKAN", "EKONOMI", "OLAHRAGA", "SENI_BUDAYA", "LAINNYA"]),
-  tanggalMulai: z.string().min(1, "Tanggal mulai wajib diisi"),
-  tanggalSelesai: z.string().optional(),
-  lokasi: z.string().optional(),
-  anggaran: z.string().optional(),
-  status: z.enum(["UPCOMING", "ONGOING", "SELESAI", "DIBATALKAN"]),
-  thumbnail: z.string().optional(),
-}).refine((data) => {
-  // Validate date range: tanggalSelesai must be after tanggalMulai
-  if (data.tanggalSelesai && data.tanggalMulai) {
-    const mulai = new Date(data.tanggalMulai);
-    const selesai = new Date(data.tanggalSelesai);
-    return selesai >= mulai;
-  }
-  return true;
-}, {
-  message: "Tanggal selesai harus setelah atau sama dengan tanggal mulai",
-  path: ["tanggalSelesai"],
-});
+import { 
+  createKegiatanSchema, 
+  validateFormData 
+} from "@/lib/validations";
 
 export async function createKegiatan(formData: FormData) {
   const session = await auth();
-  const parsed = kegiatanSchema.safeParse({
-    nama: formData.get("nama"),
-    deskripsi: formData.get("deskripsi"),
-    jenis: formData.get("jenis"),
-    tanggalMulai: formData.get("tanggalMulai"),
-    tanggalSelesai: formData.get("tanggalSelesai"),
-    lokasi: formData.get("lokasi"),
-    anggaran: formData.get("anggaran"),
-    status: formData.get("status") || "UPCOMING",
-    thumbnail: formData.get("thumbnail"),
-  });
-
-  if (!parsed.success) {
-    throw new Error(parsed.error.issues[0].message);
-  }
-
-  const { nama, deskripsi, jenis, tanggalMulai, tanggalSelesai, lokasi, anggaran, status, thumbnail } = parsed.data;
+  
+  // ✅ VALIDATE INPUT with centralized schema
+  const data = validateFormData(formData, createKegiatanSchema);
 
   try {
     const kegiatan = await prisma.kegiatan.create({
       data: {
-        nama,
-        deskripsi: deskripsi || null,
-        jenis,
-        tanggalMulai: new Date(tanggalMulai),
-        tanggalSelesai: tanggalSelesai ? new Date(tanggalSelesai) : null,
-        lokasi: lokasi || null,
-        anggaran: anggaran ? parseFloat(anggaran) : null,
-        status,
-        thumbnail: thumbnail || null,
+        nama: data.nama,
+        deskripsi: data.deskripsi || null,
+        jenis: data.jenis,
+        tanggalMulai: new Date(data.tanggalMulai),
+        tanggalSelesai: data.tanggalSelesai ? new Date(data.tanggalSelesai) : null,
+        lokasi: data.lokasi || null,
+        anggaran: data.anggaran ? parseFloat(data.anggaran) : null,
+        status: data.status,
+        thumbnail: data.thumbnail || null,
       },
     });
 
@@ -70,12 +36,13 @@ export async function createKegiatan(formData: FormData) {
     await auditCreate(
       "kegiatan",
       kegiatan.id,
-      nama,
+      data.nama,
       session?.user?.id,
       session?.user?.name || undefined,
-      `Created kegiatan: ${nama} (${jenis}, ${status})`
+      `Created kegiatan: ${data.nama} (${data.jenis}, ${data.status})`
     );
-  } catch (error: any) {
+  } catch (error) {
+    console.error("[CREATE_KEGIATAN_ERROR]", error);
     throw new Error("Gagal menyimpan data kegiatan");
   }
 

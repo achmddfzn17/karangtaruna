@@ -2,9 +2,14 @@
 
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { deleteFileFromStorage } from "@/lib/supabase";
 import { auditDelete, auditCreate } from "@/lib/audit";
 import { auth } from "@/auth";
+import { 
+  createProgramSchema, 
+  validateFormData 
+} from "@/lib/validations";
 
 export async function deleteProgram(id: string) {
   const session = await auth();
@@ -46,44 +51,37 @@ export async function deleteProgram(id: string) {
   }
 }
 
-import { z } from "zod";
-import { redirect } from "next/navigation";
-
-const programSchema = z.object({
-  nama: z.string().min(3, "Nama program minimal 3 karakter"),
-  deskripsi: z.string().optional(),
-  icon: z.string().optional(),
-  thumbnail: z.string().optional(),
-  status: z.preprocess((val) => val === "true", z.boolean()),
-  urutan: z.preprocess((val) => Number(val), z.number().min(0)),
-});
-
 export async function createProgram(formData: FormData) {
   const session = await auth();
-  const parsed = programSchema.safeParse({
-    nama: formData.get("nama"),
-    deskripsi: formData.get("deskripsi"),
-    icon: formData.get("icon"),
-    thumbnail: formData.get("thumbnail"),
-    status: formData.get("status") || "true",
-    urutan: formData.get("urutan") || "0",
-  });
-
-  if (!parsed.success) {
-    throw new Error(parsed.error.issues[0].message);
+  
+  // ✅ VALIDATE INPUT with centralized schema
+  // Manual parsing for boolean and number types
+  const rawData = {
+    nama: formData.get("nama") as string,
+    deskripsi: formData.get("deskripsi") as string,
+    icon: formData.get("icon") as string,
+    thumbnail: formData.get("thumbnail") as string,
+    status: formData.get("status") === "true",
+    urutan: Number(formData.get("urutan") || "0"),
+  };
+  
+  const validation = createProgramSchema.safeParse(rawData);
+  
+  if (!validation.success) {
+    throw new Error(validation.error.issues[0].message);
   }
-
-  const { nama, deskripsi, icon, thumbnail, status, urutan } = parsed.data;
+  
+  const data = validation.data;
 
   try {
     const program = await prisma.program.create({
       data: {
-        nama,
-        deskripsi: deskripsi || null,
-        icon: icon || null,
-        thumbnail: thumbnail || null,
-        status,
-        urutan,
+        nama: data.nama,
+        deskripsi: data.deskripsi || null,
+        icon: data.icon || null,
+        thumbnail: data.thumbnail || null,
+        status: data.status,
+        urutan: data.urutan,
       },
     });
 
@@ -91,12 +89,13 @@ export async function createProgram(formData: FormData) {
     await auditCreate(
       "program",
       program.id,
-      nama,
+      data.nama,
       session?.user?.id,
       session?.user?.name || undefined,
-      `Created program: ${nama}`
+      `Created program: ${data.nama}`
     );
-  } catch (error: any) {
+  } catch (error) {
+    console.error("[CREATE_PROGRAM_ERROR]", error);
     throw new Error("Gagal menyimpan data program");
   }
 

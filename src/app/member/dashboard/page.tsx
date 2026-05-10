@@ -1,5 +1,4 @@
-import { auth } from "@/auth";
-import { redirect } from "next/navigation";
+import { requireMemberAuth } from "@/lib/auth-helpers";
 import prisma from "@/lib/prisma";
 import Link from "next/link";
 import {
@@ -14,13 +13,9 @@ export const metadata = {
 };
 
 export default async function MemberDashboard() {
-  const session = await auth();
-
-  if (!session || !session.user) redirect("/anggota/login");
-
-  const userRole = session.user.role;
-  if (userRole !== "ANGGOTA") redirect("/anggota/login");
-
+  // ✅ AUTH CHECK: Require member authentication
+  // Will redirect to /anggota/login if not authenticated
+  const session = await requireMemberAuth();
   const userId = session.user.id;
 
   const anggotaData = await prisma.anggota.findUnique({

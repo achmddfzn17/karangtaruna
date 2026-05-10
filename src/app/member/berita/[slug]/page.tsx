@@ -6,6 +6,7 @@ import { ArrowLeft, Calendar, Eye } from "lucide-react";
 import { format } from "date-fns";
 import { id as localeId } from "date-fns/locale";
 import ShareButton from "@/components/member/ShareButton";
+import { sanitizeHtml } from "@/lib/sanitize";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -40,6 +41,9 @@ export default async function BeritaDetailPage({
     where: { id: berita.id },
     data: { viewCount: { increment: 1 } },
   });
+
+  // Sanitize HTML content
+  const sanitizedContent = await sanitizeHtml(berita.isi);
 
   // Get related berita
   const relatedBerita = await prisma.berita.findMany({
@@ -114,7 +118,7 @@ export default async function BeritaDetailPage({
           {/* Content */}
           <div
             className="prose prose-slate max-w-none"
-            dangerouslySetInnerHTML={{ __html: berita.isi }}
+            dangerouslySetInnerHTML={{ __html: sanitizedContent }}
           />
 
           {/* Tags */}

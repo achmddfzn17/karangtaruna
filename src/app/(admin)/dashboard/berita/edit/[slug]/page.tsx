@@ -30,7 +30,16 @@ export default async function EditBeritaPage({ params }: EditBeritaPageProps) {
     const thumbnail = formData.get("thumbnail") as string;
     const tagsRaw = formData.get("tags") as string;
     let tags: string[] = [];
-    try { tags = tagsRaw ? JSON.parse(tagsRaw) : []; } catch {}
+    if (tagsRaw) {
+      try {
+        const parsed = JSON.parse(tagsRaw);
+        tags = Array.isArray(parsed) ? parsed : [];
+      } catch (error) {
+        console.error('[PARSE_TAGS_ERROR]', error);
+        // Continue with empty tags array
+        tags = [];
+      }
+    }
 
     if (!judul || judul.length < 5) throw new Error("Judul minimal 5 karakter");
     if (!isi || isi.length < 10) throw new Error("Isi berita tidak boleh kosong");
