@@ -1,10 +1,14 @@
 import { prisma } from "@/lib/prisma";
+import { requireAdmin } from "@/lib/auth-helpers";
 import { revalidatePath } from "next/cache";
 import SusDashboard from "./SusDashboard";
 
 export const metadata = { title: "Kuisioner SUS" };
 
 export default async function SusAdminPage() {
+  // ✅ Auth check
+  await requireAdmin();
+
   const responses = await prisma.susResponse.findMany({
     orderBy: { createdAt: "desc" },
   });
@@ -40,7 +44,22 @@ export default async function SusAdminPage() {
   // Server action: hapus response
   async function deleteResponse(id: string) {
     "use server";
-    await prisma.susResponse.delete({ where: { id } });
+    
+    // ✅ Auth check in server action
+    await requireAdmin();
+    
+    // ✅ Validate ID
+    if (!id || typeof id !== "string") {
+      throw new Error("ID response tidak valid");
+    }
+    
+    try {
+      await prisma.susResponse.delete({ where: { id } });
+    } catch (error) {
+      console.error("[DELETE_SUS_RESPONSE_ERROR]", error);
+      throw new Error("Gagal menghapus response");
+    }
+    
     revalidatePath("/dashboard/sus");
   }
 

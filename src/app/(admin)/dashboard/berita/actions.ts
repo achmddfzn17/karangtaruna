@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { deleteFileFromStorage } from "@/lib/supabase";
 import { auditCreate, auditDelete, auditUpdate } from "@/lib/audit";
-import { auth } from "@/auth";
+import { requireAdmin } from "@/lib/auth-helpers";
 import { 
   createBeritaSchema, 
   updateBeritaSchema, 
@@ -13,7 +13,8 @@ import {
 } from "@/lib/validations";
 
 export async function createBerita(formData: FormData) {
-  const session = await auth();
+  // ✅ Auth check
+  const session = await requireAdmin();
   
   // ✅ VALIDATE INPUT with centralized schema
   const data = validateFormData(formData, createBeritaSchema);
@@ -51,8 +52,8 @@ export async function createBerita(formData: FormData) {
       "berita",
       berita.id,
       data.judul,
-      session?.user?.id,
-      session?.user?.name || undefined,
+      session.user.id,
+      session.user.name || undefined,
       `Created berita: ${data.judul} (${data.status})`
     );
   } catch (error) {
@@ -61,11 +62,18 @@ export async function createBerita(formData: FormData) {
   }
 
   revalidatePath("/dashboard/berita");
+  revalidatePath("/berita");
   redirect("/dashboard/berita");
 }
 
 export async function deleteBerita(id: string) {
-  const session = await auth();
+  // ✅ Auth check
+  const session = await requireAdmin();
+  
+  // ✅ Validate ID
+  if (!id || typeof id !== "string") {
+    throw new Error("ID berita tidak valid");
+  }
   
   try {
     // Ambil data berita untuk hapus thumbnail dari Supabase
@@ -78,9 +86,14 @@ export async function deleteBerita(id: string) {
       throw new Error("Berita tidak ditemukan");
     }
 
-    // Hapus thumbnail dari Supabase Storage jika ada
+    // ✅ Hapus thumbnail dari Supabase Storage (dengan error handling)
     if (berita.thumbnail) {
-      await deleteFileFromStorage(berita.thumbnail);
+      try {
+        await deleteFileFromStorage(berita.thumbnail);
+      } catch (storageError) {
+        console.error("[STORAGE_DELETE_ERROR]", storageError);
+        // Continue dengan DB deletion meskipun storage gagal
+      }
     }
 
     // Hapus data berita dari database
@@ -91,21 +104,26 @@ export async function deleteBerita(id: string) {
       "berita",
       id,
       berita.judul,
-      session?.user?.id,
-      session?.user?.name || undefined,
+      session.user.id,
+      session.user.name || undefined,
       `Deleted berita: ${berita.judul}`
     );
 
     revalidatePath("/dashboard/berita");
+    revalidatePath("/berita");
     revalidatePath("/");
   } catch (error) {
     console.error("[DELETE_BERITA_ERROR]", error);
+    if (error instanceof Error) {
+      throw new Error(error.message);
+    }
     throw new Error("Gagal menghapus berita");
   }
 }
 
 export async function updateBerita(id: string, formData: FormData) {
-  const session = await auth();
+  // ✅ Auth check
+  const session = await requireAdmin();
   
   // ✅ VALIDATE INPUT with centralized schema
   const data = validateFormData(formData, updateBeritaSchema);
@@ -127,8 +145,8 @@ export async function updateBerita(id: string, formData: FormData) {
       "berita",
       id,
       data.judul,
-      session?.user?.id,
-      session?.user?.name || undefined,
+      session.user.id,
+      session.user.name || undefined,
       `Updated berita: ${data.judul} (${data.status})`
     );
   } catch (error) {
@@ -137,5 +155,6 @@ export async function updateBerita(id: string, formData: FormData) {
   }
   
   revalidatePath("/dashboard/berita");
+  revalidatePath("/berita");
   redirect("/dashboard/berita");
 }

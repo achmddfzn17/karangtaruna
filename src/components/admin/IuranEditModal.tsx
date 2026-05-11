@@ -7,8 +7,15 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { Edit2, Trash2, Save, X } from "lucide-react";
 
+interface Iuran {
+  id: string;
+  jumlah: number;
+  tanggalBayar: Date | string;
+  keterangan: string | null;
+}
+
 interface IuranEditProps {
-  iuran: any;
+  iuran: Iuran;
   onSuccess?: () => void;
 }
 

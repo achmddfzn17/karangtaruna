@@ -110,36 +110,49 @@ export default function SusDashboard({ responses, stats, distribution, avgPerQ, 
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-extrabold text-slate-900">Kuisioner SUS</h1>
-          <p className="text-sm text-slate-500 mt-1">Analisis System Usability Scale website Karang Taruna</p>
-        </div>
-        <div className="flex items-center gap-3">
-          <a
-            href="/sus"
-            target="_blank"
-            className="inline-flex items-center gap-2 px-4 py-2.5 border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-sm font-bold rounded-xl transition-colors shadow-sm"
-          >
-            <ExternalLink className="w-4 h-4" />
-            Buka Form
-          </a>
-          <button
-            onClick={exportExcel}
-            disabled={stats.total === 0}
-            className="inline-flex items-center gap-2 px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white text-sm font-bold rounded-xl transition-colors shadow-sm disabled:opacity-50"
-          >
-            <Download className="w-4 h-4" />
-            Export Excel
-          </button>
+      {/* Header Section */}
+      <div className="bg-gradient-to-r from-blue-50 to-white rounded-2xl border border-blue-100 p-6">
+        <div className="flex items-start justify-between flex-wrap gap-4">
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-blue-600 rounded-xl">
+              <ClipboardList className="w-7 h-7 text-white" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">
+                Manajemen Kuisioner SUS
+              </h1>
+              <p className="text-sm text-slate-600 font-medium mt-1">
+                Analisis System Usability Scale website Karang Taruna
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <a
+              href="/sus"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-4 py-2.5 border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-sm font-bold rounded-xl transition-colors shadow-sm"
+              aria-label="Buka form SUS"
+            >
+              <ExternalLink className="w-4 h-4" />
+              Buka Form
+            </a>
+            <button
+              onClick={exportExcel}
+              disabled={stats.total === 0}
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white text-sm font-bold rounded-xl transition-all shadow-lg shadow-blue-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Download className="w-4 h-4" />
+              Export Excel
+            </button>
+          </div>
         </div>
       </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
         {/* Skor rata-rata — card besar */}
-        <div className="col-span-2 lg:col-span-1 bg-blue-600 rounded-2xl p-6 text-white shadow-sm shadow-blue-500/20 flex flex-col justify-between">
+        <div className="col-span-2 lg:col-span-1 bg-gradient-to-br from-blue-600 to-blue-700 rounded-2xl p-6 text-white shadow-lg shadow-blue-500/30 flex flex-col justify-between">
           <p className="text-[11px] font-bold uppercase tracking-widest text-blue-200">Rata-rata Skor</p>
           <div>
             <p className="text-5xl font-black mt-2">{stats.avgScore.toFixed(1)}</p>
@@ -150,39 +163,48 @@ export default function SusDashboard({ responses, stats, distribution, avgPerQ, 
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm flex flex-col justify-between">
+        <div className="bg-gradient-to-br from-cyan-50 to-cyan-100/50 rounded-2xl p-5 border border-cyan-200/50 flex flex-col justify-between">
           <div className="flex items-center justify-between mb-3">
-            <p className="text-[11px] text-slate-500 font-bold uppercase">Total Responden</p>
-            <Users className="w-4 h-4 text-slate-400" />
+            <div className="p-2.5 bg-cyan-500 rounded-xl">
+              <Users className="w-5 h-5 text-white" />
+            </div>
+            <span className="text-xs font-bold text-cyan-600 bg-cyan-100 px-2 py-1 rounded-full">Total</span>
           </div>
           <p className="text-3xl font-extrabold text-slate-900">{stats.total}</p>
+          <p className="text-xs text-slate-600 font-medium mt-1">Total Responden</p>
         </div>
 
-        <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm flex flex-col justify-between">
+        <div className="bg-gradient-to-br from-green-50 to-green-100/50 rounded-2xl p-5 border border-green-200/50 flex flex-col justify-between">
           <div className="flex items-center justify-between mb-3">
-            <p className="text-[11px] text-green-600 font-bold uppercase">Acceptable</p>
-            <CheckCircle2 className="w-4 h-4 text-green-500" />
+            <div className="p-2.5 bg-green-500 rounded-xl">
+              <CheckCircle2 className="w-5 h-5 text-white" />
+            </div>
+            <span className="text-xs font-bold text-green-600 bg-green-100 px-2 py-1 rounded-full">Good</span>
           </div>
-          <p className="text-3xl font-extrabold text-green-600">{stats.acceptable}</p>
-          <p className="text-[11px] text-slate-400 mt-1">≥ 71.4</p>
+          <p className="text-3xl font-extrabold text-slate-900">{stats.acceptable}</p>
+          <p className="text-[11px] text-slate-500 mt-1">Acceptable (≥ 71.4)</p>
         </div>
 
-        <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm flex flex-col justify-between">
+        <div className="bg-gradient-to-br from-amber-50 to-amber-100/50 rounded-2xl p-5 border border-amber-200/50 flex flex-col justify-between">
           <div className="flex items-center justify-between mb-3">
-            <p className="text-[11px] text-amber-600 font-bold uppercase">Marginal</p>
-            <AlertTriangle className="w-4 h-4 text-amber-500" />
+            <div className="p-2.5 bg-amber-500 rounded-xl">
+              <AlertTriangle className="w-5 h-5 text-white" />
+            </div>
+            <span className="text-xs font-bold text-amber-600 bg-amber-100 px-2 py-1 rounded-full">Fair</span>
           </div>
-          <p className="text-3xl font-extrabold text-amber-600">{stats.marginal}</p>
-          <p className="text-[11px] text-slate-400 mt-1">50.9 – 71.4</p>
+          <p className="text-3xl font-extrabold text-slate-900">{stats.marginal}</p>
+          <p className="text-[11px] text-slate-500 mt-1">Marginal (50.9–71.4)</p>
         </div>
 
-        <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm flex flex-col justify-between">
+        <div className="bg-gradient-to-br from-red-50 to-red-100/50 rounded-2xl p-5 border border-red-200/50 flex flex-col justify-between">
           <div className="flex items-center justify-between mb-3">
-            <p className="text-[11px] text-red-500 font-bold uppercase">Not Acceptable</p>
-            <XCircle className="w-4 h-4 text-red-400" />
+            <div className="p-2.5 bg-red-500 rounded-xl">
+              <XCircle className="w-5 h-5 text-white" />
+            </div>
+            <span className="text-xs font-bold text-red-600 bg-red-100 px-2 py-1 rounded-full">Poor</span>
           </div>
-          <p className="text-3xl font-extrabold text-red-500">{stats.notAcceptable}</p>
-          <p className="text-[11px] text-slate-400 mt-1">{"< 50.9"}</p>
+          <p className="text-3xl font-extrabold text-slate-900">{stats.notAcceptable}</p>
+          <p className="text-[11px] text-slate-500 mt-1">Not Acceptable ({"< 50.9"})</p>
         </div>
       </div>
 

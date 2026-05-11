@@ -4,6 +4,8 @@ import { ArrowLeft, Save } from "lucide-react";
 import { notFound, redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import ThumbnailUpload from "@/components/admin/ThumbnailUpload";
+import { requireAdmin } from "@/lib/auth-helpers";
+import { JenisKegiatan, StatusKegiatan } from "@prisma/client";
 
 export const metadata = { title: "Edit Kegiatan" };
 
@@ -18,7 +20,14 @@ function toDatetimeLocal(date: Date | null | undefined): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
+// Valid enum values for validation
+const VALID_JENIS: JenisKegiatan[] = ["SOSIAL", "PENDIDIKAN", "EKONOMI", "OLAHRAGA", "SENI_BUDAYA", "LAINNYA"];
+const VALID_STATUS: StatusKegiatan[] = ["UPCOMING", "ONGOING", "SELESAI", "DIBATALKAN"];
+
 export default async function EditKegiatanPage({ params }: EditKegiatanPageProps) {
+  // Auth check
+  await requireAdmin();
+
   const { id } = await params;
 
   const kegiatan = await prisma.kegiatan.findUnique({ where: { id } });
@@ -26,18 +35,55 @@ export default async function EditKegiatanPage({ params }: EditKegiatanPageProps
 
   async function updateKegiatan(formData: FormData) {
     "use server";
-    const nama = formData.get("nama") as string;
-    const deskripsi = formData.get("deskripsi") as string;
+    
+    // Auth check in server action
+    await requireAdmin();
+
+    const nama = (formData.get("nama") as string)?.trim();
+    const deskripsi = (formData.get("deskripsi") as string)?.trim();
     const jenis = formData.get("jenis") as string;
     const tanggalMulai = formData.get("tanggalMulai") as string;
     const tanggalSelesai = formData.get("tanggalSelesai") as string;
-    const lokasi = formData.get("lokasi") as string;
+    const lokasi = (formData.get("lokasi") as string)?.trim();
     const anggaran = formData.get("anggaran") as string;
     const status = formData.get("status") as string;
     const thumbnail = formData.get("thumbnail") as string;
 
+    // Validation
     if (!nama || nama.length < 5) throw new Error("Nama kegiatan minimal 5 karakter");
+    if (nama.length > 200) throw new Error("Nama kegiatan maksimal 200 karakter");
     if (!tanggalMulai) throw new Error("Tanggal mulai wajib diisi");
+    
+    // Validate enum values
+    if (!VALID_JENIS.includes(jenis as JenisKegiatan)) {
+      throw new Error("Jenis kegiatan tidak valid");
+    }
+    if (!VALID_STATUS.includes(status as StatusKegiatan)) {
+      throw new Error("Status kegiatan tidak valid");
+    }
+
+    // Validate dates
+    const startDate = new Date(tanggalMulai);
+    if (isNaN(startDate.getTime())) throw new Error("Format tanggal mulai tidak valid");
+
+    let endDate: Date | null = null;
+    if (tanggalSelesai) {
+      endDate = new Date(tanggalSelesai);
+      if (isNaN(endDate.getTime())) throw new Error("Format tanggal selesai tidak valid");
+      if (endDate < startDate) throw new Error("Tanggal selesai harus setelah tanggal mulai");
+    }
+
+    // Validate anggaran
+    let anggaranValue: number | null = null;
+    if (anggaran) {
+      anggaranValue = parseFloat(anggaran);
+      if (isNaN(anggaranValue) || anggaranValue < 0) {
+        throw new Error("Anggaran harus berupa angka positif");
+      }
+      if (anggaranValue > 999_999_999) {
+        throw new Error("Anggaran terlalu besar");
+      }
+    }
 
     try {
       await prisma.kegiatan.update({
@@ -45,16 +91,17 @@ export default async function EditKegiatanPage({ params }: EditKegiatanPageProps
         data: {
           nama,
           deskripsi: deskripsi || null,
-          jenis: jenis as any,
-          tanggalMulai: new Date(tanggalMulai),
-          tanggalSelesai: tanggalSelesai ? new Date(tanggalSelesai) : null,
+          jenis: jenis as JenisKegiatan,
+          tanggalMulai: startDate,
+          tanggalSelesai: endDate,
           lokasi: lokasi || null,
-          anggaran: anggaran ? parseFloat(anggaran) : null,
-          status: status as any,
+          anggaran: anggaranValue,
+          status: status as StatusKegiatan,
           thumbnail: thumbnail || null,
         },
       });
-    } catch {
+    } catch (error) {
+      console.error("[UPDATE_KEGIATAN_ERROR]", error);
       throw new Error("Gagal mengupdate kegiatan");
     }
 

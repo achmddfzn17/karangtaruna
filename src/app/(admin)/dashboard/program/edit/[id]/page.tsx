@@ -4,6 +4,7 @@ import { ArrowLeft, Save } from "lucide-react";
 import { notFound, redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import ThumbnailUpload from "@/components/admin/ThumbnailUpload";
+import { requireAdmin } from "@/lib/auth-helpers";
 
 export const metadata = { title: "Edit Program" };
 
@@ -12,6 +13,9 @@ interface EditProgramPageProps {
 }
 
 export default async function EditProgramPage({ params }: EditProgramPageProps) {
+  // Auth check
+  await requireAdmin();
+
   const { id } = await params;
 
   const program = await prisma.program.findUnique({ where: { id } });
@@ -19,17 +23,30 @@ export default async function EditProgramPage({ params }: EditProgramPageProps) 
 
   async function updateProgram(formData: FormData) {
     "use server";
-    const nama = formData.get("nama") as string;
-    const deskripsi = formData.get("deskripsi") as string;
-    const icon = formData.get("icon") as string;
+
+    // Auth check in server action
+    await requireAdmin();
+
+    const nama = (formData.get("nama") as string)?.trim();
+    const deskripsi = (formData.get("deskripsi") as string)?.trim();
+    const icon = (formData.get("icon") as string)?.trim();
     const thumbnail = formData.get("thumbnail") as string;
     const statusRaw = formData.get("status") as string;
     const urutanRaw = formData.get("urutan") as string;
 
+    // Validation
     if (!nama || nama.length < 3) throw new Error("Nama program minimal 3 karakter");
+    if (nama.length > 100) throw new Error("Nama program maksimal 100 karakter");
+    if (deskripsi && deskripsi.length > 5000) throw new Error("Deskripsi maksimal 5000 karakter");
 
     const status = statusRaw === "true";
-    const urutan = Number(urutanRaw) || 0;
+    const urutanNum = Number(urutanRaw);
+    
+    // Validate urutan
+    if (urutanRaw && (isNaN(urutanNum) || urutanNum < 0 || urutanNum > 999)) {
+      throw new Error("Urutan harus berupa angka antara 0-999");
+    }
+    const urutan = urutanNum || 0;
 
     try {
       await prisma.program.update({
@@ -43,7 +60,8 @@ export default async function EditProgramPage({ params }: EditProgramPageProps) 
           urutan,
         },
       });
-    } catch {
+    } catch (error) {
+      console.error("[UPDATE_PROGRAM_ERROR]", error);
       throw new Error("Gagal mengupdate program");
     }
 

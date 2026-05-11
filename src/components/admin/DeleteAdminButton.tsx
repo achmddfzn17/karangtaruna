@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Trash2 } from "lucide-react";
+import { Trash2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
@@ -20,7 +20,7 @@ export default function DeleteAdminButton({ id, nama, isSelf }: Props) {
       toast.error("Tidak bisa menghapus akun Anda sendiri");
       return;
     }
-    if (!confirm(`Hapus admin "${nama}"? Akun ini tidak bisa dipulihkan.`)) return;
+    if (!confirm(`Hapus admin "${nama}"?\n\nAkun ini tidak bisa dipulihkan setelah dihapus.`)) return;
 
     setLoading(true);
     try {
@@ -31,8 +31,9 @@ export default function DeleteAdminButton({ id, nama, isSelf }: Props) {
       }
       toast.success(`Admin "${nama}" berhasil dihapus`);
       router.refresh();
-    } catch (err: any) {
-      toast.error(err.message || "Gagal menghapus admin");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Gagal menghapus admin";
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -42,10 +43,21 @@ export default function DeleteAdminButton({ id, nama, isSelf }: Props) {
     <button
       onClick={handleDelete}
       disabled={loading || isSelf}
-      title={isSelf ? "Tidak bisa hapus akun sendiri" : "Hapus admin"}
-      className="p-1.5 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+      title={isSelf ? "Tidak bisa hapus akun sendiri" : `Hapus admin ${nama}`}
+      aria-label={isSelf ? "Tidak bisa hapus akun sendiri" : `Hapus admin ${nama}`}
+      className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-red-50 hover:bg-red-100 text-red-700 text-xs font-bold rounded-lg transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
     >
-      <Trash2 className="w-4 h-4" />
+      {loading ? (
+        <>
+          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+          Menghapus...
+        </>
+      ) : (
+        <>
+          <Trash2 className="w-3.5 h-3.5" />
+          Hapus
+        </>
+      )}
     </button>
   );
 }

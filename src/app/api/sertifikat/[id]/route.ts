@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
+import { Prisma } from "@prisma/client";
 
 /**
  * PATCH /api/sertifikat/[id]
@@ -16,7 +17,8 @@ export async function PATCH(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const userRole = (session.user as any).role;
+    // Type-safe role check
+    const userRole = session.user.role;
     if (userRole !== "ADMIN" && userRole !== "SUPER_ADMIN") {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
@@ -33,7 +35,8 @@ export async function PATCH(
       );
     }
 
-    let updateData: any = {};
+    // Type-safe update data
+    const updateData: Prisma.SertifikatUpdateInput = {};
 
     if (regenerateQR) {
       const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(
@@ -75,7 +78,8 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const userRole = (session.user as any).role;
+    // Type-safe role check
+    const userRole = session.user.role;
     if (userRole !== "ADMIN" && userRole !== "SUPER_ADMIN") {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }

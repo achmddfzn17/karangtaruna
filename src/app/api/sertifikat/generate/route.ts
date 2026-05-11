@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { generateCertificatePDFDataUrl } from "@/lib/certificate-pdf";
 import { sendCertificateEmail } from "@/lib/email";
+import { Prisma } from "@prisma/client";
 
 /**
  * POST /api/sertifikat/generate
@@ -16,8 +17,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized - login diperlukan" }, { status: 401 });
     }
 
-    // SECURITY: Only ADMIN/SUPER_ADMIN can generate certificates
-    const userRole = (session.user as any).role;
+    // SECURITY: Only ADMIN/SUPER_ADMIN can generate certificates (proper typing)
+    const userRole = session.user.role;
     if (userRole !== "ADMIN" && userRole !== "SUPER_ADMIN") {
       return NextResponse.json(
         { error: "Forbidden - hanya admin yang bisa membuat sertifikat" },
@@ -67,21 +68,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Check if already has certificate
-    const existingCert = await prisma.sertifikat.findUnique({
-      where: { anggotaKegiatanId },
-    });
-
-    if (existingCert) {
-      return NextResponse.json(
-        { 
-          error: "Sertifikat sudah dibuat sebelumnya",
-          certificate: existingCert 
-        },
-        { status: 400 }
-      );
-    }
-
     // Generate certificate number with UUID to prevent race conditions
     // Format: CERT-YEAR-UUID (first 8 chars)
     const year = new Date().getFullYear();
@@ -110,18 +96,40 @@ export async function POST(req: NextRequest) {
       // Continue without PDF if generation fails
     }
 
-    // Create certificate with proper data
-    const certificate = await prisma.sertifikat.create({
-      data: {
-        anggotaKegiatanId,
-        nomorSertifikat,
-        namaAnggota: anggotaKegiatan.anggota.namaLengkap,
-        namaKegiatan: anggotaKegiatan.kegiatan.nama,
-        tanggalKegiatan: anggotaKegiatan.kegiatan.tanggalMulai,
-        qrCode: qrCodeUrl,
-        pdfUrl,
-      },
-    });
+    // RACE CONDITION FIX: Use try-catch on create instead of find-then-create
+    // This relies on the unique constraint on anggotaKegiatanId
+    let certificate;
+    try {
+      certificate = await prisma.sertifikat.create({
+        data: {
+          anggotaKegiatanId,
+          nomorSertifikat,
+          namaAnggota: anggotaKegiatan.anggota.namaLengkap,
+          namaKegiatan: anggotaKegiatan.kegiatan.nama,
+          tanggalKegiatan: anggotaKegiatan.kegiatan.tanggalMulai,
+          qrCode: qrCodeUrl,
+          pdfUrl,
+        },
+      });
+    } catch (error) {
+      // Handle unique constraint violation (race condition)
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        if (error.code === "P2002") {
+          // Unique constraint violation - certificate already exists
+          const existingCert = await prisma.sertifikat.findUnique({
+            where: { anggotaKegiatanId },
+          });
+          return NextResponse.json(
+            {
+              error: "Sertifikat sudah dibuat sebelumnya",
+              certificate: existingCert,
+            },
+            { status: 400 }
+          );
+        }
+      }
+      throw error;
+    }
 
     // Send email notification (async - don't wait for it)
     const anggotaEmail = anggotaKegiatan.anggota.email || anggotaKegiatan.anggota.noHp;

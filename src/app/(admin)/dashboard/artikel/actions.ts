@@ -5,14 +5,15 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { deleteFileFromStorage } from "@/lib/supabase";
 import { auditCreate, auditDelete } from "@/lib/audit";
-import { auth } from "@/auth";
+import { requireAdmin } from "@/lib/auth-helpers";
 import { 
   createArtikelSchema, 
   validateFormData 
 } from "@/lib/validations";
 
 export async function createArtikel(formData: FormData) {
-  const session = await auth();
+  // ✅ Auth check
+  const session = await requireAdmin();
   
   // ✅ VALIDATE INPUT with centralized schema
   const data = validateFormData(formData, createArtikelSchema);
@@ -50,8 +51,8 @@ export async function createArtikel(formData: FormData) {
       "artikel",
       artikel.id,
       data.judul,
-      session?.user?.id,
-      session?.user?.name || undefined,
+      session.user.id,
+      session.user.name || undefined,
       `Created artikel: ${data.judul} (${data.status})`
     );
   } catch (error) {
@@ -60,11 +61,18 @@ export async function createArtikel(formData: FormData) {
   }
 
   revalidatePath("/dashboard/artikel");
+  revalidatePath("/artikel");
   redirect("/dashboard/artikel");
 }
 
 export async function deleteArtikel(id: string) {
-  const session = await auth();
+  // ✅ Auth check
+  const session = await requireAdmin();
+  
+  // ✅ Validate ID
+  if (!id || typeof id !== "string") {
+    throw new Error("ID artikel tidak valid");
+  }
   
   try {
     // Ambil data artikel untuk hapus thumbnail dari Supabase
@@ -77,9 +85,14 @@ export async function deleteArtikel(id: string) {
       throw new Error("Artikel tidak ditemukan");
     }
 
-    // Hapus thumbnail dari Supabase Storage jika ada
+    // ✅ Hapus thumbnail dari Supabase Storage (dengan error handling)
     if (artikel.thumbnail) {
-      await deleteFileFromStorage(artikel.thumbnail);
+      try {
+        await deleteFileFromStorage(artikel.thumbnail);
+      } catch (storageError) {
+        console.error("[STORAGE_DELETE_ERROR]", storageError);
+        // Continue dengan DB deletion meskipun storage gagal
+      }
     }
 
     // Hapus data artikel dari database
@@ -90,15 +103,19 @@ export async function deleteArtikel(id: string) {
       "artikel",
       id,
       artikel.judul,
-      session?.user?.id,
-      session?.user?.name || undefined,
+      session.user.id,
+      session.user.name || undefined,
       `Deleted artikel: ${artikel.judul}`
     );
 
     revalidatePath("/dashboard/artikel");
+    revalidatePath("/artikel");
     revalidatePath("/");
   } catch (error) {
     console.error("[DELETE_ARTIKEL_ERROR]", error);
+    if (error instanceof Error) {
+      throw new Error(error.message);
+    }
     throw new Error("Gagal menghapus artikel");
   }
 }

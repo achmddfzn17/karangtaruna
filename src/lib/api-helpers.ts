@@ -130,7 +130,7 @@ export function apiHandler(
  * @param session - Auth session
  * @returns User ID or null
  */
-export function getUserId(session: any): string | null {
+export function getUserId(session: { user?: { id?: string } } | null): string | null {
   return session?.user?.id || null;
 }
 
@@ -139,7 +139,7 @@ export function getUserId(session: any): string | null {
  * @param session - Auth session
  * @returns User role or null
  */
-export function getUserRole(session: any): string | null {
+export function getUserRole(session: { user?: { role?: string } } | null): string | null {
   return session?.user?.role || null;
 }
 
@@ -149,7 +149,7 @@ export function getUserRole(session: any): string | null {
  * @param allowedRoles - Array of allowed roles
  * @returns boolean
  */
-export function hasRole(session: any, allowedRoles: string[]): boolean {
+export function hasRole(session: { user?: { role?: string } } | null, allowedRoles: string[]): boolean {
   const role = getUserRole(session);
   return role ? allowedRoles.includes(role) : false;
 }

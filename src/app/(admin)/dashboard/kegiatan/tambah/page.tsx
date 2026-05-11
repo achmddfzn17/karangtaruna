@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ChevronLeft, Save, AlertCircle } from "lucide-react";
+import { ChevronLeft, Save, AlertCircle, Loader2 } from "lucide-react";
 import { createKegiatan } from "./actions";
 import { toast } from "sonner";
 import ThumbnailUpload from "@/components/admin/ThumbnailUpload";
@@ -16,9 +16,17 @@ export default function TambahKegiatanPage() {
     setErrorMsg("");
     try {
       await createKegiatan(formData);
+      // Note: redirect() di server action akan throw NEXT_REDIRECT error
+      // yang ditangkap oleh Next.js, jadi code ini tidak akan tereksekusi
       toast.success("Berhasil menambahkan kegiatan baru!");
-    } catch (error: any) {
-      setErrorMsg(error.message || "Terjadi kesalahan");
+    } catch (error: unknown) {
+      // ✅ BUG FIX: Don't treat NEXT_REDIRECT as an error
+      if (error instanceof Error && error.message.includes("NEXT_REDIRECT")) {
+        throw error; // Re-throw untuk Next.js handle redirect
+      }
+      const message = error instanceof Error ? error.message : "Terjadi kesalahan";
+      setErrorMsg(message);
+      toast.error(message);
       setIsSubmitting(false);
     }
   };
@@ -29,6 +37,7 @@ export default function TambahKegiatanPage() {
         <Link
           href="/dashboard/kegiatan"
           className="p-2 bg-white rounded-xl border border-gray-100 hover:bg-slate-50 transition-colors"
+          aria-label="Kembali ke daftar kegiatan"
         >
           <ChevronLeft className="w-5 h-5 text-slate-600" />
         </Link>
@@ -50,24 +59,32 @@ export default function TambahKegiatanPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Nama Kegiatan */}
             <div className="space-y-2 md:col-span-2">
-              <label htmlFor="nama" className="text-sm font-bold text-slate-700">Nama Kegiatan *</label>
+              <label htmlFor="nama" className="text-sm font-bold text-slate-700">
+                Nama Kegiatan <span className="text-red-500">*</span>
+              </label>
               <input
                 id="nama"
                 type="text"
                 name="nama"
                 required
+                minLength={5}
+                maxLength={200}
                 placeholder="Contoh: Rapat Rutin Bulanan"
                 className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
               />
+              <p className="text-xs text-slate-400">Minimal 5 karakter, maksimal 200 karakter</p>
             </div>
 
             {/* Jenis Kegiatan */}
             <div className="space-y-2">
-              <label htmlFor="jenis" className="text-sm font-bold text-slate-700">Jenis Kegiatan *</label>
+              <label htmlFor="jenis" className="text-sm font-bold text-slate-700">
+                Jenis Kegiatan <span className="text-red-500">*</span>
+              </label>
               <select
                 id="jenis"
                 name="jenis"
                 required
+                defaultValue="SOSIAL"
                 className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all bg-white"
               >
                 <option value="SOSIAL">Sosial</option>
@@ -81,11 +98,14 @@ export default function TambahKegiatanPage() {
 
             {/* Status */}
             <div className="space-y-2">
-              <label htmlFor="status" className="text-sm font-bold text-slate-700">Status *</label>
+              <label htmlFor="status" className="text-sm font-bold text-slate-700">
+                Status <span className="text-red-500">*</span>
+              </label>
               <select
                 id="status"
                 name="status"
                 required
+                defaultValue="UPCOMING"
                 className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all bg-white"
               >
                 <option value="UPCOMING">Akan Datang</option>
@@ -97,7 +117,9 @@ export default function TambahKegiatanPage() {
 
             {/* Tanggal Mulai */}
             <div className="space-y-2">
-              <label htmlFor="tanggalMulai" className="text-sm font-bold text-slate-700">Tanggal Mulai *</label>
+              <label htmlFor="tanggalMulai" className="text-sm font-bold text-slate-700">
+                Tanggal Mulai <span className="text-red-500">*</span>
+              </label>
               <input
                 id="tanggalMulai"
                 type="datetime-local"
@@ -116,6 +138,7 @@ export default function TambahKegiatanPage() {
                 name="tanggalSelesai"
                 className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
               />
+              <p className="text-xs text-slate-400">Harus setelah tanggal mulai</p>
             </div>
 
             {/* Lokasi */}
@@ -125,6 +148,7 @@ export default function TambahKegiatanPage() {
                 id="lokasi"
                 type="text"
                 name="lokasi"
+                maxLength={200}
                 placeholder="Contoh: Balai RW 05"
                 className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
               />
@@ -139,10 +163,14 @@ export default function TambahKegiatanPage() {
                   id="anggaran"
                   type="number"
                   name="anggaran"
+                  min="0"
+                  max="999999999"
+                  step="1000"
                   placeholder="0"
                   className="w-full pl-12 pr-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
                 />
               </div>
+              <p className="text-xs text-slate-400">Maksimal Rp 999.999.999</p>
             </div>
 
             {/* Deskripsi */}
@@ -152,9 +180,11 @@ export default function TambahKegiatanPage() {
                 id="deskripsi"
                 name="deskripsi"
                 rows={4}
+                maxLength={5000}
                 placeholder="Jelaskan detail kegiatan ini..."
                 className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all resize-none"
-              ></textarea>
+              />
+              <p className="text-xs text-slate-400">Maksimal 5000 karakter</p>
             </div>
 
             {/* Thumbnail */}
@@ -177,10 +207,19 @@ export default function TambahKegiatanPage() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-white bg-blue-600 hover:bg-blue-700 transition-colors disabled:opacity-70"
+              className="flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 transition-all disabled:opacity-70 disabled:cursor-not-allowed shadow-lg shadow-blue-500/30"
             >
-              <Save className="w-4 h-4" />
-              {isSubmitting ? "Menyimpan..." : "Simpan Kegiatan"}
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Menyimpan...
+                </>
+              ) : (
+                <>
+                  <Save className="w-4 h-4" />
+                  Simpan Kegiatan
+                </>
+              )}
             </button>
           </div>
         </form>

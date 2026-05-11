@@ -21,29 +21,50 @@ export async function DELETE(
     }, { status: 403 });
   }
 
-  // Tidak bisa hapus diri sendiri
+  // ✅ CRITICAL: Tidak bisa hapus diri sendiri
   if (session.user.id === id) {
     return NextResponse.json({ 
       error: "Tidak bisa menghapus akun sendiri" 
     }, { status: 400 });
   }
 
+  // ✅ Validate ID format
+  if (!id || typeof id !== "string") {
+    return NextResponse.json({ 
+      error: "ID admin tidak valid" 
+    }, { status: 400 });
+  }
+
   try {
     const user = await prisma.user.findUnique({ 
       where: { id },
-      include: { admin: true, anggota: true }
+      select: { id: true, role: true, name: true, email: true },
     });
     
     if (!user || (user.role !== "ADMIN" && user.role !== "SUPER_ADMIN")) {
       return NextResponse.json({ error: "Admin tidak ditemukan" }, { status: 404 });
     }
 
-    // Note: Admin biasanya tidak punya foto profil
-    // Tapi jika ada anggota yang di-promote jadi admin, foto akan tetap ada
-    // Cascade delete akan handle relasi admin dan anggota
+    // ✅ CRITICAL: Cek jika target user adalah SUPER_ADMIN terakhir
+    if (user.role === "SUPER_ADMIN") {
+      const superAdminCount = await prisma.user.count({
+        where: { role: "SUPER_ADMIN" },
+      });
 
+      if (superAdminCount <= 1) {
+        return NextResponse.json({ 
+          error: "Tidak bisa menghapus Super Admin terakhir. Sistem harus memiliki minimal 1 Super Admin." 
+        }, { status: 400 });
+      }
+    }
+
+    // Cascade delete akan handle relasi admin dan anggota
     await prisma.user.delete({ where: { id } });
-    return NextResponse.json({ success: true });
+    
+    return NextResponse.json({ 
+      success: true,
+      message: `Admin "${user.name || user.email}" berhasil dihapus`,
+    });
   } catch (error) {
     console.error("[DELETE_ADMIN_ERROR]", error);
     return NextResponse.json({ error: "Gagal menghapus admin" }, { status: 500 });

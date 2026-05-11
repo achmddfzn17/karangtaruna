@@ -7,8 +7,17 @@ import { toast } from "sonner";
 import { Download, Trash2, RefreshCw, Eye } from "lucide-react";
 import Link from "next/link";
 
+interface Sertifikat {
+  id: string;
+  nomorSertifikat: string;
+  namaAnggota: string;
+  namaKegiatan: string;
+  tanggalTerbit: Date | string;
+  qrCode: string | null;
+}
+
 interface SertifikatListItemProps {
-  sertifikat: any;
+  sertifikat: Sertifikat;
   onSuccess?: () => void;
 }
 
