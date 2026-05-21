@@ -28,7 +28,7 @@ function createPrismaClient(): PrismaClient {
     min: 2, // Maintain minimum connections
     idleTimeoutMillis: 30000, // Close idle connections after 30s
     connectionTimeoutMillis: 10000, // Wait up to 10s for connection
-    statementTimeoutMillis: 30000, // Statement timeout 30s
+    statement_timeout: 30000, // Abort any statement that takes more than 30s
   });
 
   const adapter = new PrismaPg(pool);
