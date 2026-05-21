@@ -6,6 +6,7 @@ const nextConfig: NextConfig = {
   },
   serverExternalPackages: ["pg"],
   images: {
+    dangerouslyAllowLocalIP: true,
     remotePatterns: [
       {
         protocol: "https",

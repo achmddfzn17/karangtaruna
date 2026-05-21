@@ -217,8 +217,8 @@ export default function SusDashboard({ responses, stats, distribution, avgPerQ, 
               <TrendingUp className="w-4 h-4 text-blue-500" />
               Distribusi Skor
             </h2>
-            <div style={{ width: "100%", height: "200px" }}>
-              <ResponsiveContainer width="100%" height="100%" minHeight={200}>
+            <div className="w-full h-[200px]">
+              <ResponsiveContainer width="100%" height={200}>
                 <BarChart data={distribution} barSize={28}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                   <XAxis dataKey="range" tick={{ fontSize: 10, fill: "#94a3b8" }} />
@@ -249,8 +249,8 @@ export default function SusDashboard({ responses, stats, distribution, avgPerQ, 
                 <span className="w-2.5 h-2.5 rounded-sm bg-slate-400 inline-block" /> Pertanyaan negatif
               </span>
             </p>
-            <div style={{ width: "100%", height: "260px" }}>
-              <ResponsiveContainer width="100%" height="100%" minHeight={260}>
+            <div className="w-full h-[260px]">
+              <ResponsiveContainer width="100%" height={260}>
                 <BarChart
                   data={barData}
                   layout="vertical"

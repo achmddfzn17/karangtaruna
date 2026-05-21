@@ -64,10 +64,10 @@ function createPrismaClient(): PrismaClient {
 
   const pool = new Pool({
     connectionString,
-    // Connection pool optimization
-    max: 20, // Max connections in pool
-    min: 2, // Maintain minimum connections
-    idleTimeoutMillis: 30000, // Close idle connections after 30s
+    // Serverless-friendly connection pool configuration
+    max: 2, // Max connections per serverless function instance
+    min: 0, // Allow idle connections to close completely
+    idleTimeoutMillis: 5000, // Close idle connections quickly (5s) to free up DB pool
     connectionTimeoutMillis: 10000, // Wait up to 10s for connection
     statement_timeout: 30000, // Abort any statement that takes more than 30s
   });
