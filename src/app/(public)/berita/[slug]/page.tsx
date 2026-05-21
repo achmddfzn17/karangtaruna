@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import { formatDate } from "@/lib/utils";
+import { sanitizeHtml } from "@/lib/sanitize";
 
 // Halaman di-cache secara statis dan diregenerasi otomatis setiap 60 detik (ISR)
 export const revalidate = 60; 
@@ -15,6 +16,9 @@ export default async function DetailBeritaPage({ params }: { params: Promise<{ s
   if (!berita || berita.status !== "PUBLISHED") {
     notFound();
   }
+
+  // ✅ XSS FIX: Sanitize HTML content
+  const sanitizedContent = await sanitizeHtml(berita.isi);
 
   // Schema.org JSON-LD untuk SEO Google
   const jsonLd = {
@@ -55,9 +59,11 @@ export default async function DetailBeritaPage({ params }: { params: Promise<{ s
         </div>
       )}
 
-      <div className="prose prose-lg prose-blue max-w-none text-slate-700 leading-relaxed">
-        {berita.isi}
-      </div>
+      {/* ✅ XSS FIX: Use sanitized HTML */}
+      <div 
+        className="prose prose-lg prose-blue max-w-none text-slate-700 leading-relaxed"
+        dangerouslySetInnerHTML={{ __html: sanitizedContent }}
+      />
     </article>
   );
 }

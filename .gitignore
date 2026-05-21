@@ -40,6 +40,9 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# runtime logs
+/logs/
+
 # AI Agents & IDE
 .agents/
 .gemini/

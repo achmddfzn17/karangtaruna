@@ -36,37 +36,50 @@ export async function DELETE(
   }
 
   try {
-    const user = await prisma.user.findUnique({ 
-      where: { id },
-      select: { id: true, role: true, name: true, email: true },
+    // ✅ RACE CONDITION FIX: Do check and delete inside transaction
+    const result = await prisma.$transaction(async (tx) => {
+      const user = await tx.user.findUnique({ 
+        where: { id },
+        select: { id: true, role: true, name: true, email: true },
+      });
+      
+      if (!user || (user.role !== "ADMIN" && user.role !== "SUPER_ADMIN")) {
+        throw new Error("NOT_FOUND");
+      }
+
+      // Cek jika target user adalah SUPER_ADMIN terakhir (inside transaction)
+      if (user.role === "SUPER_ADMIN") {
+        const superAdminCount = await tx.user.count({
+          where: { role: "SUPER_ADMIN" },
+        });
+
+        if (superAdminCount <= 1) {
+          throw new Error("LAST_SUPER_ADMIN");
+        }
+      }
+
+      await tx.user.delete({ where: { id } });
+      return user;
     });
     
-    if (!user || (user.role !== "ADMIN" && user.role !== "SUPER_ADMIN")) {
-      return NextResponse.json({ error: "Admin tidak ditemukan" }, { status: 404 });
-    }
-
-    // ✅ CRITICAL: Cek jika target user adalah SUPER_ADMIN terakhir
-    if (user.role === "SUPER_ADMIN") {
-      const superAdminCount = await prisma.user.count({
-        where: { role: "SUPER_ADMIN" },
-      });
-
-      if (superAdminCount <= 1) {
+    return NextResponse.json({ 
+      success: true,
+      message: `Admin "${result.name || result.email}" berhasil dihapus`,
+    });
+  } catch (error) {
+    console.error("[DELETE_ADMIN_ERROR]", error);
+    
+    if (error instanceof Error) {
+      if (error.message === "NOT_FOUND") {
+        return NextResponse.json({ error: "Admin tidak ditemukan" }, { status: 404 });
+      }
+      if (error.message === "LAST_SUPER_ADMIN") {
         return NextResponse.json({ 
           error: "Tidak bisa menghapus Super Admin terakhir. Sistem harus memiliki minimal 1 Super Admin." 
         }, { status: 400 });
       }
     }
-
-    // Cascade delete akan handle relasi admin dan anggota
-    await prisma.user.delete({ where: { id } });
     
-    return NextResponse.json({ 
-      success: true,
-      message: `Admin "${user.name || user.email}" berhasil dihapus`,
-    });
-  } catch (error) {
-    console.error("[DELETE_ADMIN_ERROR]", error);
     return NextResponse.json({ error: "Gagal menghapus admin" }, { status: 500 });
   }
 }

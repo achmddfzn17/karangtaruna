@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import { formatDate } from "@/lib/utils";
+import { sanitizeHtml } from "@/lib/sanitize";
 
 // Halaman di-cache secara statis dan diregenerasi otomatis setiap 60 detik (ISR)
 export const revalidate = 60; 
@@ -15,6 +16,9 @@ export default async function DetailArtikelPage({ params }: { params: Promise<{ 
   if (!artikel || artikel.status !== "PUBLISHED") {
     notFound();
   }
+
+  // ✅ XSS FIX: Sanitize HTML content
+  const sanitizedContent = await sanitizeHtml(artikel.isi);
 
   // Schema.org JSON-LD untuk SEO Google
   const jsonLd = {
@@ -39,7 +43,7 @@ export default async function DetailArtikelPage({ params }: { params: Promise<{ 
       />
       
       <header className="mb-10 text-center">
-        <span className="inline-block px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-bold mb-4 uppercase tracking-wider">
+        <span className="inline-block px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-bold mb-4 uppercase tracking-wider">
           {artikel.kategori || "Artikel"}
         </span>
         <h1 className="text-4xl md:text-5xl font-extrabold text-slate-900 mb-6">{artikel.judul}</h1>
@@ -54,9 +58,11 @@ export default async function DetailArtikelPage({ params }: { params: Promise<{ 
         </div>
       )}
 
-      <div className="prose prose-lg prose-purple max-w-none text-slate-700 leading-relaxed">
-        {artikel.isi}
-      </div>
+      {/* ✅ XSS FIX: Use sanitized HTML */}
+      <div 
+        className="prose prose-lg prose-blue max-w-none text-slate-700 leading-relaxed"
+        dangerouslySetInnerHTML={{ __html: sanitizedContent }}
+      />
     </article>
   );
 }

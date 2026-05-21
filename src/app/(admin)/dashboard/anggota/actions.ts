@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 import bcrypt from "bcryptjs";
 import { deleteFileFromStorage } from "@/lib/supabase";
 import { auditUpdate, auditDelete, auditCreate } from "@/lib/audit";
-import { auth } from "@/auth";
+import { requireAdmin } from "@/lib/auth-helpers";
 import { 
   updateAnggotaSchema, 
   buatAkunSchema, 
@@ -15,7 +15,8 @@ import {
 } from "@/lib/validations";
 
 export async function updateAnggota(id: string, formData: FormData) {
-  const session = await auth();
+  // ✅ Auth check
+  const session = await requireAdmin();
   
   // ✅ VALIDATE INPUT with centralized schema
   const data = validateFormData(formData, updateAnggotaSchema);
@@ -63,8 +64,8 @@ export async function updateAnggota(id: string, formData: FormData) {
       "anggota",
       id,
       data.namaLengkap,
-      session?.user?.id,
-      session?.user?.name || undefined,
+      session.user.id,
+      session.user.name || undefined,
       `Updated anggota: ${data.namaLengkap} (${data.nik})`
     );
   } catch (error) {
@@ -72,6 +73,7 @@ export async function updateAnggota(id: string, formData: FormData) {
       throw new Error("NIK sudah terdaftar oleh anggota lain");
     }
     console.error("[UPDATE_ANGGOTA_ERROR]", error);
+    if (error instanceof Error && error.message.includes("NEXT_REDIRECT")) throw error;
     throw new Error("Gagal mengupdate data anggota");
   }
 
@@ -80,7 +82,13 @@ export async function updateAnggota(id: string, formData: FormData) {
 }
 
 export async function deleteAnggota(id: string) {
-  const session = await auth();
+  // ✅ CRITICAL FIX: Add proper auth check
+  const session = await requireAdmin();
+  
+  // ✅ Validate ID
+  if (!id || typeof id !== "string") {
+    throw new Error("ID anggota tidak valid");
+  }
   
   // Cari data anggota sebelum hapus untuk ambil foto dan userId
   const anggota = await prisma.anggota.findUnique({
@@ -95,7 +103,12 @@ export async function deleteAnggota(id: string) {
   try {
     // Hapus foto dari Supabase Storage jika ada
     if (anggota.foto) {
-      await deleteFileFromStorage(anggota.foto);
+      try {
+        await deleteFileFromStorage(anggota.foto);
+      } catch (storageError) {
+        console.error("[STORAGE_DELETE_ERROR]", storageError);
+        // Continue even if storage deletion fails
+      }
     }
 
     // Hapus data anggota dari database
@@ -113,12 +126,13 @@ export async function deleteAnggota(id: string) {
       "anggota",
       id,
       anggota.namaLengkap,
-      session?.user?.id,
-      session?.user?.name || undefined,
+      session.user.id,
+      session.user.name || undefined,
       `Deleted anggota: ${anggota.namaLengkap} (${anggota.nik})`
     );
   } catch (error) {
     console.error("[DELETE_ANGGOTA_ERROR]", error);
+    if (error instanceof Error && error.message.includes("NEXT_REDIRECT")) throw error;
     throw new Error("Gagal menghapus data anggota");
   }
 
@@ -129,7 +143,8 @@ export async function deleteAnggota(id: string) {
  * Buat akun login untuk anggota yang belum punya akun
  */
 export async function buatAkunAnggota(anggotaId: string, formData: FormData) {
-  const session = await auth();
+  // ✅ Auth check
+  const session = await requireAdmin();
   
   // ✅ VALIDATE INPUT with centralized schema
   const { loginEmail, loginPassword } = validateFormData(formData, buatAkunSchema);
@@ -142,35 +157,40 @@ export async function buatAkunAnggota(anggotaId: string, formData: FormData) {
   if (!anggota) throw new Error("Anggota tidak ditemukan");
   if (anggota.userId) throw new Error("Anggota sudah memiliki akun login");
 
-  const existingUser = await prisma.user.findUnique({ where: { email: loginEmail } });
-  if (existingUser) throw new Error("Email sudah digunakan akun lain");
-
   const hashedPassword = await bcrypt.hash(loginPassword, 12);
 
-  let newUserId: string | undefined;
-  await prisma.$transaction(async (tx) => {
-    const user = await tx.user.create({
-      data: {
-        name: anggota.namaLengkap,
-        email: loginEmail,
-        password: hashedPassword,
-        role: "ANGGOTA",
-      },
+  try {
+    await prisma.$transaction(async (tx) => {
+      const user = await tx.user.create({
+        data: {
+          name: anggota.namaLengkap,
+          email: loginEmail,
+          password: hashedPassword,
+          role: "ANGGOTA",
+        },
+      });
+      await tx.anggota.update({
+        where: { id: anggotaId },
+        data: { userId: user.id },
+      });
     });
-    newUserId = user.id;
-    await tx.anggota.update({
-      where: { id: anggotaId },
-      data: { userId: user.id },
-    });
-  });
+  } catch (error) {
+    console.error("[CREATE_AKUN_ANGGOTA_ERROR]", error);
+    if (error && typeof error === "object" && "code" in error) {
+      if (error.code === "P2002") {
+        throw new Error("Email sudah digunakan akun lain");
+      }
+    }
+    throw new Error("Gagal membuat akun anggota");
+  }
 
   // Audit log
   await auditCreate(
     "anggota",
     anggotaId,
     anggota.namaLengkap,
-    session?.user?.id,
-    session?.user?.name || undefined,
+    session.user.id,
+    session.user.name || undefined,
     `Created login account for anggota: ${anggota.namaLengkap} (${loginEmail})`
   );
 
@@ -182,7 +202,8 @@ export async function buatAkunAnggota(anggotaId: string, formData: FormData) {
  * Reset password akun anggota
  */
 export async function resetPasswordAnggota(userId: string, formData: FormData) {
-  const session = await auth();
+  // ✅ Auth check
+  const session = await requireAdmin();
   
   // ✅ VALIDATE INPUT with centralized schema
   const { newPassword } = validateFormData(formData, resetPasswordSchema);
@@ -198,8 +219,8 @@ export async function resetPasswordAnggota(userId: string, formData: FormData) {
     "auth",
     userId,
     "Password Reset",
-    session?.user?.id,
-    session?.user?.name || undefined,
+    session.user.id,
+    session.user.name || undefined,
     `Reset password for user: ${userId}`
   );
 

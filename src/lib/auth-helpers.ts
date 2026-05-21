@@ -62,6 +62,7 @@ export async function requireAdmin(allowedRoles: Role[] = ["ADMIN", "SUPER_ADMIN
 
 /**
  * Require super admin role - redirect if not super admin
+ * @param redirectError - Optional error message to append as query param
  */
 export async function requireSuperAdmin() {
   const session = await auth();
@@ -71,8 +72,8 @@ export async function requireSuperAdmin() {
   }
   
   if (session.user.role !== "SUPER_ADMIN") {
-    // Non-super-admin redirect to dashboard
-    redirect("/dashboard");
+    // Non-super-admin redirect to dashboard with error info
+    redirect("/dashboard?error=forbidden&msg=Halaman%20ini%20hanya%20untuk%20Super%20Admin");
   }
   
   return session;

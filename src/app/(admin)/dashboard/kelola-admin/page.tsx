@@ -1,12 +1,14 @@
 import { prisma } from "@/lib/prisma";
-import { requireSuperAdmin } from "@/lib/auth-helpers";
+import { requireAdmin } from "@/lib/auth-helpers";
 import { formatDate } from "@/lib/utils";
 import { 
   UserCog, Plus, ShieldCheck, Pencil, Search, Filter, 
-  Settings, Shield, Users, Mail, Briefcase, Calendar
+  Settings, Shield, Users, Mail, Briefcase, Calendar, Info, Activity
 } from "lucide-react";
 import Link from "next/link";
 import DeleteAdminButton from "@/components/admin/DeleteAdminButton";
+import ResetPasswordAdminButton from "@/components/admin/ResetPasswordAdminButton";
+import ExportAdminButton from "@/components/admin/ExportAdminButton";
 import { Prisma, Role } from "@prisma/client";
 
 export const metadata = { title: "Kelola Admin" };
@@ -22,10 +24,12 @@ interface PageProps {
 }
 
 export default async function KelolaAdminPage({ searchParams }: PageProps) {
-  // ✅ AUTH CHECK: Require SUPER_ADMIN role only
-  const session = await requireSuperAdmin();
+  // ✅ AUTH CHECK: Semua admin bisa lihat halaman ini
+  // Tapi aksi CREATE/EDIT/DELETE hanya SUPER_ADMIN
+  const session = await requireAdmin();
   const currentUserId = session.user.id;
   const currentRole = session.user.role;
+  const isSuperAdmin = currentRole === "SUPER_ADMIN";
 
   const params = await searchParams;
   const q = params.q?.trim() ?? "";
@@ -57,8 +61,13 @@ export default async function KelolaAdminPage({ searchParams }: PageProps) {
 
   const where: Prisma.UserWhereInput = { AND: whereConditions };
 
-  // Parallel queries for data and stats
-  const [adminUsers, totalSuperAdmin, totalAdmin] = await Promise.all([
+  // Parallel queries for data, stats, dan aktivitas recent
+  const [
+    adminUsers, 
+    totalSuperAdmin, 
+    totalAdmin,
+    recentActivity,
+  ] = await Promise.all([
     prisma.user.findMany({
       where,
       include: { admin: true },
@@ -66,9 +75,23 @@ export default async function KelolaAdminPage({ searchParams }: PageProps) {
     }),
     prisma.user.count({ where: { role: "SUPER_ADMIN" } }),
     prisma.user.count({ where: { role: "ADMIN" } }),
+    // Get recent admin activity from audit log (last 24 hours)
+    prisma.auditLog.count({
+      where: {
+        createdAt: {
+          gte: new Date(Date.now() - 24 * 60 * 60 * 1000),
+        },
+      },
+    }),
   ]);
 
   const totalAll = totalSuperAdmin + totalAdmin;
+  
+  // Admin yang baru daftar dalam 30 hari terakhir
+  const newAdmins = adminUsers.filter((u) => {
+    const daysSinceCreated = (Date.now() - new Date(u.createdAt).getTime()) / (1000 * 60 * 60 * 24);
+    return daysSinceCreated <= 30;
+  }).length;
 
   const roleColor: Record<string, string> = {
     SUPER_ADMIN: "bg-indigo-100 text-indigo-700 border-indigo-200",
@@ -101,6 +124,20 @@ export default async function KelolaAdminPage({ searchParams }: PageProps) {
         </div>
       </div>
 
+      {/* Info Banner untuk ADMIN non-super */}
+      {!isSuperAdmin && (
+        <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4 flex items-start gap-3">
+          <Info className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm font-bold text-blue-900">Mode Hanya Lihat</p>
+            <p className="text-xs text-blue-700 mt-1">
+              Anda dapat melihat daftar administrator. Untuk menambah, mengedit, atau menghapus admin,
+              hubungi Super Administrator.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Tombol Pengelolaan Section */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm">
         <div className="px-6 py-4 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white">
@@ -112,15 +149,20 @@ export default async function KelolaAdminPage({ searchParams }: PageProps) {
         </div>
         <div className="p-6">
           <div className="flex flex-wrap gap-3">
-            {/* Tambah Admin */}
-            <Link
-              href="/dashboard/kelola-admin/tambah"
-              className="inline-flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white text-sm font-bold rounded-xl shadow-lg shadow-blue-500/30 transition-all"
-              aria-label="Tambah Administrator Baru"
-            >
-              <Plus className="w-4 h-4" />
-              Tambah Admin
-            </Link>
+            {/* Tambah Admin - Hanya SUPER_ADMIN */}
+            {isSuperAdmin && (
+              <Link
+                href="/dashboard/kelola-admin/tambah"
+                className="inline-flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white text-sm font-bold rounded-xl shadow-lg shadow-blue-500/30 transition-all"
+                aria-label="Tambah Administrator Baru"
+              >
+                <Plus className="w-4 h-4" />
+                Tambah Admin
+              </Link>
+            )}
+
+            {/* Export Data - Semua Admin bisa */}
+            <ExportAdminButton data={adminUsers} />
 
             {/* Search */}
             <form method="GET" className="flex gap-2">
@@ -186,7 +228,7 @@ export default async function KelolaAdminPage({ searchParams }: PageProps) {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-gradient-to-br from-blue-50 to-blue-100/50 rounded-2xl p-5 border border-blue-200/50">
           <div className="flex items-center justify-between mb-3">
             <div className="p-2.5 bg-blue-500 rounded-xl">
@@ -219,6 +261,17 @@ export default async function KelolaAdminPage({ searchParams }: PageProps) {
           <p className="text-2xl font-extrabold text-slate-900">{totalAdmin}</p>
           <p className="text-xs text-slate-600 font-medium mt-1">Administrator</p>
         </div>
+
+        <div className="bg-gradient-to-br from-green-50 to-green-100/50 rounded-2xl p-5 border border-green-200/50">
+          <div className="flex items-center justify-between mb-3">
+            <div className="p-2.5 bg-green-500 rounded-xl">
+              <Activity className="w-5 h-5 text-white" />
+            </div>
+            <span className="text-xs font-bold text-green-600 bg-green-100 px-2 py-1 rounded-full">24 Jam</span>
+          </div>
+          <p className="text-2xl font-extrabold text-slate-900">{recentActivity}</p>
+          <p className="text-xs text-slate-600 font-medium mt-1">Aktivitas Terbaru</p>
+        </div>
       </div>
 
       {/* Tabel Data Admin */}
@@ -247,7 +300,7 @@ export default async function KelolaAdminPage({ searchParams }: PageProps) {
                 ? "Tidak ada admin yang sesuai filter"
                 : "Mulai tambahkan administrator baru"}
             </p>
-            {!q && roleFilter === "SEMUA" && (
+            {!q && roleFilter === "SEMUA" && isSuperAdmin && (
               <Link
                 href="/dashboard/kelola-admin/tambah"
                 className="inline-flex items-center gap-2 px-5 py-3 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-xl transition-colors"
@@ -321,25 +374,51 @@ export default async function KelolaAdminPage({ searchParams }: PageProps) {
                     </div>
                   </div>
 
-                  {/* Action Buttons */}
-                  <div className="flex items-center gap-2 pt-3 border-t border-slate-100">
-                    <Link
-                      href={`/dashboard/kelola-admin/edit/${user.id}`}
-                      className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-amber-50 hover:bg-amber-100 text-amber-700 text-xs font-bold rounded-lg transition-colors"
-                      aria-label={`Edit admin ${user.name || "Administrator"}`}
-                    >
-                      <Pencil className="w-3.5 h-3.5" />
-                      Edit
-                    </Link>
-                    {/* Hanya SUPER_ADMIN yang bisa hapus, dan tidak bisa hapus diri sendiri */}
-                    {currentRole === "SUPER_ADMIN" && (
-                      <DeleteAdminButton
-                        id={user.id}
-                        nama={user.name || "Admin"}
-                        isSelf={isSelf}
-                      />
-                    )}
-                  </div>
+                  {/* Action Buttons - Hanya untuk SUPER_ADMIN */}
+                  {isSuperAdmin && (
+                    <div className="space-y-2 pt-3 border-t border-slate-100">
+                      {/* Top Row: Edit & Delete */}
+                      <div className="flex items-center gap-2">
+                        <Link
+                          href={`/dashboard/kelola-admin/edit/${user.id}`}
+                          className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-amber-50 hover:bg-amber-100 text-amber-700 text-xs font-bold rounded-lg transition-colors"
+                          aria-label={`Edit admin ${user.name || "Administrator"}`}
+                        >
+                          <Pencil className="w-3.5 h-3.5" />
+                          Edit
+                        </Link>
+                        {/* Tidak bisa hapus diri sendiri atau last super admin */}
+                        {!isSelf && (
+                          <DeleteAdminButton
+                            id={user.id}
+                            nama={user.name || "Admin"}
+                            isSelf={false}
+                            isLastSuperAdmin={
+                              user.role === "SUPER_ADMIN" && totalSuperAdmin <= 1
+                            }
+                          />
+                        )}
+                      </div>
+
+                      {/* Bottom Row: Reset Password (not for self) */}
+                      {!isSelf && (
+                        <ResetPasswordAdminButton
+                          id={user.id}
+                          nama={user.name || "Admin"}
+                        />
+                      )}
+                    </div>
+                  )}
+
+                  {/* View-only indicator untuk ADMIN */}
+                  {!isSuperAdmin && (
+                    <div className="flex items-center gap-2 pt-3 border-t border-slate-100">
+                      <div className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-slate-50 text-slate-500 text-xs font-bold rounded-lg">
+                        <Info className="w-3.5 h-3.5" />
+                        Hanya Lihat
+                      </div>
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -358,7 +437,7 @@ export default async function KelolaAdminPage({ searchParams }: PageProps) {
             <p className="text-xs text-slate-600 mt-0.5">Informasi hak akses sistem administrator</p>
           </div>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="bg-white rounded-xl p-4 border border-slate-200">
             <div className="flex items-center gap-2 mb-2">
               <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
@@ -372,6 +451,13 @@ export default async function KelolaAdminPage({ searchParams }: PageProps) {
               <p className="text-xs font-bold text-slate-700">Super Administrator</p>
             </div>
             <p className="text-lg font-extrabold text-slate-900">{totalSuperAdmin} Super Admin</p>
+          </div>
+          <div className="bg-white rounded-xl p-4 border border-slate-200">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+              <p className="text-xs font-bold text-slate-700">Admin Baru (30 hari)</p>
+            </div>
+            <p className="text-lg font-extrabold text-slate-900">{newAdmins} Admin</p>
           </div>
           <div className="bg-white rounded-xl p-4 border border-slate-200">
             <div className="flex items-center gap-2 mb-2">

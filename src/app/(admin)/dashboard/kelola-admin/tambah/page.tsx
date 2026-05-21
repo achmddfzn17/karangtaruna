@@ -12,44 +12,50 @@ export const metadata = { title: "Tambah Admin" };
 const VALID_ROLES: Role[] = ["ADMIN", "SUPER_ADMIN"];
 
 export default async function TambahAdminPage() {
-  // ✅ Auth check: Only SUPER_ADMIN can access
+  // Auth check: Only SUPER_ADMIN can access
   await requireSuperAdmin();
 
   async function createAdmin(formData: FormData) {
     "use server";
     
-    // ✅ Auth check in server action
+    // Auth check in server action
     await requireSuperAdmin();
 
     const name = (formData.get("name") as string)?.trim();
     const email = (formData.get("email") as string)?.trim().toLowerCase();
     const password = formData.get("password") as string;
     const roleRaw = formData.get("role") as string;
+    const nip = (formData.get("nip") as string)?.trim();
     const jabatan = (formData.get("jabatan") as string)?.trim();
     const phone = (formData.get("phone") as string)?.trim();
 
-    // ✅ Enhanced validation
+    // Enhanced validation - NAME
     if (!name || name.length < 3) {
       throw new Error("Nama minimal 3 karakter");
     }
     if (name.length > 100) {
       throw new Error("Nama maksimal 100 karakter");
     }
+    // Prevent XSS in name
+    if (/<[^>]*>/.test(name)) {
+      throw new Error("Nama tidak boleh mengandung karakter HTML");
+    }
 
+    // EMAIL validation
     if (!email) {
       throw new Error("Email wajib diisi");
     }
     
-    // ✅ Email format validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       throw new Error("Format email tidak valid");
     }
     
     if (email.length > 255) {
-      throw new Error("Email terlalu panjang");
+      throw new Error("Email terlalu panjang (maksimal 255 karakter)");
     }
 
+    // PASSWORD validation
     if (!password) {
       throw new Error("Password wajib diisi");
     }
@@ -60,36 +66,47 @@ export default async function TambahAdminPage() {
       throw new Error("Password maksimal 100 karakter");
     }
 
-    // ✅ Role validation
-    const role: Role = VALID_ROLES.includes(roleRaw as Role)
-      ? (roleRaw as Role)
-      : "ADMIN";
+    // ROLE validation
+    if (!VALID_ROLES.includes(roleRaw as Role)) {
+      throw new Error("Role tidak valid");
+    }
+    const role = roleRaw as Role;
 
-    // ✅ Phone validation (Indonesia format)
+    // PHONE validation (Indonesia format)
     if (phone) {
       const phoneRegex = /^(\+62|62|0)[0-9]{9,13}$/;
       if (!phoneRegex.test(phone)) {
-        throw new Error("Format nomor HP tidak valid (gunakan format: 081234567890)");
+        throw new Error("Format nomor HP tidak valid (contoh: 081234567890)");
       }
     }
 
-    // ✅ Jabatan validation
-    if (jabatan && jabatan.length > 100) {
-      throw new Error("Jabatan maksimal 100 karakter");
+    // NIP validation (if provided)
+    if (nip) {
+      if (nip.length < 5) {
+        throw new Error("NIP minimal 5 karakter");
+      }
+      if (nip.length > 30) {
+        throw new Error("NIP maksimal 30 karakter");
+      }
+      if (!/^[a-zA-Z0-9]+$/.test(nip)) {
+        throw new Error("NIP hanya boleh berisi huruf dan angka");
+      }
     }
 
-    // Check email availability
-    const existingUser = await prisma.user.findUnique({ 
-      where: { email },
-      select: { id: true },
-    });
-    if (existingUser) {
-      throw new Error("Email sudah terdaftar");
+    // JABATAN validation
+    if (jabatan) {
+      if (jabatan.length > 100) {
+        throw new Error("Jabatan maksimal 100 karakter");
+      }
+      // Prevent XSS in jabatan
+      if (/<[^>]*>/.test(jabatan)) {
+        throw new Error("Jabatan tidak boleh mengandung karakter HTML");
+      }
     }
 
     const hashedPassword = await bcrypt.hash(password, 12);
 
-    // ✅ Use transaction to prevent orphan records
+    // Use transaction to prevent orphan records
     try {
       await prisma.$transaction(async (tx) => {
         const user = await tx.user.create({
@@ -104,20 +121,32 @@ export default async function TambahAdminPage() {
         await tx.admin.create({
           data: {
             userId: user.id,
+            nip: nip || null,
             jabatan: jabatan || null,
             phone: phone || null,
           },
         });
       });
     } catch (error) {
-      // ✅ Proper error logging
       console.error("[CREATE_ADMIN_ERROR]", error);
       
-      // Handle Prisma unique constraint
+      // Handle Prisma unique constraint violations
       if (error && typeof error === "object" && "code" in error) {
         if (error.code === "P2002") {
-          throw new Error("Email sudah terdaftar");
+          // Check which field caused the violation
+          const target = (error as { meta?: { target?: string[] } }).meta?.target;
+          if (target?.includes("email")) {
+            throw new Error("Email sudah terdaftar");
+          }
+          if (target?.includes("nip")) {
+            throw new Error("NIP sudah digunakan oleh admin lain");
+          }
+          throw new Error("Data sudah ada di sistem");
         }
+      }
+      
+      if (error instanceof Error && error.message.includes("NEXT_REDIRECT")) {
+        throw error;
       }
       
       throw new Error("Gagal membuat akun admin");
@@ -212,6 +241,24 @@ export default async function TambahAdminPage() {
               <option value="SUPER_ADMIN">Super Admin</option>
             </select>
             <p className="text-[10px] text-slate-400">Super Admin memiliki akses penuh termasuk kelola admin</p>
+          </div>
+
+          {/* NIP */}
+          <div className="space-y-1.5">
+            <label htmlFor="nip" className="text-[12px] font-bold text-slate-600">
+              NIP (Opsional)
+            </label>
+            <input
+              id="nip"
+              name="nip"
+              type="text"
+              minLength={5}
+              maxLength={30}
+              pattern="[a-zA-Z0-9]+"
+              placeholder="Nomor Induk Pegawai"
+              className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white text-sm text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 transition-all"
+            />
+            <p className="text-[10px] text-slate-400">5-30 karakter, hanya huruf dan angka. Harus unik.</p>
           </div>
 
           {/* Jabatan */}

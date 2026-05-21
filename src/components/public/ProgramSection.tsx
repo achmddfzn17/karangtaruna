@@ -18,19 +18,25 @@ export default async function ProgramSection() {
     orderBy: { urutan: "asc" },
   });
 
-  // ✅ SAFE: Helper function to dynamically render Lucide icons with proper type checking
+  // Helper to dynamically resolve a Lucide icon by name.
+  // Lucide exports icons as `React.forwardRef(...)` objects, so a `typeof === 'function'`
+  // check rejects valid icons. We accept either a function component or a forwardRef object
+  // (objects carry a `$$typeof` symbol or a `render` function).
   const getIcon = (iconName: string | null): React.ElementType => {
     if (!iconName) return ShoppingBag;
-    
-    // Type-safe icon lookup
+
     const icon = (LucideIcons as Record<string, unknown>)[iconName];
-    
-    // Validate that the icon exists and is a valid React component
-    if (typeof icon === 'function') {
+
+    const isRenderable =
+      typeof icon === "function" ||
+      (typeof icon === "object" &&
+        icon !== null &&
+        ("$$typeof" in icon || "render" in icon));
+
+    if (isRenderable) {
       return icon as React.ElementType;
     }
-    
-    // Fallback to default icon if not found
+
     console.warn(`[ICON_NOT_FOUND] Icon "${iconName}" not found in lucide-react, using default`);
     return ShoppingBag;
   };

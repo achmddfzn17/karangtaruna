@@ -94,6 +94,9 @@ export default function HeroSection({ statsData }: HeroSectionProps) {
               alt="Karang Taruna Logo" 
               width={500}
               height={500}
+              priority
+              fetchPriority="high"
+              sizes="(max-width: 1024px) 80vw, 500px"
               className="w-full max-w-[500px] h-auto object-contain"
               onError={(e) => {
                 // Fallback UI if hero-logo.png doesn't exist

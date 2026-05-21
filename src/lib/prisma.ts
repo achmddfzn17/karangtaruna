@@ -1,6 +1,6 @@
+import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@prisma/client";
 import { Pool } from "pg";
-import { PrismaPg } from "@prisma/adapter-pg";
 
 /**
  * Prisma Client singleton pattern
@@ -23,10 +23,12 @@ function createPrismaClient(): PrismaClient {
 
   const pool = new Pool({ 
     connectionString,
-    // Optional: configure pool for better performance
-    max: 20, // Max connections
-    idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 2000,
+    // Connection pool optimization
+    max: 20, // Max connections in pool
+    min: 2, // Maintain minimum connections
+    idleTimeoutMillis: 30000, // Close idle connections after 30s
+    connectionTimeoutMillis: 10000, // Wait up to 10s for connection
+    statementTimeoutMillis: 30000, // Statement timeout 30s
   });
 
   const adapter = new PrismaPg(pool);

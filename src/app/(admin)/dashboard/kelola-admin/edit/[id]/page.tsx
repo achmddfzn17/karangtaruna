@@ -15,7 +15,7 @@ export default async function EditAdminPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  // ✅ Auth check: Only SUPER_ADMIN can access
+  // Auth check: Only SUPER_ADMIN can access
   const session = await requireSuperAdmin();
   const currentUserId = session.user.id;
 
@@ -33,88 +33,112 @@ export default async function EditAdminPage({
   async function updateAdmin(formData: FormData) {
     "use server";
     
-    // ✅ Auth check in server action
+    // Auth check in server action
     const currentSession = await requireSuperAdmin();
     const currentId = currentSession.user.id;
 
     const name = (formData.get("name") as string)?.trim();
     const roleRaw = formData.get("role") as string;
+    const nip = (formData.get("nip") as string)?.trim();
     const jabatan = (formData.get("jabatan") as string)?.trim();
     const phone = (formData.get("phone") as string)?.trim();
 
-    // ✅ Validation
+    // NAME validation
     if (!name || name.length < 3) {
       throw new Error("Nama minimal 3 karakter");
     }
     if (name.length > 100) {
       throw new Error("Nama maksimal 100 karakter");
     }
+    if (/<[^>]*>/.test(name)) {
+      throw new Error("Nama tidak boleh mengandung karakter HTML");
+    }
 
-    // ✅ Role validation
+    // ROLE validation
     if (!VALID_ROLES.includes(roleRaw as Role)) {
       throw new Error("Role tidak valid");
     }
     const newRole = roleRaw as Role;
 
-    // ✅ Phone validation
+    // PHONE validation
     if (phone) {
       const phoneRegex = /^(\+62|62|0)[0-9]{9,13}$/;
       if (!phoneRegex.test(phone)) {
-        throw new Error("Format nomor HP tidak valid (gunakan format: 081234567890)");
+        throw new Error("Format nomor HP tidak valid (contoh: 081234567890)");
       }
     }
 
-    // ✅ Jabatan validation
-    if (jabatan && jabatan.length > 100) {
-      throw new Error("Jabatan maksimal 100 karakter");
+    // NIP validation
+    if (nip) {
+      if (nip.length < 5) {
+        throw new Error("NIP minimal 5 karakter");
+      }
+      if (nip.length > 30) {
+        throw new Error("NIP maksimal 30 karakter");
+      }
+      if (!/^[a-zA-Z0-9]+$/.test(nip)) {
+        throw new Error("NIP hanya boleh berisi huruf dan angka");
+      }
     }
 
-    // ✅ CRITICAL: Prevent self-demotion
+    // JABATAN validation
+    if (jabatan) {
+      if (jabatan.length > 100) {
+        throw new Error("Jabatan maksimal 100 karakter");
+      }
+      if (/<[^>]*>/.test(jabatan)) {
+        throw new Error("Jabatan tidak boleh mengandung karakter HTML");
+      }
+    }
+
+    // CRITICAL: Prevent self-demotion
     if (id === currentId && newRole !== "SUPER_ADMIN") {
       throw new Error(
         "Anda tidak bisa mengubah role diri sendiri. Minta Super Admin lain untuk mengubah role Anda."
       );
     }
 
-    // ✅ CRITICAL: Prevent removing last SUPER_ADMIN
-    if (newRole === "ADMIN") {
-      // Check if target user is currently SUPER_ADMIN
-      const targetUser = await prisma.user.findUnique({
-        where: { id },
-        select: { role: true },
-      });
-
-      if (targetUser?.role === "SUPER_ADMIN") {
-        const superAdminCount = await prisma.user.count({
-          where: { role: "SUPER_ADMIN" },
+    try {
+      // ✅ RACE CONDITION FIX: All checks inside transaction
+      await prisma.$transaction(async (tx) => {
+        // Check target user inside transaction
+        const targetUser = await tx.user.findUnique({
+          where: { id },
+          select: { role: true },
         });
 
-        if (superAdminCount <= 1) {
-          throw new Error(
-            "Tidak bisa menurunkan role Super Admin terakhir. Sistem harus memiliki minimal 1 Super Admin."
-          );
+        if (!targetUser) {
+          throw new Error("Administrator tidak ditemukan");
         }
-      }
-    }
 
-    try {
-      // Use transaction to prevent race conditions
-      await prisma.$transaction(async (tx) => {
-        // Update user data
+        // Check last SUPER_ADMIN inside transaction (atomic)
+        if (newRole === "ADMIN" && targetUser.role === "SUPER_ADMIN") {
+          const superAdminCount = await tx.user.count({
+            where: { role: "SUPER_ADMIN" },
+          });
+
+          if (superAdminCount <= 1) {
+            throw new Error(
+              "Tidak bisa menurunkan role Super Admin terakhir. Sistem harus memiliki minimal 1 Super Admin."
+            );
+          }
+        }
+
         await tx.user.update({
           where: { id },
           data: { name, role: newRole },
         });
 
-        // Upsert admin record
         await tx.admin.upsert({
           where: { userId: id },
           create: {
             userId: id,
+            nip: nip || null,
             jabatan: jabatan || null,
             phone: phone || null,
           },
           update: {
+            nip: nip || null,
             jabatan: jabatan || null,
             phone: phone || null,
           },
@@ -122,7 +146,23 @@ export default async function EditAdminPage({
       });
     } catch (error) {
       console.error("[UPDATE_ADMIN_ERROR]", error);
-      if (error instanceof Error) throw error;
+      
+      // Handle Prisma unique constraint violations
+      if (error && typeof error === "object" && "code" in error) {
+        if (error.code === "P2002") {
+          const target = (error as { meta?: { target?: string[] } }).meta?.target;
+          if (target?.includes("nip")) {
+            throw new Error("NIP sudah digunakan oleh admin lain");
+          }
+          throw new Error("Data sudah ada di sistem");
+        }
+      }
+      
+      if (error instanceof Error) {
+        // Re-throw NEXT_REDIRECT
+        if (error.message.includes("NEXT_REDIRECT")) throw error;
+        throw error;
+      }
       throw new Error("Gagal memperbarui data admin");
     }
 
@@ -211,6 +251,21 @@ export default async function EditAdminPage({
                 Role tidak dapat diubah untuk akun sendiri
               </p>
             )}
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-[12px] font-bold text-slate-600">NIP (Opsional)</label>
+            <input
+              name="nip"
+              type="text"
+              minLength={5}
+              maxLength={30}
+              pattern="[a-zA-Z0-9]+"
+              defaultValue={user.admin?.nip || ""}
+              placeholder="Nomor Induk Pegawai"
+              className={inputCls}
+            />
+            <p className="text-[10px] text-slate-400">5-30 karakter, hanya huruf dan angka. Harus unik.</p>
           </div>
 
           <div className="space-y-1.5">

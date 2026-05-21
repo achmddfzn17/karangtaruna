@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { headers } from "next/headers";
+import { logger } from "@/lib/logger";
 
 export type AuditAction = 
   | "CREATE" 
@@ -61,9 +62,20 @@ export async function createAuditLog(params: AuditLogParams): Promise<void> {
         ipAddress,
       },
     });
+
+    logger.info(
+      "audit",
+      `${params.action} ${params.module}${params.targetName ? ` "${params.targetName}"` : ""}`,
+      {
+        userId: params.userId ?? null,
+        userName: params.userName ?? null,
+        targetId: params.targetId ?? null,
+        ipAddress,
+      },
+    );
   } catch (error) {
     // Don't throw error - audit logging should not break the main operation
-    console.error("[AUDIT_LOG_ERROR]", error);
+    logger.error("audit", "Failed to write audit log", error);
   }
 }
 
