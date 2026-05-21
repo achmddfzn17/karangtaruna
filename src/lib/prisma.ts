@@ -25,15 +25,41 @@ function createPrismaClient(): PrismaClient {
 
   if (!connectionString) {
     // During `next build` on Vercel the DATABASE_URL env-var is typically not
-    // available.  Instead of crashing the build we return a bare PrismaClient
-    // (no pg adapter).  Any *actual* query would still fail at runtime, but
-    // build-time module evaluation (e.g. PrismaAdapter inspecting model
-    // metadata) can proceed without a live database connection.
+    // available.  Instead of crashing the build we return a no-op Proxy that
+    // satisfies type checks (e.g. PrismaAdapter inspecting model metadata)
+    // without ever touching the database.  Any *actual* query at runtime would
+    // still fail, but that's fine — at runtime the env var is always set.
     console.warn(
-      "[prisma] DATABASE_URL is not set – returning build-safe PrismaClient. " +
+      "[prisma] DATABASE_URL is not set – returning build-safe stub. " +
       "Queries will fail until the variable is provided at runtime."
     );
-    return new PrismaClient();
+
+    // Return a recursive no-op Proxy that acts like a PrismaClient.
+    // Any property access returns another Proxy, any function call returns
+    // a resolved Promise with null/empty results.  This is enough for
+    // PrismaAdapter() and auth.ts module evaluation during build.
+    const handler: ProxyHandler<object> = {
+      get(_target, prop) {
+        // Support common inspection properties
+        if (prop === "then") return undefined; // prevent auto-await
+        if (prop === Symbol.toPrimitive) return () => "PrismaClient(build-stub)";
+        if (prop === Symbol.toStringTag) return "PrismaClient";
+        if (prop === "$connect" || prop === "$disconnect") {
+          return () => Promise.resolve();
+        }
+        if (prop === "$on" || prop === "$use") {
+          return () => {};
+        }
+        // For model access (e.g. prisma.user) return another proxy
+        // that stubs query methods (findUnique, create, etc.)
+        return new Proxy(() => Promise.resolve(null), handler);
+      },
+      apply() {
+        return Promise.resolve(null);
+      },
+    };
+
+    return new Proxy({}, handler) as unknown as PrismaClient;
   }
 
   const pool = new Pool({
@@ -80,3 +106,4 @@ export const prisma = new Proxy({} as PrismaClient, {
 });
 
 export default prisma;
+
