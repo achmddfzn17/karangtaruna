@@ -24,10 +24,16 @@ function createPrismaClient(): PrismaClient {
   const connectionString = process.env.DATABASE_URL;
 
   if (!connectionString) {
-    throw new Error(
-      "DATABASE_URL environment variable is not set. " +
-      "Please check your .env.local file or environment configuration."
+    // During `next build` on Vercel the DATABASE_URL env-var is typically not
+    // available.  Instead of crashing the build we return a bare PrismaClient
+    // (no pg adapter).  Any *actual* query would still fail at runtime, but
+    // build-time module evaluation (e.g. PrismaAdapter inspecting model
+    // metadata) can proceed without a live database connection.
+    console.warn(
+      "[prisma] DATABASE_URL is not set – returning build-safe PrismaClient. " +
+      "Queries will fail until the variable is provided at runtime."
     );
+    return new PrismaClient();
   }
 
   const pool = new Pool({
