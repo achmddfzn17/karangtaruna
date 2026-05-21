@@ -40,6 +40,7 @@ function createPrismaClient(): PrismaClient {
     // PrismaAdapter() and auth.ts module evaluation during build.
     const handler: ProxyHandler<object> = {
       get(_target, prop) {
+        if (prop === "isBuildStub") return true;
         // Support common inspection properties
         if (prop === "then") return undefined; // prevent auto-await
         if (prop === Symbol.toPrimitive) return () => "PrismaClient(build-stub)";
@@ -100,6 +101,9 @@ function getPrisma(): PrismaClient {
 export const prisma = new Proxy({} as PrismaClient, {
   get(_target, prop, receiver) {
     const client = getPrisma();
+    if ((client as any).isBuildStub) {
+      return Reflect.get(client, prop, receiver);
+    }
     const value = Reflect.get(client, prop, receiver);
     return typeof value === "function" ? value.bind(client) : value;
   },
