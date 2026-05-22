@@ -1,11 +1,3 @@
-/**
- * Script untuk hapus file orphan di Supabase Storage
- * (file yang tidak ada referensinya di database)
- * 
- * Usage:
- * npx tsx scripts/cleanup-orphaned-files.ts
- */
-
 import "dotenv/config";
 import { PrismaClient } from "@prisma/client";
 import { Pool } from "pg";

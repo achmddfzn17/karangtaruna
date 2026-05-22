@@ -1,12 +1,3 @@
-/**
- * Script untuk hapus user dan semua data terkait termasuk file di Supabase Storage
- * 
- * Usage:
- * npx tsx scripts/cleanup-user.ts "nama@email.com"
- * atau
- * npx tsx scripts/cleanup-user.ts "Nama Lengkap"
- */
-
 import "dotenv/config"; // Load .env file
 import { PrismaClient } from "@prisma/client";
 import { Pool } from "pg";
