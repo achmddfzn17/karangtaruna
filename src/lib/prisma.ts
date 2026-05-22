@@ -71,6 +71,18 @@ function createPrismaClient(): PrismaClient {
     idleTimeoutMillis: 5000, // Close idle connections quickly (5s) to free up DB pool
     connectionTimeoutMillis: 10000, // Wait up to 10s for connection
     statement_timeout: 30000, // Abort any statement that takes more than 30s
+    query_timeout: 30000, // Abort the query after 30s
+    // TCP keepalive prevents Supabase pgbouncer / load-balancer from silently
+    // dropping a socket that the local pool still thinks is healthy. Without
+    // this you periodically get "Can't reach database server" on the first
+    // query after an idle period in dev.
+    keepAlive: true,
+  });
+
+  // Surface socket-level pool errors instead of letting them resurface as
+  // generic "Can't reach database server" the next time a query is attempted.
+  pool.on("error", (err) => {
+    console.error("[PRISMA_POOL_ERROR]", err.message);
   });
 
   const adapter = new PrismaPg(pool);
