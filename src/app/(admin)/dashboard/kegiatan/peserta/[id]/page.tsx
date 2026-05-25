@@ -7,6 +7,8 @@ import { formatDate } from "@/lib/utils";
 import ExportAbsensiButton from "@/components/admin/ExportAbsensiButton";
 import { generateCertificatePDFDataUrl } from "@/lib/certificate-pdf";
 import { sendCertificateEmail } from "@/lib/email";
+import { requireAdmin } from "@/lib/auth-helpers";
+import { generateCertificateNumber, getCertificateQrCodeUrl } from "@/lib/certificate";
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -19,6 +21,8 @@ export default async function PesertaKegiatanPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  await requireAdmin();
+
   const { id } = await params;
 
   const kegiatan = await prisma.kegiatan.findUnique({
@@ -49,6 +53,8 @@ export default async function PesertaKegiatanPage({
   // Server Action: Tambah peserta
   async function tambahPeserta(formData: FormData) {
     "use server";
+    await requireAdmin();
+
     const anggotaId = formData.get("anggotaId") as string;
     if (!anggotaId) return;
 
@@ -65,6 +71,8 @@ export default async function PesertaKegiatanPage({
   // Server Action: Hapus peserta
   async function hapusPeserta(formData: FormData) {
     "use server";
+    await requireAdmin();
+
     const pesertaId = formData.get("pesertaId") as string;
     if (!pesertaId) return;
 
@@ -79,6 +87,8 @@ export default async function PesertaKegiatanPage({
   // Server Action: Toggle kehadiran + auto-generate sertifikat with PDF & Email
   async function toggleHadir(formData: FormData) {
     "use server";
+    await requireAdmin();
+
     const pesertaId = formData.get("pesertaId") as string;
     const currentHadir = formData.get("hadir") === "true";
     if (!pesertaId) return;
@@ -96,10 +106,8 @@ export default async function PesertaKegiatanPage({
           where: { anggotaKegiatanId: pesertaId },
         });
         if (!existing) {
-          const year = new Date().getFullYear();
-          const count = await prisma.sertifikat.count();
-          const nomorSertifikat = `CERT-${year}-${String(count + 1).padStart(5, "0")}`;
-          const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(nomorSertifikat)}`;
+          const nomorSertifikat = generateCertificateNumber();
+          const qrCodeUrl = getCertificateQrCodeUrl(nomorSertifikat);
           
           // Generate PDF
           let pdfUrl: string | null = null;
@@ -156,13 +164,13 @@ export default async function PesertaKegiatanPage({
   // Server Action: Generate sertifikat for all hadir peserta with PDF & Email
   async function generateAllSertifikat() {
     "use server";
+    await requireAdmin();
+
     const pesertaHadir = kegiatan!.peserta.filter((p) => p.hadir && !p.sertifikat);
     
     for (const p of pesertaHadir) {
-      const year = new Date().getFullYear();
-      const count = await prisma.sertifikat.count();
-      const nomorSertifikat = `CERT-${year}-${String(count + 1).padStart(5, "0")}`;
-      const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(nomorSertifikat)}`;
+      const nomorSertifikat = generateCertificateNumber();
+      const qrCodeUrl = getCertificateQrCodeUrl(nomorSertifikat);
       
       // Generate PDF
       let pdfUrl: string | null = null;

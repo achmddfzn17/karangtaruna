@@ -45,11 +45,14 @@ export default function SusFormPage() {
           q6: answers[5], q7: answers[6], q8: answers[7], q9: answers[8], q10: answers[9],
         }),
       });
-      if (!res.ok) throw new Error();
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        throw new Error(data?.error || "Gagal mengirim evaluasi");
+      }
       setIsSuccess(true);
       toast.success("Terima kasih atas evaluasi Anda!");
-    } catch {
-      toast.error("Terjadi kesalahan. Silakan coba lagi.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Terjadi kesalahan. Silakan coba lagi.");
     } finally {
       setIsSubmitting(false);
     }

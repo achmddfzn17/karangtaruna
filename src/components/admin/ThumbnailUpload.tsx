@@ -2,7 +2,6 @@
 
 import { useState, useRef } from "react";
 import { ImageIcon, Upload, X, Loader2 } from "lucide-react";
-import { supabaseAdmin } from "@/lib/supabase";
 import { toast } from "sonner";
 
 interface ThumbnailUploadProps {
@@ -37,21 +36,27 @@ export default function ThumbnailUpload({
 
     setUploading(true);
     try {
-      const ext = file.name.split(".").pop();
-      const path = `${folder}/${Date.now()}.${ext}`;
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("bucket", bucket);
+      formData.append("folder", folder);
 
-      const { error } = await supabaseAdmin.storage
-        .from(bucket)
-        .upload(path, file, { upsert: true });
+      const response = await fetch("/api/thumbnail/upload", {
+        method: "POST",
+        body: formData,
+      });
 
-      if (error) throw error;
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.error || "Coba lagi");
+      }
 
-      const { data } = supabaseAdmin.storage.from(bucket).getPublicUrl(path);
-      setUploadedUrl(data.publicUrl);
-      setPreview(data.publicUrl);
+      setUploadedUrl(result.url);
+      setPreview(result.url);
       toast.success("Thumbnail berhasil diupload");
-    } catch (err: any) {
-      toast.error("Gagal upload: " + (err.message || "Coba lagi"));
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Coba lagi";
+      toast.error("Gagal upload: " + message);
     } finally {
       setUploading(false);
     }

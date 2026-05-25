@@ -14,12 +14,27 @@ export default async function NotifikasiPage() {
 
   // Fetch notifications
   const notifications = await prisma.notification.findMany({
-    where: { userId: session.user.id },
+    where: {
+      OR: [
+        { userId: session.user.id },
+        { userId: null },
+      ],
+    },
+    include: {
+      reads: {
+        where: { userId: session.user.id },
+        select: { userId: true },
+      },
+    },
     orderBy: { createdAt: "desc" },
     take: 50,
   });
 
-  const unreadCount = notifications.filter((n) => !n.isRead).length;
+  const notificationsWithReadState = notifications.map(({ reads, ...notification }) => ({
+    ...notification,
+    isRead: notification.userId ? notification.isRead : reads.length > 0,
+  }));
+  const unreadCount = notificationsWithReadState.filter((n) => !n.isRead).length;
 
   return (
     <div className="space-y-6">
@@ -39,7 +54,7 @@ export default async function NotifikasiPage() {
       </div>
 
       {/* Notification List */}
-      <NotificationList notifications={notifications} />
+      <NotificationList notifications={notificationsWithReadState} />
     </div>
   );
 }

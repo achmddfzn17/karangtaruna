@@ -6,8 +6,11 @@ import bcrypt from "bcryptjs";
 export async function PATCH(req: Request) {
   const session = await auth();
   if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (session.user.role !== "ADMIN" && session.user.role !== "SUPER_ADMIN") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
 
-  const userId = (session.user as any).id;
+  const userId = session.user.id;
   const { oldPassword, newPassword } = await req.json();
 
   if (!oldPassword || !newPassword) {

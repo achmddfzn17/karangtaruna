@@ -15,16 +15,40 @@ export async function POST() {
 
     const userId = session.user.id;
 
-    // Update all unread notifications for this user
-    const result = await prisma.notification.updateMany({
-      where: { userId, isRead: false },
+    const userNotifications = await prisma.notification.updateMany({
+      where: {
+        userId,
+        isRead: false,
+      },
       data: { isRead: true },
     });
 
+    const broadcastNotifications = await prisma.notification.findMany({
+      where: {
+        userId: null,
+        reads: {
+          none: { userId },
+        },
+      },
+      select: { id: true },
+    });
+
+    if (broadcastNotifications.length > 0) {
+      await prisma.notificationRead.createMany({
+        data: broadcastNotifications.map((notification) => ({
+          notificationId: notification.id,
+          userId,
+        })),
+        skipDuplicates: true,
+      });
+    }
+
+    const updated = userNotifications.count + broadcastNotifications.length;
+
     return NextResponse.json({ 
       success: true,
-      updated: result.count,
-      message: `${result.count} notifikasi ditandai sebagai sudah dibaca`,
+      updated,
+      message: `${updated} notifikasi ditandai sebagai sudah dibaca`,
     });
   } catch (error) {
     console.error("[MARK_ALL_READ_ERROR]", error);

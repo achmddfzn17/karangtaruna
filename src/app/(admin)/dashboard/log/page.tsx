@@ -1,6 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { auth } from "@/auth";
-import { redirect } from "next/navigation";
+import { requireSuperAdmin } from "@/lib/auth-helpers";
 import { formatDateTime } from "@/lib/utils";
 import {
   Activity,
@@ -63,12 +62,7 @@ interface PageProps {
 }
 
 export default async function LogAktivitasPage({ searchParams }: PageProps) {
-  const session = await auth();
-  if (!session?.user) redirect("/login");
-
-  // Type-safe role check
-  const userRole = (session.user as { role?: string }).role;
-  if (userRole !== "SUPER_ADMIN") redirect("/dashboard");
+  await requireSuperAdmin();
 
   const params = await searchParams;
   const moduleFilter = params.module ?? "";

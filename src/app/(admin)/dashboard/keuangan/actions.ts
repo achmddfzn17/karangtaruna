@@ -4,14 +4,14 @@ import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { auditUpdate, auditDelete } from "@/lib/audit";
-import { auth } from "@/auth";
+import { requireAdmin } from "@/lib/auth-helpers";
 import { 
   updateTransaksiSchema, 
   validateFormData 
 } from "@/lib/validations";
 
 export async function deleteTransaksi(id: string) {
-  const session = await auth();
+  const session = await requireAdmin();
   
   // Get transaksi data before delete for audit log
   const transaksi = await prisma.transaksiKeuangan.findUnique({
@@ -42,7 +42,7 @@ export async function deleteTransaksi(id: string) {
 }
 
 export async function updateTransaksi(id: string, formData: FormData) {
-  const session = await auth();
+  const session = await requireAdmin();
   
   // ✅ VALIDATE INPUT with centralized schema
   const data = validateFormData(formData, updateTransaksiSchema);

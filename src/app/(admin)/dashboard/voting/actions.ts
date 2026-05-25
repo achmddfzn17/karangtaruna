@@ -4,19 +4,13 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { auth } from "@/auth";
-import { 
-  createPollingSchema, 
-  validateFormData 
-} from "@/lib/validations";
+import { requireAdmin } from "@/lib/auth-helpers";
+import { createPollingSchema } from "@/lib/validations";
 
 const idSchema = z.string().cuid("ID tidak valid");
 
 export async function createPolling(formData: FormData) {
-  const session = await auth();
-  if (!session?.user) redirect("/login");
-  const userRole = (session.user as any).role;
-  if (userRole !== "ADMIN" && userRole !== "SUPER_ADMIN") redirect("/login");
+  const session = await requireAdmin();
 
   // ✅ VALIDATE INPUT with centralized schema
   const rawData = {
@@ -49,7 +43,7 @@ export async function createPolling(formData: FormData) {
     // Audit Log
     await prisma.auditLog.create({
       data: {
-        userId: (session.user as any).id,
+        userId: session.user.id,
         userName: session.user.name || session.user.email || "Unknown",
         action: "CREATE",
         module: "voting",
@@ -69,10 +63,7 @@ export async function createPolling(formData: FormData) {
 }
 
 export async function togglePollingStatus(formData: FormData) {
-  const session = await auth();
-  if (!session?.user) redirect("/login");
-  const userRole = (session.user as any).role;
-  if (userRole !== "ADMIN" && userRole !== "SUPER_ADMIN") redirect("/login");
+  const session = await requireAdmin();
 
   const id = formData.get("id") as string;
   const currentStatus = formData.get("currentStatus") === "true";
@@ -104,7 +95,7 @@ export async function togglePollingStatus(formData: FormData) {
   // Audit Log
   await prisma.auditLog.create({
     data: {
-      userId: (session.user as any).id,
+      userId: session.user.id,
       userName: session.user.name || session.user.email || "Unknown",
       action: "UPDATE",
       module: "voting",
@@ -120,10 +111,7 @@ export async function togglePollingStatus(formData: FormData) {
 }
 
 export async function deletePolling(formData: FormData) {
-  const session = await auth();
-  if (!session?.user) redirect("/login");
-  const userRole = (session.user as any).role;
-  if (userRole !== "ADMIN" && userRole !== "SUPER_ADMIN") redirect("/login");
+  const session = await requireAdmin();
 
   const id = formData.get("id") as string;
 
@@ -146,7 +134,7 @@ export async function deletePolling(formData: FormData) {
   // Audit Log
   await prisma.auditLog.create({
     data: {
-      userId: (session.user as any).id,
+      userId: session.user.id,
       userName: session.user.name || session.user.email || "Unknown",
       action: "DELETE",
       module: "voting",

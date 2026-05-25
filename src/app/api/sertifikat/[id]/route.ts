@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { Prisma } from "@prisma/client";
+import { getCertificateQrCodeUrl } from "@/lib/certificate";
 
 /**
  * PATCH /api/sertifikat/[id]
@@ -39,10 +40,7 @@ export async function PATCH(
     const updateData: Prisma.SertifikatUpdateInput = {};
 
     if (regenerateQR) {
-      const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(
-        sertifikat.nomorSertifikat
-      )}`;
-      updateData.qrCode = qrCodeUrl;
+      updateData.qrCode = getCertificateQrCodeUrl(sertifikat.nomorSertifikat);
     }
 
     const updated = await prisma.sertifikat.update({

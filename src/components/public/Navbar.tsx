@@ -16,6 +16,7 @@ import {
   Image as ImageIcon,
   ChevronRight,
   ClipboardList,
+  MessageSquare,
 } from "lucide-react";
 
 import { Session } from "next-auth";
@@ -33,6 +34,7 @@ const navLinks: NavLink[] = [
   { label: "Berita", href: "/berita", icon: Newspaper },
   { label: "Artikel", href: "/artikel", icon: FileText },
   { label: "Galeri", href: "/galeri", icon: ImageIcon },
+  { label: "Aspirasi", href: "/aspirasi", icon: MessageSquare },
   { label: "Kuisioner", href: "/sus", icon: ClipboardList },
 ];
 

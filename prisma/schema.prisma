@@ -32,6 +32,7 @@ model User {
   admin         Admin?
   susResponses  SusResponse[]
   notifications Notification[]
+  notificationReads NotificationRead[]
   aspirasi      Aspirasi[]
   votes         Vote[]
   createdAt     DateTime  @default(now())
@@ -363,10 +364,24 @@ model Notification {
   isRead  Boolean @default(false)
   userId  String?
   user    User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reads   NotificationRead[]
 
   createdAt DateTime @default(now())
 
   @@map("notifications")
+}
+
+model NotificationRead {
+  id             String       @id @default(cuid())
+  notificationId String
+  userId         String
+  notification   Notification @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  readAt         DateTime     @default(now())
+
+  @@unique([notificationId, userId])
+  @@index([userId])
+  @@map("notification_reads")
 }
 
 // ===== ASPIRASI =====

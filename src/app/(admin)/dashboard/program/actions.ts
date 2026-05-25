@@ -5,14 +5,11 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { deleteFileFromStorage } from "@/lib/supabase";
 import { auditDelete, auditCreate } from "@/lib/audit";
-import { auth } from "@/auth";
-import { 
-  createProgramSchema, 
-  validateFormData 
-} from "@/lib/validations";
+import { requireAdmin } from "@/lib/auth-helpers";
+import { createProgramSchema } from "@/lib/validations";
 
 export async function deleteProgram(id: string) {
-  const session = await auth();
+  const session = await requireAdmin();
   
   try {
     // Ambil data program untuk hapus thumbnail dari Supabase
@@ -52,7 +49,7 @@ export async function deleteProgram(id: string) {
 }
 
 export async function createProgram(formData: FormData) {
-  const session = await auth();
+  const session = await requireAdmin();
   
   // ✅ VALIDATE INPUT with centralized schema
   // Manual parsing for boolean and number types

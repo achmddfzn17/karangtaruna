@@ -10,11 +10,43 @@ export async function POST(req: Request) {
     }
 
     const { id } = await req.json();
+    const userId = session.user.id;
 
-    await prisma.notification.update({
-      where: { id, userId: session.user.id },
-      data: { isRead: true },
+    const notification = await prisma.notification.findFirst({
+      where: {
+        id,
+        OR: [
+          { userId },
+          { userId: null },
+        ],
+      },
+      select: { id: true, userId: true },
     });
+
+    if (!notification) {
+      return NextResponse.json({ error: "Notifikasi tidak ditemukan" }, { status: 404 });
+    }
+
+    if (notification.userId === null) {
+      await prisma.notificationRead.upsert({
+        where: {
+          notificationId_userId: {
+            notificationId: notification.id,
+            userId,
+          },
+        },
+        update: { readAt: new Date() },
+        create: {
+          notificationId: notification.id,
+          userId,
+        },
+      });
+    } else {
+      await prisma.notification.update({
+        where: { id: notification.id },
+        data: { isRead: true },
+      });
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {

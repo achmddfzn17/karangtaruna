@@ -17,7 +17,17 @@ export default async function MemberLayout({
 
   // Get unread notification count for badge
   const unreadCount = await prisma.notification.count({
-    where: { userId: session.user.id, isRead: false },
+    where: {
+      OR: [
+        { userId: session.user.id, isRead: false },
+        {
+          userId: null,
+          reads: {
+            none: { userId: session.user.id },
+          },
+        },
+      ],
+    },
   });
 
   return (

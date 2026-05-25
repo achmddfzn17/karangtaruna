@@ -5,8 +5,11 @@ import { auth } from "@/auth";
 export async function GET() {
   const session = await auth();
   if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (session.user.role !== "ADMIN" && session.user.role !== "SUPER_ADMIN") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
 
-  const userId = (session.user as any).id;
+  const userId = session.user.id;
   const user = await prisma.user.findUnique({
     where: { id: userId },
     include: { admin: true },
@@ -28,8 +31,11 @@ export async function GET() {
 export async function PATCH(req: Request) {
   const session = await auth();
   if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (session.user.role !== "ADMIN" && session.user.role !== "SUPER_ADMIN") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
 
-  const userId = (session.user as any).id;
+  const userId = session.user.id;
   const body = await req.json();
   const { name, jabatan, phone } = body;
 
@@ -47,10 +53,6 @@ export async function PATCH(req: Request) {
     await prisma.admin.update({
       where: { userId },
       data: { jabatan: jabatan || null, phone: phone || null },
-    });
-  } else {
-    await prisma.admin.create({
-      data: { userId, jabatan: jabatan || null, phone: phone || null },
     });
   }
 

@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { generateCertificatePDFDataUrl } from "@/lib/certificate-pdf";
 import { sendCertificateEmail } from "@/lib/email";
 import { Prisma } from "@prisma/client";
+import { generateCertificateNumber, getCertificateQrCodeUrl } from "@/lib/certificate";
 
 /**
  * POST /api/sertifikat/generate
@@ -68,17 +69,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Generate certificate number with UUID to prevent race conditions
-    // Format: CERT-YEAR-UUID (first 8 chars)
-    const year = new Date().getFullYear();
-    const uniqueId = crypto.randomUUID().slice(0, 8).toUpperCase();
-    const nomorSertifikat = `CERT-${year}-${uniqueId}`;
-
-    // Generate QR Code URL pointing to certificate verification endpoint
-    const certificateQRData = `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/verify/${nomorSertifikat}`;
-    const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(
-      certificateQRData
-    )}`;
+    const nomorSertifikat = generateCertificateNumber();
+    const qrCodeUrl = getCertificateQrCodeUrl(nomorSertifikat);
 
     // Generate PDF (optional - can be async)
     let pdfUrl: string | null = null;

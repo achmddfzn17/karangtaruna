@@ -19,32 +19,28 @@ const susSchema = z.object({
 
 export async function POST(req: Request) {
   try {
-    // SECURITY: Add authentication to prevent spam/DoS
     const session = await auth();
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized - login diperlukan" }, { status: 401 });
-    }
+    const userId = session?.user?.id ?? null;
 
-    const userId = session.user.id;
+    if (userId) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
 
-    // SECURITY: Check if user already submitted SUS today
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    const existingToday = await prisma.susResponse.findFirst({
-      where: {
-        userId,
-        createdAt: {
-          gte: today,
+      const existingToday = await prisma.susResponse.findFirst({
+        where: {
+          userId,
+          createdAt: {
+            gte: today,
+          },
         },
-      },
-    });
+      });
 
-    if (existingToday) {
-      return NextResponse.json(
-        { error: "Anda sudah mengisi survey SUS hari ini" },
-        { status: 400 }
-      );
+      if (existingToday) {
+        return NextResponse.json(
+          { error: "Anda sudah mengisi survey SUS hari ini" },
+          { status: 400 }
+        );
+      }
     }
 
     const body = await req.json();
