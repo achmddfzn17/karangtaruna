@@ -9,7 +9,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const userRole = (session.user as any).role;
+  const userRole = session.user.role;
   // SECURITY: Only ADMIN/SUPER_ADMIN can create gallery items
   if (userRole !== "ADMIN" && userRole !== "SUPER_ADMIN") {
     return NextResponse.json({ error: "Forbidden - hanya admin yang bisa membuat galeri" }, { status: 403 });

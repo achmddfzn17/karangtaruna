@@ -24,8 +24,8 @@ export default function TambahAnggotaPage() {
     try {
       await createAnggota(formData);
       toast.success("Anggota berhasil ditambahkan!");
-    } catch (error: any) {
-      setErrorMsg(error.message || "Terjadi kesalahan");
+    } catch (error) {
+      setErrorMsg(error instanceof Error ? error.message : "Terjadi kesalahan");
       setIsSubmitting(false);
     }
   };

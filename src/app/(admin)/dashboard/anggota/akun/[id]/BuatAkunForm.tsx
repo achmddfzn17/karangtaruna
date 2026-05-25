@@ -38,10 +38,18 @@ export default function BuatAkunForm({ anggotaId, userId, mode, defaultEmail = "
         router.refresh();
         setIsSubmitting(false);
       }
-    } catch (error: any) {
+    } catch (error) {
       // Re-throw NEXT_REDIRECT agar Next.js bisa handle redirect
-      if (error?.digest?.startsWith("NEXT_REDIRECT")) throw error;
-      setErrorMsg(error.message || "Terjadi kesalahan");
+      if (
+        error &&
+        typeof error === "object" &&
+        "digest" in error &&
+        typeof error.digest === "string" &&
+        error.digest.startsWith("NEXT_REDIRECT")
+      ) {
+        throw error;
+      }
+      setErrorMsg(error instanceof Error ? error.message : "Terjadi kesalahan");
       setIsSubmitting(false);
     }
   };

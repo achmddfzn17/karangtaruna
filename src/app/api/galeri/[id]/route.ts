@@ -17,7 +17,7 @@ export async function DELETE(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const userRole = (session.user as any).role;
+  const userRole = session.user.role;
   // SECURITY: Only ADMIN/SUPER_ADMIN can delete gallery items
   if (userRole !== "ADMIN" && userRole !== "SUPER_ADMIN") {
     return NextResponse.json({ error: "Forbidden - hanya admin yang bisa menghapus galeri" }, { status: 403 });

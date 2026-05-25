@@ -117,8 +117,7 @@ async function cleanupOrphanedFiles() {
     console.log(`   File dihapus: ${orphanedFiles.length}`);
     console.log(`   File tersisa: ${remainingFiles}`);
 
-  } catch (error: any) {
-    console.error("\n❌ ERROR:", error.message);
+  } catch (error) {
     console.error(error);
   } finally {
     await prisma.$disconnect();

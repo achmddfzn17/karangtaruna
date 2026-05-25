@@ -87,8 +87,10 @@ export async function createAnggota(formData: FormData) {
         },
       });
     }
-  } catch (error: any) {
-    if (error.code === "P2002") throw new Error("NIK sudah terdaftar!");
+  } catch (error) {
+    if (error && typeof error === "object" && "code" in error && error.code === "P2002") {
+      throw new Error("NIK sudah terdaftar!");
+    }
     throw error;
   }
 

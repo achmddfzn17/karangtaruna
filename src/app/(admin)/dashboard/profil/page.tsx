@@ -53,8 +53,8 @@ export default function ProfilAdminPage() {
       });
       if (!res.ok) throw new Error((await res.json()).error || "Gagal menyimpan");
       toast.success("Profil berhasil diperbarui");
-    } catch (err: any) {
-      toast.error(err.message);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Gagal menyimpan");
     } finally {
       setSaving(false);
     }
@@ -83,8 +83,8 @@ export default function ProfilAdminPage() {
       if (!res.ok) throw new Error((await res.json()).error || "Gagal mengubah password");
       toast.success("Password berhasil diubah");
       setPw({ oldPassword: "", newPassword: "", confirmPassword: "" });
-    } catch (err: any) {
-      toast.error(err.message);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Gagal mengubah password");
     } finally {
       setChangingPw(false);
     }

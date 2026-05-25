@@ -146,8 +146,8 @@ export default function GaleriUploadForm({ kegiatanList, defaultKegiatanId }: Pr
       toast.success("Dokumentasi berhasil ditambahkan!");
       router.push("/dashboard/galeri");
       router.refresh();
-    } catch (err: any) {
-      setError(err.message || "Terjadi kesalahan");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Terjadi kesalahan");
       setUploadProgress(0);
     } finally {
       setUploading(false);

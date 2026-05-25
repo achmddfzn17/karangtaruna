@@ -88,7 +88,7 @@ export default async function LaporanKeuanganPage({
             ))}
           </div>
           <ExportKeuanganButton
-            transaksi={transaksiTahun as any}
+            transaksi={transaksiTahun}
             totalPemasukan={totalMasuk}
             totalPengeluaran={totalKeluar}
             saldo={saldoTahun}

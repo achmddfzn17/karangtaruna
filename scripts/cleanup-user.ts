@@ -95,8 +95,7 @@ async function cleanupUser(identifier: string) {
 
     console.log("\n✅ CLEANUP SELESAI!");
     console.log("   User dan semua data terkait berhasil dihapus dari database dan Supabase Storage");
-  } catch (error: any) {
-    console.error("\n❌ ERROR:", error.message);
+  } catch (error) {
     console.error(error);
   } finally {
     await prisma.$disconnect();

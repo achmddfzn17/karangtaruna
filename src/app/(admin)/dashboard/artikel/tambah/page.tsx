@@ -27,8 +27,8 @@ export default function TambahArtikelPage() {
     try {
       await createArtikel(formData);
       toast.success("Berhasil mempublikasikan artikel!");
-    } catch (error: any) {
-      setErrorMsg(error.message || "Terjadi kesalahan");
+    } catch (error) {
+      setErrorMsg(error instanceof Error ? error.message : "Terjadi kesalahan");
       setIsSubmitting(false);
     }
   };

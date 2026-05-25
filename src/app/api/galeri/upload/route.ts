@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const userRole = (session.user as any).role;
+  const userRole = session.user.role;
   // SECURITY: Only ADMIN/SUPER_ADMIN can upload gallery content
   if (userRole !== "ADMIN" && userRole !== "SUPER_ADMIN") {
     return NextResponse.json({ error: "Forbidden - hanya admin yang bisa upload galeri" }, { status: 403 });
@@ -55,9 +55,7 @@ export async function POST(req: NextRequest) {
 
     // Generate unique filename
     const ext = file.name.split(".").pop()?.toLowerCase() ?? (isVideo ? "mp4" : "jpg");
-    const timestamp = Date.now();
-    const random = Math.random().toString(36).substring(2, 8);
-    const fileName = `${folder}/${timestamp}-${random}.${ext}`;
+    const fileName = `${folder}/${Date.now()}-${crypto.randomUUID()}.${ext}`;
 
     // Upload to Supabase Storage
     const arrayBuffer = await file.arrayBuffer();

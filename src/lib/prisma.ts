@@ -113,7 +113,8 @@ function getPrisma(): PrismaClient {
 export const prisma = new Proxy({} as PrismaClient, {
   get(_target, prop, receiver) {
     const client = getPrisma();
-    if ((client as any).isBuildStub) {
+    const buildStubClient = client as PrismaClient & { isBuildStub?: boolean };
+    if (buildStubClient.isBuildStub) {
       return Reflect.get(client, prop, receiver);
     }
     const value = Reflect.get(client, prop, receiver);

@@ -27,8 +27,8 @@ export default function TambahBeritaPage() {
     try {
       await createBerita(formData);
       toast.success("Berhasil mempublikasikan berita!");
-    } catch (error: any) {
-      setErrorMsg(error.message || "Terjadi kesalahan");
+    } catch (error) {
+      setErrorMsg(error instanceof Error ? error.message : "Terjadi kesalahan");
       setIsSubmitting(false);
     }
   };

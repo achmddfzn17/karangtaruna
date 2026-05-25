@@ -15,8 +15,8 @@ export default function TambahProgramPage() {
     setErrorMsg("");
     try {
       await createProgram(formData);
-    } catch (error: any) {
-      setErrorMsg(error.message || "Terjadi kesalahan");
+    } catch (error) {
+      setErrorMsg(error instanceof Error ? error.message : "Terjadi kesalahan");
       setIsSubmitting(false);
     }
   };

@@ -12,7 +12,7 @@ export default auth((req) => {
   const isMemberRoute = nextUrl.pathname.startsWith("/member");
   const isAuthRoute = nextUrl.pathname === "/login" || nextUrl.pathname.startsWith("/anggota/login");
 
-  const userRole = (req.auth?.user as any)?.role;
+  const userRole = req.auth?.user?.role;
 
   // 1. Block logged in users from auth pages
   if (isAuthRoute && isLoggedIn) {

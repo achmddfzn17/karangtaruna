@@ -58,8 +58,8 @@ export default function EditAnggotaPage() {
     try {
       await updateAnggota(id, formData);
       toast.success("Data anggota berhasil diperbarui!");
-    } catch (error: any) {
-      setErrorMsg(error.message || "Terjadi kesalahan");
+    } catch (error) {
+      setErrorMsg(error instanceof Error ? error.message : "Terjadi kesalahan");
       setIsSubmitting(false);
     }
   };

@@ -6,8 +6,11 @@ import { auth } from "@/auth";
 export async function POST(req: Request) {
   const session = await auth();
   if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (session.user.role !== "ANGGOTA") {
+    return NextResponse.json({ error: "Forbidden - hanya anggota yang bisa mendaftar kegiatan" }, { status: 403 });
+  }
 
-  const userId = (session.user as any).id;
+  const userId = session.user.id;
   const { kegiatanId } = await req.json();
 
   if (!kegiatanId) return NextResponse.json({ error: "kegiatanId wajib diisi" }, { status: 400 });
@@ -40,16 +43,22 @@ export async function POST(req: Request) {
 export async function DELETE(req: Request) {
   const session = await auth();
   if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (session.user.role !== "ANGGOTA") {
+    return NextResponse.json({ error: "Forbidden - hanya anggota yang bisa membatalkan pendaftaran" }, { status: 403 });
+  }
 
-  const userId = (session.user as any).id;
+  const userId = session.user.id;
   const { kegiatanId } = await req.json();
+
+  if (!kegiatanId) return NextResponse.json({ error: "kegiatanId wajib diisi" }, { status: 400 });
 
   const anggota = await prisma.anggota.findUnique({ where: { userId } });
   if (!anggota) return NextResponse.json({ error: "Data anggota tidak ditemukan" }, { status: 404 });
 
   // Hanya bisa batalkan jika kegiatan belum selesai
   const kegiatan = await prisma.kegiatan.findUnique({ where: { id: kegiatanId } });
-  if (kegiatan?.status === "SELESAI") {
+  if (!kegiatan) return NextResponse.json({ error: "Kegiatan tidak ditemukan" }, { status: 404 });
+  if (kegiatan.status === "SELESAI" || kegiatan.status === "DIBATALKAN") {
     return NextResponse.json({ error: "Tidak bisa membatalkan kegiatan yang sudah selesai" }, { status: 400 });
   }
 
