@@ -1,6 +1,6 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
-import type { Role } from "@prisma/client";
+import type { Role } from "@/lib/prisma";
 
 /**
  * Server-side auth helpers untuk page-level protection

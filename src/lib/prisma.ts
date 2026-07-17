@@ -1,6 +1,9 @@
 import { PrismaPg } from "@prisma/adapter-pg";
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, Role } from "@prisma/client";
 import { Pool } from "pg";
+
+// Re-export types from Prisma for convenience
+export type { Role };
 
 /**
  * Prisma Client singleton with **lazy** initialization.
