@@ -12,7 +12,6 @@ import {
 import * as XLSX from "xlsx";
 import { toast } from "sonner";
 import { useHydrated } from "@/lib/use-hydrated";
-import { useHydrated } from "@/lib/use-hydrated";
 
 interface SusResponse {
   id: string;
