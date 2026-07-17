@@ -34,8 +34,12 @@ export default auth((req) => {
   }
 
   // 3. Protect Member Routes
-  if (isMemberRoute && !isLoggedIn) {
-    return NextResponse.redirect(new URL("/anggota/login", nextUrl));
+  if (isMemberRoute) {
+    if (!isLoggedIn) {
+      return NextResponse.redirect(new URL("/anggota/login", nextUrl));
+    }
+    // Allow members and admins to access member routes
+    // (admins might want to test member dashboard)
   }
 
   return NextResponse.next();
