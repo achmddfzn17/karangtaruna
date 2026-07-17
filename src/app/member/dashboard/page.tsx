@@ -43,7 +43,7 @@ export default async function MemberDashboard() {
   const isProfileLengkap =
     anggotaData?.nik && anggotaData?.noHp && anggotaData?.alamat && anggotaData?.tanggalLahir;
   const totalKegiatan = anggotaData?.kegiatan.length || 0;
-  const kegiatanHadir = anggotaData?.kegiatan.filter((k) => k.hadir).length || 0;
+  const kegiatanHadir = anggotaData?.kegiatan.filter((k: { hadir: boolean }) => k.hadir).length || 0;
   const tingkatKehadiran =
     totalKegiatan > 0 ? Math.round((kegiatanHadir / totalKegiatan) * 100) : 0;
 
@@ -51,7 +51,7 @@ export default async function MemberDashboard() {
   const currentMonth = now.getMonth() + 1;
   const currentYear = now.getFullYear();
   const iuranBulanIni = anggotaData?.iuran.find(
-    (i) => i.bulan === currentMonth && i.tahun === currentYear
+    (i: { bulan: number; tahun: number }) => i.bulan === currentMonth && i.tahun === currentYear
   );
 
   return (
@@ -226,7 +226,7 @@ export default async function MemberDashboard() {
             </h4>
             {upcomingKegiatan.length > 0 ? (
               <div className="space-y-4">
-                {upcomingKegiatan.map((kegiatan) => (
+                {upcomingKegiatan.map((kegiatan: { id: string; nama: string; tanggalMulai: Date; lokasi: string | null }) => (
                   <Link
                     key={kegiatan.id}
                     href="/member/kegiatan"
@@ -261,7 +261,7 @@ export default async function MemberDashboard() {
             </h4>
             {latestBerita.length > 0 ? (
               <div className="space-y-4">
-                {latestBerita.map((berita) => (
+                {latestBerita.map((berita: { id: string; slug: string; judul: string; ringkasan: string | null; publishedAt: Date | null }) => (
                   <Link
                     key={berita.id}
                     href={`/member/berita/${berita.slug}`}
