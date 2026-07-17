@@ -26,9 +26,9 @@ export async function PATCH(
     const { jumlah, tanggalBayar, keterangan } = body;
 
     // Validate input
-    if (!jumlah || jumlah <= 0) {
+    if (typeof jumlah !== "number" || !Number.isFinite(jumlah) || jumlah <= 0) {
       return NextResponse.json(
-        { error: "Jumlah harus lebih dari 0" },
+        { error: "Jumlah harus berupa angka lebih dari 0" },
         { status: 400 }
       );
     }

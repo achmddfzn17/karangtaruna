@@ -124,19 +124,39 @@ export async function deleteBerita(id: string) {
 export async function updateBerita(id: string, formData: FormData) {
   // ✅ Auth check
   const session = await requireAdmin();
-  
+
   // ✅ VALIDATE INPUT with centralized schema
   const data = validateFormData(formData, updateBeritaSchema);
 
+  const tagsRaw = formData.get("tags") as string;
+  let tags: string[] = [];
   try {
+    tags = tagsRaw ? JSON.parse(tagsRaw) : [];
+  } catch (error) {
+    console.error("[PARSE_TAGS_ERROR]", error);
+  }
+
+  try {
+    // Preserve the original publish time; only stamp a new one when moving to PUBLISHED.
+    const existing = await prisma.berita.findUnique({
+      where: { id },
+      select: { publishedAt: true },
+    });
+
     await prisma.berita.update({
       where: { id },
-      data: { 
-        judul: data.judul, 
-        kategori: data.kategori || null, 
-        status: data.status, 
-        ringkasan: data.ringkasan || null, 
-        isi: data.isi 
+      data: {
+        judul: data.judul,
+        kategori: data.kategori || null,
+        status: data.status,
+        ringkasan: data.ringkasan || null,
+        isi: data.isi,
+        thumbnail: data.thumbnail || null,
+        tags,
+        publishedAt:
+          data.status === "PUBLISHED"
+            ? existing?.publishedAt ?? new Date()
+            : null,
       },
     });
 

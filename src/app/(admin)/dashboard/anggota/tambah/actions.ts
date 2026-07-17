@@ -4,8 +4,13 @@ import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import bcrypt from "bcryptjs";
+import { requireAdmin } from "@/lib/auth-helpers";
 
 export async function createAnggota(formData: FormData) {
+  // ✅ Auth check — server actions are invokable as POST endpoints,
+  // so this must authenticate the caller like every other admin action.
+  await requireAdmin();
+
   const namaLengkap = formData.get("namaLengkap") as string;
   const nik = formData.get("nik") as string;
   const tempatLahir = formData.get("tempatLahir") as string;

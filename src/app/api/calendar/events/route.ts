@@ -14,12 +14,20 @@ export async function GET(req: Request) {
     }
 
     const { searchParams } = new URL(req.url);
-    const month = parseInt(searchParams.get("month") || String(new Date().getMonth() + 1));
-    const year = parseInt(searchParams.get("year") || String(new Date().getFullYear()));
+    const now = new Date();
+    const parsedMonth = parseInt(searchParams.get("month") || "", 10);
+    const parsedYear = parseInt(searchParams.get("year") || "", 10);
 
-    // Get start and end date of the month
+    // Fall back to the current month/year when params are missing or non-numeric,
+    // otherwise NaN produces Invalid Date bounds and a Prisma 500.
+    const month = Number.isNaN(parsedMonth) ? now.getMonth() + 1 : parsedMonth;
+    const year = Number.isNaN(parsedYear) ? now.getFullYear() : parsedYear;
+
+    // Get start and end date of the month.
+    // endDate is the last day of the month at 23:59:59.999 so events on the last
+    // day with a time component are included (lte with 00:00:00 would drop them).
     const startDate = new Date(year, month - 1, 1);
-    const endDate = new Date(year, month, 0);
+    const endDate = new Date(year, month, 0, 23, 59, 59, 999);
 
     // Fetch kegiatan, berita, and artikel
     const [kegiatan, berita, artikel] = await Promise.all([

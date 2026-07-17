@@ -207,6 +207,18 @@ export async function resetPasswordAnggota(userId: string, formData: FormData) {
   
   // ✅ VALIDATE INPUT with centralized schema
   const { newPassword } = validateFormData(formData, resetPasswordSchema);
+
+  // ✅ Prevent privilege escalation: an ADMIN must not be able to reset the
+  // password of another ADMIN or a SUPER_ADMIN via this member-scoped action.
+  const target = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { role: true },
+  });
+  if (!target) throw new Error("Akun tidak ditemukan");
+  if (target.role !== "ANGGOTA") {
+    throw new Error("Aksi ini hanya untuk mereset password akun anggota");
+  }
+
   const hashedPassword = await bcrypt.hash(newPassword, 12);
 
   await prisma.user.update({

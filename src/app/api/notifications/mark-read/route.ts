@@ -12,6 +12,13 @@ export async function POST(req: Request) {
     const { id } = await req.json();
     const userId = session.user.id;
 
+    if (!id || typeof id !== "string") {
+      return NextResponse.json(
+        { error: "ID notifikasi tidak valid" },
+        { status: 400 }
+      );
+    }
+
     const notification = await prisma.notification.findFirst({
       where: {
         id,
