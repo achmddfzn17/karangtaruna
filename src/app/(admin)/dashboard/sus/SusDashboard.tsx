@@ -11,6 +11,8 @@ import {
 } from "lucide-react";
 import * as XLSX from "xlsx";
 import { toast } from "sonner";
+import { useHydrated } from "@/lib/use-hydrated";
+import { useHydrated } from "@/lib/use-hydrated";
 
 interface SusResponse {
   id: string;
@@ -59,11 +61,7 @@ function getGrade(score: number) {
 export default function SusDashboard({ responses, stats, distribution, avgPerQ, deleteResponse }: Props) {
   const [deleting, setDeleting] = useState<string | null>(null);
   const [filterKategori, setFilterKategori] = useState<string>("ALL");
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const mounted = useHydrated();
 
   const { grade, label } = getGrade(stats.avgScore);
 

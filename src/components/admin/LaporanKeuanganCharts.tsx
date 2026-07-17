@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, Legend, LineChart, Line,
 } from "recharts";
 import { formatCurrency } from "@/lib/utils";
+import { useHydrated } from "@/lib/use-hydrated";
 
 interface BulanData {
   nama: string;
@@ -15,12 +15,7 @@ interface BulanData {
 }
 
 export default function LaporanKeuanganCharts({ perBulan }: { perBulan: BulanData[] }) {
-  const [mounted, setMounted] = useState(false);
-  const formatter = (value: number) => formatCurrency(value);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const mounted = useHydrated();
 
   if (!mounted) {
     return (
