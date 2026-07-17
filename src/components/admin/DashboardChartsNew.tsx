@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { TrendingUp, BarChart3 } from "lucide-react";
+import { useHydrated } from "@/lib/use-hydrated";
 
 interface AnggotaData {
   bulan: string;
@@ -24,11 +24,7 @@ export default function DashboardChartsNew({
   anggotaData,
   keuanganData,
 }: DashboardChartsNewProps) {
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const mounted = useHydrated();
 
   if (!mounted) {
     return (
