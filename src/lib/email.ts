@@ -61,7 +61,12 @@ export async function sendCertificateEmail(
   qrCodeUrl: string,
   pdfUrl?: string
 ) {
-  const verifyUrl = `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/verify/${nomorSertifikat}`;
+  const configuredUrl =
+    process.env.NEXTAUTH_URL ||
+    process.env.AUTH_URL ||
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000");
+  
+  const verifyUrl = `${configuredUrl.replace(/\/$/, "")}/verify/${nomorSertifikat}`;
 
   const html = `
     <!DOCTYPE html>
