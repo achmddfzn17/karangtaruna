@@ -61,6 +61,11 @@ export default async function KelolaAdminPage({ searchParams }: PageProps) {
 
   const where: Prisma.UserWhereInput = { AND: whereConditions };
 
+  // Server Component: dirender sekali per request, jadi membaca waktu saat ini
+  // aman dan disengaja (bukan sumber render tidak stabil seperti di client).
+  // eslint-disable-next-line react-hooks/purity
+  const nowMs = Date.now();
+
   // Parallel queries for data, stats, dan aktivitas recent
   const [
     adminUsers, 
@@ -79,7 +84,7 @@ export default async function KelolaAdminPage({ searchParams }: PageProps) {
     prisma.auditLog.count({
       where: {
         createdAt: {
-          gte: new Date(Date.now() - 24 * 60 * 60 * 1000),
+          gte: new Date(nowMs - 24 * 60 * 60 * 1000),
         },
       },
     }),
@@ -89,7 +94,7 @@ export default async function KelolaAdminPage({ searchParams }: PageProps) {
   
   // Admin yang baru daftar dalam 30 hari terakhir
   const newAdmins = adminUsers.filter((u) => {
-    const daysSinceCreated = (Date.now() - new Date(u.createdAt).getTime()) / (1000 * 60 * 60 * 24);
+    const daysSinceCreated = (nowMs - new Date(u.createdAt).getTime()) / (1000 * 60 * 60 * 24);
     return daysSinceCreated <= 30;
   }).length;
 

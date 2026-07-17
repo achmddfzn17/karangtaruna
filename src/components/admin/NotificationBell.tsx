@@ -33,21 +33,24 @@ export default function NotificationBell() {
   const [unread, setUnread] = useState(0);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const fetchNotifs = async () => {
-    try {
-      const res = await fetch("/api/notifikasi");
-      if (!res.ok) return;
+  useEffect(() => {
+    // Poll setiap 30 detik. setState hanya terjadi setelah await (asinkron),
+    // sehingga tidak memicu cascading render sinkron di dalam effect.
+    let active = true;
+    const run = async () => {
+      const res = await fetch("/api/notifikasi").catch(() => null);
+      if (!active || !res || !res.ok) return;
       const data = await res.json();
+      if (!active) return;
       setNotifs(data.notifs);
       setUnread(data.unreadCount);
-    } catch {}
-  };
-
-  useEffect(() => {
-    fetchNotifs();
-    // Poll setiap 30 detik
-    const interval = setInterval(fetchNotifs, 30000);
-    return () => clearInterval(interval);
+    };
+    run();
+    const interval = setInterval(run, 30000);
+    return () => {
+      active = false;
+      clearInterval(interval);
+    };
   }, []);
 
   useEffect(() => {

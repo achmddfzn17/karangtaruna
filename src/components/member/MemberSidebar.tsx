@@ -104,16 +104,13 @@ export default function MemberSidebar({
     onMobileClose?.();
   }, [pathname]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Auto-expand group if active item is in it
-  useEffect(() => {
-    for (const group of menuGroups) {
-      if (group.items.some((item) => item.href === pathname)) {
-        setExpandedGroups((prev) => new Set(prev).add(group.label));
-      }
-    }
-  }, [pathname]); // eslint-disable-line react-hooks/exhaustive-deps
-
   const isActive = (href: string) => pathname === href;
+
+  // Derive (during render) which group contains the active route so it is
+  // always shown expanded — no effect/state sync needed.
+  const activeGroupLabel = menuGroups.find((group) =>
+    group.items.some((item) => item.href === pathname)
+  )?.label;
 
   const toggleGroup = (groupLabel: string) => {
     setExpandedGroups((prev) => {
@@ -162,7 +159,7 @@ export default function MemberSidebar({
   };
 
   const MenuGroupComponent = ({ group }: { group: MenuGroup }) => {
-    const isExpanded = expandedGroups.has(group.label);
+    const isExpanded = expandedGroups.has(group.label) || group.label === activeGroupLabel;
     const GroupIcon = group.icon;
 
     // Single item groups (like Dashboard) don't need expand/collapse
@@ -199,7 +196,7 @@ export default function MemberSidebar({
     );
   };
 
-  const SidebarContent = () => (
+  const sidebarContent = (
     <>
       {/* Logo */}
       <div className="flex items-center gap-3 h-[72px] px-5 border-b border-slate-100 shrink-0">
@@ -240,7 +237,7 @@ export default function MemberSidebar({
     <>
       {/* Desktop sidebar */}
       <aside className="hidden lg:flex w-[240px] shrink-0 bg-white border-r border-slate-100 h-screen sticky top-0 flex-col shadow-sm z-40">
-        <SidebarContent />
+        {sidebarContent}
       </aside>
 
       {/* Mobile overlay */}
@@ -258,7 +255,7 @@ export default function MemberSidebar({
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
-        <SidebarContent />
+        {sidebarContent}
       </aside>
     </>
   );

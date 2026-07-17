@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { ChevronLeft, ChevronRight, Loader2, AlertCircle, Calendar as CalendarIcon } from "lucide-react";
 import Link from "next/link";
 
@@ -23,11 +23,7 @@ export function ContentCalendar() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchEvents();
-  }, [month, year]);
-
-  const fetchEvents = async () => {
+  const fetchEvents = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
@@ -43,7 +39,11 @@ export function ContentCalendar() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [month, year]);
+
+  useEffect(() => {
+    fetchEvents();
+  }, [fetchEvents]);
 
   const getDaysInMonth = (m: number, y: number) => new Date(y, m, 0).getDate();
   const getFirstDayOfMonth = (m: number, y: number) => new Date(y, m - 1, 1).getDay();

@@ -1,7 +1,7 @@
 /**
  * Sanitize HTML content to prevent XSS attacks
  * Server-side only - uses dynamic import to avoid Edge Runtime issues
- * 
+ *
  * @param dirty - Untrusted HTML string
  * @returns Sanitized HTML string safe for rendering
  */
@@ -49,7 +49,9 @@ export function sanitizeHtmlPreview(dirty: string): string {
       .replace(/'/g, "&#039;");
   }
   
-  // Lazy load DOMPurify on client
+  // Lazy load DOMPurify on client. Fungsi ini sinkron sehingga tidak bisa
+  // memakai `await import`; require memuat modul hanya di sisi client.
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const DOMPurify = require("isomorphic-dompurify");
   
   return DOMPurify.sanitize(dirty, {
