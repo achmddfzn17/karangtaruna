@@ -134,7 +134,7 @@ export default function DashboardChartsNew({
                   borderRadius: "8px",
                   fontSize: "12px",
                 }}
-                formatter={(value: any) =>
+                formatter={(value) =>
                   new Intl.NumberFormat("id-ID", {
                     style: "currency",
                     currency: "IDR",

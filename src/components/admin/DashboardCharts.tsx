@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useHydrated } from "@/lib/use-hydrated";
 import {
   PieChart,
   Pie,
@@ -64,12 +64,8 @@ function renderCustomLabel({
 }
 
 export function AnggotaStatusChart({ data }: AnggotaChartProps) {
-  const [mounted, setMounted] = useState(false);
+  const mounted = useHydrated();
   const total = data.reduce((s, d) => s + d.value, 0);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   if (!mounted) {
     return (
@@ -158,11 +154,7 @@ interface KegiatanChartProps {
 }
 
 export function KegiatanJenisChart({ data }: KegiatanChartProps) {
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const mounted = useHydrated();
 
   if (!mounted) {
     return (
@@ -232,11 +224,7 @@ interface KontenTrenProps {
 }
 
 export function KontenTrenChart({ data }: KontenTrenProps) {
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const mounted = useHydrated();
 
   if (!mounted) {
     return (

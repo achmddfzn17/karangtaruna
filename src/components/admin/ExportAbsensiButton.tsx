@@ -39,7 +39,14 @@ export default function ExportAbsensiButton({ namaKegiatan, tanggal, peserta }: 
   const totalHadir = peserta.filter((p) => p.hadir).length;
 
   const exportExcel = () => {
-    const data = rows.map((r) => ({
+    type ExcelRow = {
+      No?: number | string;
+      "Nama Lengkap"?: string;
+      NIK?: string;
+      "No. HP"?: string;
+      Kehadiran?: string;
+    };
+    const data: ExcelRow[] = rows.map((r) => ({
       No: r.no,
       "Nama Lengkap": r.nama,
       NIK: r.nik,
@@ -47,9 +54,9 @@ export default function ExportAbsensiButton({ namaKegiatan, tanggal, peserta }: 
       Kehadiran: r.hadir,
     }));
 
-    data.push({} as any);
+    data.push({});
     data.push({
-      No: "" as any,
+      No: "",
       "Nama Lengkap": `Total Hadir: ${totalHadir} / ${peserta.length}`,
       NIK: "",
       "No. HP": "",

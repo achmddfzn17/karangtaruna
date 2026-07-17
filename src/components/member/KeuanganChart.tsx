@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, Legend,
 } from "recharts";
+import { useHydrated } from "@/lib/use-hydrated";
 
 interface ChartData {
   bulan: string;
@@ -23,11 +23,7 @@ function formatRupiah(value: number) {
 }
 
 export default function KeuanganChart({ data }: KeuanganChartProps) {
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const mounted = useHydrated();
 
   if (data.every((d) => d.masuk === 0 && d.keluar === 0)) {
     return (

@@ -20,8 +20,8 @@ export default function DeleteAnggotaButton({ id, nama }: DeleteAnggotaButtonPro
     try {
       await deleteAnggota(id);
       toast.success(`Anggota "${nama}" berhasil dihapus`);
-    } catch (error: any) {
-      toast.error(error.message || "Gagal menghapus anggota");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Gagal menghapus anggota");
       setLoading(false);
     }
   };

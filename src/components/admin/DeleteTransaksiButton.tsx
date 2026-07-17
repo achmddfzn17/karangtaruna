@@ -20,8 +20,8 @@ export default function DeleteTransaksiButton({ id, keterangan }: DeleteTransaks
     try {
       await deleteTransaksi(id);
       toast.success("Transaksi berhasil dihapus");
-    } catch (error: any) {
-      toast.error(error.message || "Gagal menghapus transaksi");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Gagal menghapus transaksi");
       setLoading(false);
     }
   };

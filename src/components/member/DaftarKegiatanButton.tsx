@@ -26,8 +26,8 @@ export default function DaftarKegiatanButton({ kegiatanId, terdaftar }: Props) {
       if (!res.ok) throw new Error(data.error || "Terjadi kesalahan");
       toast.success(terdaftar ? "Pendaftaran dibatalkan" : "Berhasil mendaftar kegiatan!");
       router.refresh();
-    } catch (err: any) {
-      toast.error(err.message);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Terjadi kesalahan");
     } finally {
       setLoading(false);
     }

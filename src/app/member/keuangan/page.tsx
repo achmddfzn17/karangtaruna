@@ -25,7 +25,7 @@ export default async function KeuanganPage({
 }) {
   const session = await auth();
   if (!session?.user) redirect("/anggota/login");
-  const userRole = (session.user as any).role;
+  const userRole = session.user.role;
   if (userRole !== "ANGGOTA") redirect("/anggota/login");
 
   const params = await searchParams;

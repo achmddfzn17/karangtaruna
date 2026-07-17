@@ -135,19 +135,21 @@ export default async function MemberVotingPage({
       revalidatePath("/dashboard/voting");
       revalidatePath("/dashboard");
       redirect("/member/voting?success=1");
-    } catch (error: any) {
+    } catch (error) {
       console.error("[SUBMIT_VOTE_ERROR]", error);
 
+      const errorMessage = error instanceof Error ? error.message : "";
+
       // Handle specific errors
-      if (error.message === "ALREADY_VOTED") {
+      if (errorMessage === "ALREADY_VOTED") {
         redirect("/member/voting?error=Anda+sudah+memberikan+suara+pada+voting+ini");
-      } else if (error.message === "POLLING_NOT_FOUND") {
+      } else if (errorMessage === "POLLING_NOT_FOUND") {
         redirect("/member/voting?error=Voting+tidak+ditemukan");
-      } else if (error.message === "POLLING_INACTIVE") {
+      } else if (errorMessage === "POLLING_INACTIVE") {
         redirect("/member/voting?error=Voting+sudah+tidak+aktif");
-      } else if (error.message === "POLLING_EXPIRED") {
+      } else if (errorMessage === "POLLING_EXPIRED") {
         redirect("/member/voting?error=Voting+sudah+kadaluarsa");
-      } else if (error.message === "OPTION_NOT_FOUND") {
+      } else if (errorMessage === "OPTION_NOT_FOUND") {
         redirect("/member/voting?error=Pilihan+tidak+valid");
       }
 

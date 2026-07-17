@@ -1,22 +1,18 @@
 "use client";
 
-import * as React from "react";
 import { useTheme } from "next-themes";
 import { Moon, Sun } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { useHydrated } from "@/lib/use-hydrated";
 
 interface DarkModeToggleProps {
   className?: string;
 }
 
 export function DarkModeToggle({ className }: DarkModeToggleProps) {
-  const { theme, setTheme, resolvedTheme } = useTheme();
-  const [mounted, setMounted] = React.useState(false);
-
-  React.useEffect(() => {
-    setMounted(true);
-  }, []);
+  const { setTheme, resolvedTheme } = useTheme();
+  const mounted = useHydrated();
 
   const isDark = resolvedTheme === "dark";
 

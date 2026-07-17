@@ -7,6 +7,7 @@ import {
   TrendingUp, Award, Activity, Plus,
 } from "lucide-react";
 import DaftarKegiatanButton from "@/components/member/DaftarKegiatanButton";
+import { JenisKegiatan } from "@prisma/client";
 
 export const metadata = { title: "Kegiatan" };
 
@@ -40,9 +41,9 @@ export default async function RiwayatKegiatanPage({
 }) {
   const session = await auth();
   if (!session?.user) redirect("/anggota/login");
-  const userRole = (session.user as any).role;
+  const userRole = session.user.role;
   if (userRole !== "ANGGOTA") redirect("/anggota/login");
-  const userId = (session.user as any).id;
+  const userId = session.user.id;
 
   const params = await searchParams;
   const jenisFilter = params.jenis as string | undefined;
@@ -69,7 +70,7 @@ export default async function RiwayatKegiatanPage({
     where: {
       status: { in: ["UPCOMING", "ONGOING"] },
       id: { notIn: terdaftarIds },
-      ...(jenisFilter && { jenis: jenisFilter as any }),
+      ...(jenisFilter && { jenis: jenisFilter as JenisKegiatan }),
     },
     orderBy: { tanggalMulai: "asc" },
     take: 10,

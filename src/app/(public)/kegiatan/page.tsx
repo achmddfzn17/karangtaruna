@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Calendar, MapPin, ChevronRight, Tag, Search, Filter } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import type { JenisKegiatan, StatusKegiatan } from "@prisma/client";
 import { formatDate } from "@/lib/utils";
 
 export const metadata: Metadata = {
@@ -74,8 +75,8 @@ export default async function KegiatanPage({
 
   const where = {
     ...(q ? { nama: { contains: q, mode: "insensitive" as const } } : {}),
-    ...(jenis !== "ALL" ? { jenis: jenis as any } : {}),
-    ...(status !== "ALL" ? { status: status as any } : {}),
+    ...(jenis !== "ALL" ? { jenis: jenis as JenisKegiatan } : {}),
+    ...(status !== "ALL" ? { status: status as StatusKegiatan } : {}),
   };
 
   const [total, kegiatanList] = await Promise.all([

@@ -11,8 +11,8 @@ export async function GET(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const userRole = (session.user as any).role;
-  const userId = (session.user as any).id;
+  const userRole = session.user.role;
+  const userId = session.user.id;
   
   // Only ADMIN/SUPER_ADMIN can fetch any anggota
   // ANGGOTA can only fetch their own data
