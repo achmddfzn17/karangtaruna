@@ -5,12 +5,21 @@ import { Calendar, ArrowRight, Tag, Newspaper } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { formatDate } from "@/lib/utils";
 
+type BeritaItem = Awaited<ReturnType<typeof prisma.berita.findMany>>[number];
+
 export default async function BeritaSection() {
-  const beritaList = await prisma.berita.findMany({
-    where: { status: "PUBLISHED" },
-    orderBy: { publishedAt: "desc" },
-    take: 4,
-  });
+  // Bungkus query dengan try catch agar homepage tidak crash saat database
+  // tidak bisa dihubungi. Kalau gagal, tampilkan state kosong.
+  let beritaList: BeritaItem[] = [];
+  try {
+    beritaList = await prisma.berita.findMany({
+      where: { status: "PUBLISHED" },
+      orderBy: { publishedAt: "desc" },
+      take: 4,
+    });
+  } catch (error) {
+    console.error("[BeritaSection] Gagal memuat berita dari database:", error);
+  }
 
   const featured = beritaList[0];
   const others = beritaList.slice(1);

@@ -2,7 +2,12 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Calendar, MapPin, ChevronRight, Tag, Search, Filter } from "lucide-react";
 import { prisma } from "@/lib/prisma";
-import type { JenisKegiatan, StatusKegiatan } from "@prisma/client";
+import { safeQuery } from "@/lib/safe-query";
+import { Prisma, type JenisKegiatan, type StatusKegiatan } from "@prisma/client";
+
+type KegiatanWithCount = Prisma.KegiatanGetPayload<{
+  include: { _count: { select: { peserta: true } } };
+}>;
 import { formatDate } from "@/lib/utils";
 
 export const metadata: Metadata = {
@@ -79,18 +84,23 @@ export default async function KegiatanPage({
     ...(status !== "ALL" ? { status: status as StatusKegiatan } : {}),
   };
 
-  const [total, kegiatanList] = await Promise.all([
-    prisma.kegiatan.count({ where }),
-    prisma.kegiatan.findMany({
-      where,
-      orderBy: { tanggalMulai: "desc" },
-      skip: (page - 1) * LIMIT,
-      take: LIMIT,
-      include: {
-        _count: { select: { peserta: true } },
-      },
-    }),
-  ]);
+  const [total, kegiatanList] = await safeQuery(
+    () =>
+      Promise.all([
+        prisma.kegiatan.count({ where }),
+        prisma.kegiatan.findMany({
+          where,
+          orderBy: { tanggalMulai: "desc" },
+          skip: (page - 1) * LIMIT,
+          take: LIMIT,
+          include: {
+            _count: { select: { peserta: true } },
+          },
+        }),
+      ]),
+    [0, []] as [number, KegiatanWithCount[]],
+    "KegiatanPage",
+  );
 
   const totalPages = Math.ceil(total / LIMIT);
 

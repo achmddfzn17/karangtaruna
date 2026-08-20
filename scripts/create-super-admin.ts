@@ -1,12 +1,15 @@
 /**
- * Script untuk membuat Super Admin baru
- * Usage: npx tsx scripts/create-super-admin.ts
- * 
- * Default credentials (sesuai request):
- * - Name: achmddfzn
- * - Email: achmddfzn@gmail.com
- * - Password: password
- * - Role: SUPER_ADMIN
+ * Script untuk membuat atau memperbarui Super Admin.
+ *
+ * Kredensial dibaca dari environment variable atau argumen CLI, bukan hardcoded.
+ * Prioritas: env var, lalu argumen CLI, lalu nilai default (kecuali password).
+ *
+ * Contoh pemakaian:
+ *   SUPERADMIN_PASSWORD=RahasiaKuat123 npx tsx scripts/create-super-admin.ts
+ *   npx tsx scripts/create-super-admin.ts --email=admin@contoh.com --password=RahasiaKuat123
+ *
+ * Jika password tidak diberikan, script akan membuat password acak yang kuat
+ * dan menampilkannya satu kali agar bisa dipakai login pertama.
  */
 
 import { PrismaClient } from "@prisma/client";
@@ -14,16 +17,28 @@ import { Pool } from "pg";
 import { PrismaPg } from "@prisma/adapter-pg";
 import bcrypt from "bcryptjs";
 import { config } from "dotenv";
+import { randomBytes } from "crypto";
 
 // Load .env file
 config({ path: ".env" });
 config({ path: ".env.local" });
 
+// Baca argumen CLI berbentuk --flag=nilai
+function readArg(flag: string): string | undefined {
+  const prefix = `--${flag}=`;
+  const found = process.argv.find((arg) => arg.startsWith(prefix));
+  return found ? found.slice(prefix.length) : undefined;
+}
+
+// Password tidak pernah hardcoded. Ambil dari env atau CLI, atau buat acak.
+const inputPassword = process.env.SUPERADMIN_PASSWORD ?? readArg("password");
+const generatedPassword = inputPassword ? null : randomBytes(9).toString("base64url");
+
 // Konfigurasi Super Admin yang akan dibuat
 const SUPER_ADMIN_CONFIG = {
-  name: "achmddfzn",
-  email: "achmddfzn@gmail.com",
-  password: "password", // Akan di-hash
+  name: process.env.SUPERADMIN_NAME ?? readArg("name") ?? "Super Admin",
+  email: process.env.SUPERADMIN_EMAIL ?? readArg("email") ?? "admin@karangtaruna.local",
+  password: (inputPassword ?? generatedPassword) as string,
   role: "SUPER_ADMIN" as const,
   jabatan: "Super Administrator",
   phone: null as string | null,
@@ -51,7 +66,6 @@ async function createSuperAdmin() {
   console.log("📋 Konfigurasi:");
   console.log(`   - Nama:     ${SUPER_ADMIN_CONFIG.name}`);
   console.log(`   - Email:    ${SUPER_ADMIN_CONFIG.email}`);
-  console.log(`   - Password: ${SUPER_ADMIN_CONFIG.password} (akan di-hash)`);
   console.log(`   - Role:     ${SUPER_ADMIN_CONFIG.role}`);
   console.log(`   - Jabatan:  ${SUPER_ADMIN_CONFIG.jabatan}\n`);
 
@@ -139,10 +153,14 @@ async function createSuperAdmin() {
     console.log(`   - SUPER_ADMIN: ${superAdminCount} user`);
     console.log(`   - ADMIN:       ${adminCount} user`);
 
-    console.log("\n🎉 Selesai! Anda bisa login dengan:");
-    console.log(`   📧 Email:    ${SUPER_ADMIN_CONFIG.email}`);
-    console.log(`   🔑 Password: ${SUPER_ADMIN_CONFIG.password}`);
-    console.log(`   🌐 URL:      http://localhost:3000/login\n`);
+    console.log("\n🎉 Selesai! Anda bisa login di http://localhost:3000/login");
+    console.log(`   📧 Email: ${SUPER_ADMIN_CONFIG.email}`);
+    if (generatedPassword) {
+      console.log(`   🔑 Password (dibuat otomatis, simpan sekarang): ${generatedPassword}`);
+      console.log("   ⚠️  Segera ganti password ini setelah login pertama.\n");
+    } else {
+      console.log("   🔑 Password: sesuai yang Anda tetapkan lewat SUPERADMIN_PASSWORD.\n");
+    }
   } catch (error) {
     console.error("\n❌ Error membuat Super Admin:");
     console.error(error);

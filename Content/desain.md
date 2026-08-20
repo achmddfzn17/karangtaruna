@@ -51,7 +51,7 @@ Mode gelap dikelola `next-themes` dengan strategi berbasis kelas (`.dark`). Togg
 
 ## Tipografi
 
-Font memakai Geist dari `next/font` (default bawaan Next.js). Skala tipografi mengikuti utilitas Tailwind, yaitu judul besar `text-3xl` sampai `text-4xl` dengan `font-bold`, judul bagian `text-xl` sampai `text-2xl` dengan `font-semibold`, teks isi `text-sm` sampai `text-base`, dan teks bantu `text-xs` dengan warna `muted-foreground`. Jaga tinggi baris nyaman dibaca (`leading-relaxed`) pada paragraf panjang.
+Font memakai Geist dan Geist Mono lewat `next/font/google`, dipetakan ke variabel `--font-sans` dan `--font-mono` pada `layout.tsx`. Skala tipografi mengikuti utilitas Tailwind, yaitu judul besar `text-3xl` sampai `text-4xl` dengan `font-bold`, judul bagian `text-xl` sampai `text-2xl` dengan `font-semibold`, teks isi `text-sm` sampai `text-base`, dan teks bantu `text-xs` dengan warna `muted-foreground`. Jaga tinggi baris nyaman dibaca (`leading-relaxed`) pada paragraf panjang.
 
 ## Spasi dan Tata Letak
 
@@ -59,9 +59,9 @@ Gunakan skala spasi Tailwind (kelipatan 4px). Jarak antar bagian umumnya `gap-4`
 
 ## Inventaris Komponen
 
-Komponen dasar ada di `src/components/ui` mengikuti pola shadcn/ui di atas Radix UI, antara lain button, card, input, label, dialog, dropdown-menu, avatar, badge, checkbox, select, tabs, accordion, popover, progress, switch, dan toast.
+Komponen dasar ada di `src/components/ui` mengikuti pola shadcn/ui di atas Radix UI. Berkas yang benar-benar ada, yaitu avatar, badge, button, card, checkbox, dialog, dropdown-menu, input, label, progress, scroll-area, select, separator, switch, tabs, textarea, skeleton, dan dark-mode-toggle. Notifikasi toast tidak memakai komponen `ui` sendiri, melainkan library `sonner`.
 
-Komponen bersama di `src/components/shared`, yaitu DataTable, FormModal, ConfirmModal, PageHeader, StatCard, StatusBadge, dan RichTextEditor. Komponen khusus area ada di `admin`, `member`, dan `public`.
+Komponen bersama di `src/components/shared`, yaitu DataTable (memakai `@tanstack/react-table`), FormModal, ConfirmModal, PageHeader, StatCard, StatusBadge, dan RichTextEditor (memakai TipTap). Komponen khusus area ada di `admin` (sekitar 33 berkas, termasuk banyak tombol Delete, Export, dan grafik dashboard), `member` (sekitar 14 berkas untuk layout dan fitur anggota), dan `public` (10 berkas section landing page seperti HeroSection, ProgramSection, dan Footer).
 
 Aturan pakai: jangan membuat komponen baru bila sudah ada yang setara. Perluas komponen di `ui` atau `shared` agar konsisten.
 

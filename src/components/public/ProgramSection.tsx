@@ -1,22 +1,24 @@
 import Link from "next/link";
-import {
-  ShoppingBag,
-  GraduationCap,
-  Heart,
-  Trophy,
-  Leaf,
-  HandHeart,
-  ArrowRight,
-} from "lucide-react";
+import { ShoppingBag, ArrowRight } from "lucide-react";
 
 import { prisma } from "@/lib/prisma";
 import * as LucideIcons from "lucide-react";
 
+type ProgramItem = Awaited<ReturnType<typeof prisma.program.findMany>>[number];
+
 export default async function ProgramSection() {
-  const programs = await prisma.program.findMany({
-    where: { status: true },
-    orderBy: { urutan: "asc" },
-  });
+  // Bungkus query dengan try catch supaya kalau database sedang tidak bisa
+  // dihubungi (misalnya project Supabase paused), halaman depan tetap tampil
+  // dengan pesan kosong dan tidak menghentikan seluruh render halaman.
+  let programs: ProgramItem[] = [];
+  try {
+    programs = await prisma.program.findMany({
+      where: { status: true },
+      orderBy: { urutan: "asc" },
+    });
+  } catch (error) {
+    console.error("[ProgramSection] Gagal memuat program dari database:", error);
+  }
 
   // Helper to dynamically resolve a Lucide icon by name.
   // Lucide exports icons as `React.forwardRef(...)` objects, so a `typeof === 'function'`

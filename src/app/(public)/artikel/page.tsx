@@ -8,6 +8,7 @@ import {
   Search,
 } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { safeQuery } from "@/lib/safe-query";
 import { formatDate } from "@/lib/utils";
 
 export const metadata: Metadata = {
@@ -25,21 +26,31 @@ export default async function ArtikelPage({
   const q = typeof params.q === "string" ? params.q : "";
   const kat = typeof params.kat === "string" ? params.kat : "Semua";
 
-  const artikelList = await prisma.artikel.findMany({
-    where: {
-      status: "PUBLISHED",
-      ...(q ? { judul: { contains: q, mode: "insensitive" } } : {}),
-      ...(kat && kat !== "Semua" ? { kategori: kat } : {}),
-    },
-    orderBy: { publishedAt: "desc" },
-  });
+  const artikelList = await safeQuery(
+    () =>
+      prisma.artikel.findMany({
+        where: {
+          status: "PUBLISHED",
+          ...(q ? { judul: { contains: q, mode: "insensitive" } } : {}),
+          ...(kat && kat !== "Semua" ? { kategori: kat } : {}),
+        },
+        orderBy: { publishedAt: "desc" },
+      }),
+    [] as Awaited<ReturnType<typeof prisma.artikel.findMany>>,
+    "ArtikelPage",
+  );
 
   // Collect unique categories from DB for filter pills
-  const allKategori = await prisma.artikel.findMany({
-    where: { status: "PUBLISHED" },
-    select: { kategori: true },
-    distinct: ["kategori"],
-  });
+  const allKategori = await safeQuery(
+    () =>
+      prisma.artikel.findMany({
+        where: { status: "PUBLISHED" },
+        select: { kategori: true },
+        distinct: ["kategori"],
+      }),
+    [] as { kategori: string | null }[],
+    "ArtikelPage:kategori",
+  );
 
   const categories = [
     "Semua",

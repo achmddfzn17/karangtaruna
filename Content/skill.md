@@ -50,10 +50,10 @@ Skill berikut disarankan hidup di folder `skills/`. Masing-masing mengikuti form
 Gunakan saat menelusuri bug. Empat langkah, yaitu investigasi (kumpulkan bukti dan reproduksi), hipotesis (rumuskan sebab paling mungkin), perbaikan (ubah satu hal terkecil), dan verifikasi (buktikan bug hilang dan tidak ada regresi). Jika satu pendekatan gagal dua kali, berhenti menambal dan cari akar masalahnya.
 
 ### prisma-migration
-Gunakan saat mengubah skema database. Edit `prisma/schema.prisma`, jalankan `npx prisma migrate dev --name <deskripsi>`, pastikan `npx prisma generate` sukses, lalu jalankan test. Jangan mengedit migrasi lama yang sudah diterapkan.
+Gunakan saat mengubah skema database. Edit `prisma/schema.prisma`, lalu sinkronkan dengan `npx prisma db push` (pola baseline proyek ini) dan pastikan `npx prisma generate` sukses sebelum menjalankan test. Bila beralih ke alur migrasi penuh, pakai `npx prisma migrate dev --name <deskripsi>` dan jangan mengedit migrasi lama yang sudah diterapkan. Koneksi database disuntikkan lewat driver adapter dan `prisma.config.ts`, bukan lewat baris `url` di schema.
 
 ### api-route-pattern
-Gunakan saat membuat atau mengubah route handler di `src/app/api`. Pakai `lib/auth-helpers.ts` untuk cek sesi dan peran, `lib/validations.ts` untuk validasi Zod, `lib/api-helpers.ts` untuk format respons, dan `lib/audit.ts` untuk mencatat aksi tulis.
+Gunakan saat membuat atau mengubah route handler di `src/app/api`. Pakai `lib/auth-helpers.ts` untuk cek sesi dan peran, `lib/validations.ts` untuk validasi Zod, `lib/api-helpers.ts` untuk format respons, dan `lib/audit.ts` untuk mencatat aksi tulis. Sebelum menambah endpoint baru, cek dulu apakah fitur tersebut sebaiknya memakai Server Action (`actions.ts` dengan `"use server"`) seperti pola yang sudah dipakai luas di area admin.
 
 ### content-sanitize
 Gunakan saat menangani input rich text dari TipTap. Selalu sanitasi lewat `lib/sanitize.ts` sebelum menyimpan atau menampilkan agar aman dari XSS.

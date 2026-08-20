@@ -5,12 +5,21 @@ import { BookOpen, Clock, User, ArrowRight } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { formatDate } from "@/lib/utils";
 
+type ArtikelItem = Awaited<ReturnType<typeof prisma.artikel.findMany>>[number];
+
 export default async function ArtikelSection() {
-  const artikelList = await prisma.artikel.findMany({
-    where: { status: "PUBLISHED" },
-    orderBy: { publishedAt: "desc" },
-    take: 3,
-  });
+  // Bungkus query dengan try catch agar homepage tetap tampil meski database
+  // sedang tidak bisa dihubungi. State kosong akan otomatis dirender.
+  let artikelList: ArtikelItem[] = [];
+  try {
+    artikelList = await prisma.artikel.findMany({
+      where: { status: "PUBLISHED" },
+      orderBy: { publishedAt: "desc" },
+      take: 3,
+    });
+  } catch (error) {
+    console.error("[ArtikelSection] Gagal memuat artikel dari database:", error);
+  }
 
   return (
     <section className="py-24 bg-[#fcfdfe]">

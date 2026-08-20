@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { safeQuery } from "@/lib/safe-query";
 import { notFound } from "next/navigation";
 import { formatDate } from "@/lib/utils";
 import { sanitizeHtml } from "@/lib/sanitize";
@@ -7,19 +8,28 @@ export const dynamic = "force-dynamic";
 
 export default async function DetailBeritaPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  
-  const berita = await prisma.berita.findUnique({
-    where: { slug },
-  });
+
+  const berita = await safeQuery(
+    () => prisma.berita.findUnique({ where: { slug } }),
+    null,
+    "DetailBeritaPage",
+  );
 
   if (!berita || berita.status !== "PUBLISHED") {
     notFound();
   }
 
-  await prisma.berita.update({
-    where: { id: berita.id },
-    data: { viewCount: { increment: 1 } },
-  });
+  // Naikkan view count best effort. Kalau database sedang bermasalah, jangan
+  // sampai menghentikan render halaman berita.
+  await safeQuery(
+    () =>
+      prisma.berita.update({
+        where: { id: berita.id },
+        data: { viewCount: { increment: 1 } },
+      }),
+    null,
+    "DetailBeritaPage:viewCount",
+  );
 
   // ✅ XSS FIX: Sanitize HTML content
   const sanitizedContent = await sanitizeHtml(berita.isi);

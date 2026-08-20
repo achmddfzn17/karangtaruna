@@ -1,0 +1,25 @@
+# Normalisasi akhir baris.
+# Semua file teks disimpan dengan LF di dalam repo agar tidak ada lagi
+# selisih CRLF vs LF yang membuat seluruh file terlihat "modified".
+* text=auto eol=lf
+
+# File skrip Windows tetap CRLF karena memang butuh itu.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# File biner jangan disentuh normalisasi.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.webp binary
+*.svg text
+*.pdf binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.eot binary
+*.mp4 binary
+*.zip binary

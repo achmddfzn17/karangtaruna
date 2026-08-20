@@ -219,7 +219,7 @@ export default async function AspirasiPage({
                         </div>
                         <div className="flex-1">
                           <p className="text-[11px] font-bold text-blue-600 uppercase mb-1">Balasan Admin</p>
-                          <p className="text-sm text-slate-700 italic">"{asp.balasan}"</p>
+                          <p className="text-sm text-slate-700 italic">&ldquo;{asp.balasan}&rdquo;</p>
                         </div>
                       </div>
                     </div>

@@ -2,6 +2,7 @@ import * as LucideIcons from "lucide-react";
 import { ArrowRight, ShoppingBag } from "lucide-react";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import { safeQuery } from "@/lib/safe-query";
 import { Program } from "@prisma/client";
 
 export const metadata = {
@@ -9,10 +10,15 @@ export const metadata = {
 };
 
 export default async function ProgramPage() {
-  const programs = await prisma.program.findMany({
-    where: { status: true },
-    orderBy: { urutan: "asc" },
-  });
+  const programs = await safeQuery(
+    () =>
+      prisma.program.findMany({
+        where: { status: true },
+        orderBy: { urutan: "asc" },
+      }),
+    [] as Program[],
+    "ProgramPage",
+  );
 
   // Helper function to dynamically render Lucide icons with better type safety
   const getIcon = (iconName: string | null) => {

@@ -57,9 +57,9 @@ Kebutuhan fungsional dikelompokkan per modul. Setiap modul sudah tercermin pada 
 
 ### 6.1 Autentikasi dan Otorisasi
 - Login admin melalui `/login` dan login anggota melalui `/anggota/login`.
-- Sesi dikelola NextAuth v5 dengan adapter Prisma dan penyimpanan sesi database.
+- Sesi dikelola NextAuth v5 dengan provider Credentials. Strategi sesi memakai JWT, sedangkan PrismaAdapter tetap terpasang.
 - Kata sandi di-hash memakai bcryptjs.
-- Middleware (`proxy.ts` dan `auth.config.ts`) melindungi rute admin dan member sesuai peran.
+- Proteksi rute berlapis. Berkas `proxy.ts` (pengganti middleware di Next.js 16) bersama `auth.config.ts` yang edge-safe menjaga rute admin dan member, ditambah pengecekan peran pada layout tiap area.
 
 ### 6.2 Manajemen Anggota
 - Tambah, ubah, hapus, dan lihat data anggota (nama, NIK 16 digit, kontak, alamat, status).
@@ -97,15 +97,22 @@ Kebutuhan fungsional dikelompokkan per modul. Setiap modul sudah tercermin pada 
 - Anggota memberi satu suara per polling (unik per user per polling).
 
 ### 6.9 Notifikasi
-- Notifikasi ke seluruh anggota atau target tertentu.
-- Penanda sudah dibaca per pengguna (NotificationRead).
+- Notifikasi ke seluruh anggota (global) atau target pengguna tertentu.
+- Penanda sudah dibaca per pengguna lewat model NotificationRead.
+- Ada lonceng notifikasi pada header member dan admin.
 
 ### 6.10 Audit Log
 - Catat aksi penting (create, update, delete, login) beserta modul, target, dan alamat IP.
+- Rekap audit dapat dilihat pengurus lewat halaman `/dashboard/log`.
 
 ### 6.11 Survei SUS
 - Kuesioner 10 pertanyaan standar SUS, skor dihitung otomatis dan dikategorikan.
-- Dashboard analitik SUS untuk kebutuhan pengujian skripsi.
+- Dashboard analitik SUS (histogram dan rata-rata) untuk kebutuhan pengujian skripsi.
+
+### 6.12 Kalender dan Manajemen Admin
+- Kalender kegiatan yang bisa diakses admin dan anggota lewat endpoint `/api/calendar/events`.
+- Kelola akun admin dan reset password oleh SUPER_ADMIN.
+- Laporan keuangan terpisah dengan grafik dan ekspor.
 
 ## 7. Kebutuhan Non-Fungsional
 
@@ -147,5 +154,5 @@ Alur partisipasi: admin membuka polling atau menerima aspirasi, anggota dan publ
 
 ## 12. Lampiran Teknologi
 
-Framework Next.js 16 (App Router) dan React 19, bahasa TypeScript, basis data PostgreSQL dengan ORM Prisma 7, autentikasi NextAuth v5, penyimpanan berkas Supabase, styling Tailwind CSS v4 dengan komponen Radix UI (pola shadcn), state global Zustand, validasi Zod, form React Hook Form, grafik Recharts, editor TipTap, ekspor Excel dengan library xlsx, pembuatan PDF dengan jspdf, pengiriman email dengan Resend, serta pengujian Vitest dan Playwright.
+Framework Next.js 16.2.4 (App Router) dan React 19.2.4, bahasa TypeScript mode strict, basis data PostgreSQL dengan ORM Prisma 7.8.0 memakai driver adapter `@prisma/adapter-pg` di atas `pg` Pool, autentikasi NextAuth v5 dengan strategi sesi JWT, penyimpanan berkas Supabase Storage, styling Tailwind CSS v4 dengan komponen Radix UI (pola shadcn), state global Zustand, validasi Zod, form React Hook Form, grafik Recharts, editor TipTap, ekspor Excel dengan library xlsx, pembuatan PDF dengan jspdf dan jspdf-autotable, pengiriman email dengan Resend, serta pengujian unit dengan Vitest. Pengujian end to end memakai Playwright masih berupa kerangka skenario dan belum dipasang sebagai dependency.
 

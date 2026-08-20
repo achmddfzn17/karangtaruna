@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Calendar, ChevronRight, Search, Tag, Eye } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { safeQuery } from "@/lib/safe-query";
 import { formatDate } from "@/lib/utils";
 
 export const metadata: Metadata = {
@@ -18,20 +19,25 @@ export default async function BeritaPage({
   const params = await searchParams;
   const q = typeof params.q === "string" ? params.q : "";
 
-  const beritaList = await prisma.berita.findMany({
-    where: {
-      status: "PUBLISHED",
-      ...(q
-        ? {
-            OR: [
-              { judul: { contains: q, mode: "insensitive" } },
-              { ringkasan: { contains: q, mode: "insensitive" } },
-            ],
-          }
-        : {}),
-    },
-    orderBy: { publishedAt: "desc" },
-  });
+  const beritaList = await safeQuery(
+    () =>
+      prisma.berita.findMany({
+        where: {
+          status: "PUBLISHED",
+          ...(q
+            ? {
+                OR: [
+                  { judul: { contains: q, mode: "insensitive" } },
+                  { ringkasan: { contains: q, mode: "insensitive" } },
+                ],
+              }
+            : {}),
+        },
+        orderBy: { publishedAt: "desc" },
+      }),
+    [] as Awaited<ReturnType<typeof prisma.berita.findMany>>,
+    "BeritaPage",
+  );
 
   return (
     <>

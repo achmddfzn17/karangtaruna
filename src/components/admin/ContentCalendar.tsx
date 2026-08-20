@@ -42,6 +42,9 @@ export function ContentCalendar() {
   }, [month, year]);
 
   useEffect(() => {
+    // fetchEvents memang mengubah state loading saat data diambil ulang
+    // (ganti bulan atau tahun), jadi peringatan cascading render di sini aman diabaikan.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchEvents();
   }, [fetchEvents]);
 

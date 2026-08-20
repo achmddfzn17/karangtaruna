@@ -6,12 +6,21 @@ import { prisma } from "@/lib/prisma";
 import { formatDate } from "@/lib/utils";
 import { JenisKegiatan } from "@prisma/client";
 
+type KegiatanItem = Awaited<ReturnType<typeof prisma.kegiatan.findMany>>[number];
+
 export default async function KegiatanSection() {
-  const kegiatanList = await prisma.kegiatan.findMany({
-    where: { status: { in: ["UPCOMING", "ONGOING"] } },
-    orderBy: { tanggalMulai: "asc" },
-    take: 3,
-  });
+  // Bungkus query dengan try catch agar homepage tidak error total saat
+  // database tidak bisa dihubungi. Kalau gagal, tampilkan state kosong.
+  let kegiatanList: KegiatanItem[] = [];
+  try {
+    kegiatanList = await prisma.kegiatan.findMany({
+      where: { status: { in: ["UPCOMING", "ONGOING"] } },
+      orderBy: { tanggalMulai: "asc" },
+      take: 3,
+    });
+  } catch (error) {
+    console.error("[KegiatanSection] Gagal memuat kegiatan dari database:", error);
+  }
 
   const jenisLabels: Record<JenisKegiatan, string> = {
     SOSIAL: "Sosial",
