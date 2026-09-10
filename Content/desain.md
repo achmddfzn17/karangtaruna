@@ -1,6 +1,6 @@
 # desain.md
 
-Sistem Desain Karang Taruna Generasi Emas. Dokumen ini menetapkan fondasi visual aplikasi agar tampilan konsisten di seluruh halaman. Formatnya mengadaptasi konsep design system ala `nexu-io/open-design`, disesuaikan dengan token nyata pada `src/app/globals.css`.
+Sistem Desain Karang Taruna Muda Berkarya. Dokumen ini menetapkan fondasi visual aplikasi agar tampilan konsisten di seluruh halaman. Formatnya mengadaptasi konsep design system ala `nexu-io/open-design`, disesuaikan dengan token nyata pada `src/app/globals.css`.
 
 ## Prinsip Desain
 

@@ -1,4 +1,4 @@
-# PRD: Sistem Informasi Karang Taruna Generasi Emas
+# PRD: Sistem Informasi Karang Taruna Muda Berkarya
 
 Product Requirements Document
 Versi 1.0 | Terakhir diperbarui 17 Agustus 2026
@@ -8,7 +8,7 @@ Status: Aktif (skripsi / tugas akhir)
 
 ## 1. Ringkasan Produk
 
-Sistem Informasi Karang Taruna Generasi Emas adalah aplikasi web berbasis Next.js yang membantu organisasi kepemudaan (Karang Taruna) mengelola keanggotaan, kegiatan, keuangan, konten publik, dan partisipasi anggota dalam satu platform terpadu. Aplikasi ini menggantikan pencatatan manual yang tersebar di buku, grup chat, dan berkas kertas menjadi satu sumber data digital yang rapi dan bisa diakses sesuai peran pengguna.
+Sistem Informasi Karang Taruna Muda Berkarya adalah aplikasi web berbasis Next.js yang membantu organisasi kepemudaan (Karang Taruna) mengelola keanggotaan, kegiatan, keuangan, konten publik, dan partisipasi anggota dalam satu platform terpadu. Aplikasi ini menggantikan pencatatan manual yang tersebar di buku, grup chat, dan berkas kertas menjadi satu sumber data digital yang rapi dan bisa diakses sesuai peran pengguna.
 
 Produk terdiri dari tiga area utama, yaitu situs publik (etalase organisasi untuk masyarakat umum), portal anggota (ruang pribadi anggota terdaftar), dan dashboard admin (pusat kendali pengurus).
 

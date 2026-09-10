@@ -13,7 +13,7 @@ import { formatDate } from "@/lib/utils";
 export const metadata: Metadata = {
   title: "Kegiatan",
   description:
-    "Daftar seluruh kegiatan dan program yang diselenggarakan oleh Karang Taruna Generasi Emas.",
+    "Daftar seluruh kegiatan dan program yang diselenggarakan oleh Karang Taruna Muda Berkarya.",
 };
 
 const jenisOptions = [

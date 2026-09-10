@@ -54,7 +54,7 @@ export default async function PublicAspirasiPage({
                 Kirim Aspirasi
               </h1>
               <p className="text-slate-500 text-[15px] mt-1">
-                Sampaikan saran, keluhan, atau ide untuk Karang Taruna Generasi Emas.
+                Sampaikan saran, keluhan, atau ide untuk Karang Taruna Muda Berkarya.
               </p>
             </div>
           </div>

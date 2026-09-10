@@ -74,7 +74,7 @@ export default async function MemberDashboard() {
           Selamat Datang, {session.user.name}! 👋
         </h2>
         <p className="text-blue-100 relative z-10">
-          Terima kasih telah menjadi bagian dari Karang Taruna Generasi Emas
+          Terima kasih telah menjadi bagian dari Karang Taruna Muda Berkarya
         </p>
       </div>
 

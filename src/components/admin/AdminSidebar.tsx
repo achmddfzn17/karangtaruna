@@ -250,7 +250,7 @@ export default function AdminSidebar({
               Admin Panel
             </span>
             <span className="text-[10px] text-blue-500 font-bold uppercase tracking-wider leading-tight truncate">
-              Generasi Emas
+              Muda Berkarya
             </span>
           </div>
         )}

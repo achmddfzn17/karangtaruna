@@ -16,7 +16,7 @@ import {
 export const metadata: Metadata = {
   title: "Tentang Kami",
   description:
-    "Pelajari sejarah, visi, misi, nilai-nilai, dan struktur kepengurusan Karang Taruna Generasi Emas.",
+    "Pelajari sejarah, visi, misi, nilai-nilai, dan struktur kepengurusan Karang Taruna Muda Berkarya.",
 };
 
 const pengurus = [
@@ -120,7 +120,7 @@ const timeline = [
   {
     year: "2020",
     title: "Pendirian Organisasi",
-    desc: "Karang Taruna Generasi Emas resmi didirikan oleh 25 pemuda dengan semangat memberdayakan generasi muda.",
+    desc: "Karang Taruna Muda Berkarya resmi didirikan oleh 25 pemuda dengan semangat memberdayakan generasi muda.",
     color: "bg-blue-500",
   },
   {
@@ -177,7 +177,7 @@ export default function TentangPage() {
             </span>
             <h1 className="text-4xl md:text-[56px] font-extrabold text-slate-900 mb-6 leading-[1.1]">
               Tentang Karang Taruna{" "}
-              <span className="text-blue-500">Generasi Emas</span>
+              <span className="text-blue-500">Muda Berkarya</span>
             </h1>
             <p className="text-[16px] text-slate-600 leading-relaxed max-w-2xl">
               Mengenal lebih dekat organisasi kepemudaan yang berkomitmen
@@ -201,7 +201,7 @@ export default function TentangPage() {
               </h2>
               <div className="space-y-6 text-[15px] text-slate-600 leading-relaxed">
                 <p>
-                  Karang Taruna Generasi Emas lahir dari keprihatinan sekelompok
+                  Karang Taruna Muda Berkarya lahir dari keprihatinan sekelompok
                   pemuda yang melihat besarnya potensi generasi muda yang belum
                   termaksimalkan. Pada tahun 2020, dua puluh lima pemuda
                   bersemangat berkumpul dan bersepakat untuk mendirikan sebuah
@@ -210,14 +210,14 @@ export default function TentangPage() {
                 </p>
                 <p>
                   Berawal dari sebuah komunitas kecil dengan keterbatasan sumber
-                  daya, Karang Taruna Generasi Emas terus berkembang secara
+                  daya, Karang Taruna Muda Berkarya terus berkembang secara
                   konsisten. Program demi program diluncurkan, keanggotaan terus
                   bertambah, dan dampak positif yang dirasakan masyarakat
                   semakin luas.
                 </p>
                 <p>
                   Hari ini, dengan lebih dari 247 anggota aktif dan puluhan
-                  program yang telah dijalankan, Karang Taruna Generasi Emas
+                  program yang telah dijalankan, Karang Taruna Muda Berkarya
                   berdiri kokoh sebagai salah satu organisasi kepemudaan terbaik
                   dan paling berpengaruh di wilayah Jakarta.
                 </p>

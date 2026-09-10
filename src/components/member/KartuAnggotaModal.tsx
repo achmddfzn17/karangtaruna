@@ -73,7 +73,7 @@ export default function KartuAnggotaModal({
                     <p className="text-[10px] font-bold text-blue-200 uppercase tracking-widest">
                       Karang Taruna
                     </p>
-                    <p className="text-[10px] text-blue-200">Generasi Emas</p>
+                    <p className="text-[10px] text-blue-200">Muda Berkarya</p>
                   </div>
                 </div>
 

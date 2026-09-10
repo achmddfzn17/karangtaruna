@@ -77,7 +77,7 @@ export default function Footer() {
                   Karang Taruna
                 </span>
                 <span className="text-[10px] text-sidebar-foreground font-medium tracking-wide">
-                  Generasi Emas
+                  Muda Berkarya
                 </span>
               </div>
             </div>
@@ -158,7 +158,7 @@ export default function Footer() {
                 <MapPin className="w-4 h-4 text-primary mt-0.5 shrink-0" />
                 <span className="text-sm text-sidebar-foreground leading-relaxed">
                   Jl. pisang batu RW. 10, Kelurahan Mangga Dua Selatan, Kecamatan Sawah Besar,
-                  Kota Jakarata Pusaat, DKI Jakarta 10730
+                  Kota Jakarta Pusat, DKI Jakarta 10730
                 </span>
               </li>
               <li className="flex gap-3">
@@ -219,7 +219,7 @@ export default function Footer() {
       <div className="border-t border-sidebar-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row items-center justify-between gap-2">
           <p className="text-xs text-sidebar-foreground">
-            © 2026 Karang Taruna Generasi Emas. Semua hak dilindungi.
+            © 2026 Karang Taruna Muda Berkarya. Semua hak dilindungi.
           </p>
           <p className="text-xs text-sidebar-foreground">
             Dibuat dengan ❤️ untuk kemajuan pemuda Indonesia

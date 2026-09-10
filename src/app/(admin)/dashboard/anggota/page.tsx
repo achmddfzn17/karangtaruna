@@ -5,7 +5,7 @@ import { formatDate } from "@/lib/utils";
 import { 
   Users, Plus, Phone, Mail, Pencil, Search, 
   Filter, UserPlus, Settings,
-  Calendar, MapPin, Briefcase
+  Calendar, MapPin, Briefcase, LayoutGrid, List
 } from "lucide-react";
 import { ExportAnggotaButton } from "@/components/admin/ExportAnggotaButton";
 import DeleteAnggotaButton from "@/components/admin/DeleteAnggotaButton";
@@ -17,7 +17,7 @@ export const metadata = { title: "Data Anggota" };
 const PER_PAGE = 12;
 
 interface PageProps {
-  searchParams: Promise<{ q?: string; status?: string; page?: string }>;
+  searchParams: Promise<{ q?: string; status?: string; page?: string; view?: string }>;
 }
 
 export default async function DataAnggotaPage({ searchParams }: PageProps) {
@@ -25,6 +25,7 @@ export default async function DataAnggotaPage({ searchParams }: PageProps) {
   const q = params.q?.trim() ?? "";
   const statusFilter = (params.status as StatusAnggota | "SEMUA") ?? "SEMUA";
   const page = Math.max(1, parseInt(params.page ?? "1") || 1);
+  const view = params.view === "grid" ? "grid" : "table";
 
   const where: Prisma.AnggotaWhereInput = {
     AND: [
@@ -58,7 +59,7 @@ export default async function DataAnggotaPage({ searchParams }: PageProps) {
 
   const totalAll = totalAktif + totalNonAktif + totalAlumni;
   const totalPages = Math.ceil(totalFiltered / PER_PAGE);
-  const baseUrl = `/dashboard/anggota?status=${statusFilter}${q ? `&q=${encodeURIComponent(q)}` : ""}`;
+  const baseUrl = `/dashboard/anggota?status=${statusFilter}${q ? `&q=${encodeURIComponent(q)}` : ""}${view === "grid" ? "&view=grid" : ""}`;
 
   const statusColor: Record<StatusAnggota, string> = {
     AKTIF: "bg-green-100 text-green-700",
@@ -169,6 +170,7 @@ export default async function DataAnggotaPage({ searchParams }: PageProps) {
             {/* Cari Anggota */}
             <form method="GET" className="flex gap-2">
               <input type="hidden" name="status" value={statusFilter} />
+              {view === "grid" && <input type="hidden" name="view" value="grid" />}
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <input
@@ -188,7 +190,7 @@ export default async function DataAnggotaPage({ searchParams }: PageProps) {
               </button>
               {q && (
                 <Link
-                  href={`/dashboard/anggota?status=${statusFilter}`}
+                  href={`/dashboard/anggota?status=${statusFilter}${view === "grid" ? "&view=grid" : ""}`}
                   className="px-5 py-3 border border-slate-200 text-slate-600 text-sm font-bold rounded-xl hover:bg-slate-50 transition-colors"
                 >
                   Reset
@@ -202,7 +204,7 @@ export default async function DataAnggotaPage({ searchParams }: PageProps) {
               {filterTabs.map((tab) => (
                 <Link
                   key={tab.value}
-                  href={`/dashboard/anggota?status=${tab.value}${q ? `&q=${encodeURIComponent(q)}` : ""}`}
+                  href={`/dashboard/anggota?status=${tab.value}${q ? `&q=${encodeURIComponent(q)}` : ""}${view === "grid" ? "&view=grid" : ""}`}
                   className={`px-4 py-3 rounded-xl text-sm font-bold transition-all ${
                     statusFilter === tab.value
                       ? "bg-blue-600 text-white shadow-sm"
@@ -217,269 +219,297 @@ export default async function DataAnggotaPage({ searchParams }: PageProps) {
               ))}
             </div>
 
-            {/* Export Excel */}
-            <div className="ml-auto">
+            {/* Export Excel & View Toggle */}
+            <div className="ml-auto flex items-center gap-2">
+              <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200">
+                <Link
+                  href={`/dashboard/anggota?status=${statusFilter}${q ? `&q=${encodeURIComponent(q)}` : ""}&view=table`}
+                  className={`p-2 rounded-lg transition-all ${
+                    view === "table"
+                      ? "bg-white text-blue-600 shadow-sm"
+                      : "text-slate-500 hover:text-slate-800"
+                  }`}
+                  title="Tampilan Tabel"
+                >
+                  <List className="w-4 h-4" />
+                </Link>
+                <Link
+                  href={`/dashboard/anggota?status=${statusFilter}${q ? `&q=${encodeURIComponent(q)}` : ""}&view=grid`}
+                  className={`p-2 rounded-lg transition-all ${
+                    view === "grid"
+                      ? "bg-white text-blue-600 shadow-sm"
+                      : "text-slate-500 hover:text-slate-800"
+                  }`}
+                  title="Tampilan Grid Kartu"
+                >
+                  <LayoutGrid className="w-4 h-4" />
+                </Link>
+              </div>
               <ExportAnggotaButton data={anggotaList} />
             </div>
           </div>
         </div>
       </div>
 
-      {/* Table */}
-      <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="bg-slate-50 border-b border-slate-200">
-                <th className="text-left text-[11px] text-slate-500 font-bold uppercase tracking-wider py-3 px-4">Anggota</th>
-                <th className="text-left text-[11px] text-slate-500 font-bold uppercase tracking-wider py-3 px-4">NIK</th>
-                <th className="text-left text-[11px] text-slate-500 font-bold uppercase tracking-wider py-3 px-4">Jenis Kelamin</th>
-                <th className="text-left text-[11px] text-slate-500 font-bold uppercase tracking-wider py-3 px-4">Kontak</th>
-                <th className="text-left text-[11px] text-slate-500 font-bold uppercase tracking-wider py-3 px-4">Status</th>
-                <th className="text-left text-[11px] text-slate-500 font-bold uppercase tracking-wider py-3 px-4">Tanggal Gabung</th>
-                <th className="text-right text-[11px] text-slate-500 font-bold uppercase tracking-wider py-3 px-4">Aksi</th>
-              </tr>
-            </thead>
-            <tbody>
-              {anggotaList.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="text-center py-12 text-slate-400">
-                    <Users className="w-10 h-10 mx-auto mb-3 opacity-40" />
-                    <p className="text-sm font-medium">
-                      {q || statusFilter !== "SEMUA"
-                        ? "Tidak ada anggota yang sesuai filter"
-                        : "Belum ada data anggota"}
-                    </p>
-                  </td>
+      {/* View Switch Content */}
+      {view === "table" ? (
+        /* Table View */
+        <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="bg-slate-50 border-b border-slate-200">
+                  <th className="text-left text-[11px] text-slate-500 font-bold uppercase tracking-wider py-3 px-4">Anggota</th>
+                  <th className="text-left text-[11px] text-slate-500 font-bold uppercase tracking-wider py-3 px-4">NIK</th>
+                  <th className="text-left text-[11px] text-slate-500 font-bold uppercase tracking-wider py-3 px-4">Jenis Kelamin</th>
+                  <th className="text-left text-[11px] text-slate-500 font-bold uppercase tracking-wider py-3 px-4">Kontak</th>
+                  <th className="text-left text-[11px] text-slate-500 font-bold uppercase tracking-wider py-3 px-4">Status</th>
+                  <th className="text-left text-[11px] text-slate-500 font-bold uppercase tracking-wider py-3 px-4">Tanggal Gabung</th>
+                  <th className="text-right text-[11px] text-slate-500 font-bold uppercase tracking-wider py-3 px-4">Aksi</th>
                 </tr>
-              ) : (
-                anggotaList.map((a) => (
-                  <tr key={a.id} className="border-b border-slate-100 last:border-0 hover:bg-blue-50/40 transition-colors">
-                    <td className="py-3.5 px-4">
-                      <div className="flex items-center gap-3">
-                        {a.foto ? (
-                          <div className="relative w-9 h-9">
-                            <Image
-                              src={a.foto}
-                              alt={a.namaLengkap}
-                              fill
-                              className="rounded-full object-cover border border-slate-200"
-                              sizes="36px"
-                            />
-                          </div>
-                        ) : (
-                          <div className="w-9 h-9 bg-blue-100 text-blue-700 rounded-full flex items-center justify-center font-bold text-sm shrink-0">
-                            {a.namaLengkap.charAt(0)}
-                          </div>
-                        )}
-                        <div>
-                          <p className="text-sm font-semibold text-slate-800">{a.namaLengkap}</p>
-                          <p className="text-xs text-slate-500">{a.pekerjaan || "-"}</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="py-3.5 px-4 text-sm text-slate-700 font-mono">{a.nik}</td>
-                    <td className="py-3.5 px-4 text-sm text-slate-700">{genderLabel[a.jenisKelamin] || a.jenisKelamin}</td>
-                    <td className="py-3.5 px-4">
-                      <div className="flex flex-col gap-0.5">
-                        {a.noHp && (
-                          <span className="text-xs text-slate-600 flex items-center gap-1">
-                            <Phone className="w-3 h-3 text-slate-400" /> {a.noHp}
-                          </span>
-                        )}
-                        {a.email && (
-                          <span className="text-xs text-slate-600 flex items-center gap-1">
-                            <Mail className="w-3 h-3 text-slate-400" /> {a.email}
-                          </span>
-                        )}
-                        {!a.noHp && !a.email && <span className="text-xs text-slate-400">-</span>}
-                      </div>
-                    </td>
-                    <td className="py-3.5 px-4">
-                      <span className={`inline-block px-2.5 py-1 rounded-lg text-[11px] font-bold ${statusColor[a.status]}`}>
-                        {a.status.replace("_", " ")}
-                      </span>
-                    </td>
-                    <td className="py-3.5 px-4 text-sm text-slate-600">
-                      {formatDate(a.tanggalGabung)}
-                    </td>
-                    <td className="py-3.5 px-4 text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        <Link
-                          href={`/dashboard/anggota/edit/${a.id}`}
-                          title="Edit Anggota"
-                          aria-label="Edit Anggota"
-                          className="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
-                        >
-                          <Pencil className="w-4 h-4" />
-                        </Link>
-                        <DeleteAnggotaButton id={a.id} nama={a.namaLengkap} />
-                      </div>
+              </thead>
+              <tbody>
+                {anggotaList.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="text-center py-12 text-slate-400">
+                      <Users className="w-10 h-10 mx-auto mb-3 opacity-40" />
+                      <p className="text-sm font-medium">
+                        {q || statusFilter !== "SEMUA"
+                          ? "Tidak ada anggota yang sesuai filter"
+                          : "Belum ada data anggota"}
+                      </p>
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-        {anggotaList.length > 0 && (
-          <div className="px-4 py-3 border-t border-slate-100 flex items-center justify-between">
-            <p className="text-xs text-slate-500 font-medium">
-              Menampilkan {(page - 1) * PER_PAGE + 1}–{Math.min(page * PER_PAGE, totalFiltered)} dari {totalFiltered} anggota
-              {(q || statusFilter !== "SEMUA") && " (difilter)"}
-            </p>
-            <Pagination currentPage={page} totalPages={totalPages} baseUrl={baseUrl} />
+                ) : (
+                  anggotaList.map((a) => (
+                    <tr key={a.id} className="border-b border-slate-100 last:border-0 hover:bg-blue-50/40 transition-colors">
+                      <td className="py-3.5 px-4">
+                        <div className="flex items-center gap-3">
+                          {a.foto ? (
+                            <div className="relative w-9 h-9">
+                              <Image
+                                src={a.foto}
+                                alt={a.namaLengkap}
+                                fill
+                                className="rounded-full object-cover border border-slate-200"
+                                sizes="36px"
+                              />
+                            </div>
+                          ) : (
+                            <div className="w-9 h-9 bg-blue-100 text-blue-700 rounded-full flex items-center justify-center font-bold text-sm shrink-0">
+                              {a.namaLengkap.charAt(0)}
+                            </div>
+                          )}
+                          <div>
+                            <p className="text-sm font-semibold text-slate-800">{a.namaLengkap}</p>
+                            <p className="text-xs text-slate-500">{a.pekerjaan || "-"}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="py-3.5 px-4 text-sm text-slate-700 font-mono">{a.nik}</td>
+                      <td className="py-3.5 px-4 text-sm text-slate-700">{genderLabel[a.jenisKelamin] || a.jenisKelamin}</td>
+                      <td className="py-3.5 px-4">
+                        <div className="flex flex-col gap-0.5">
+                          {a.noHp && (
+                            <span className="text-xs text-slate-600 flex items-center gap-1">
+                              <Phone className="w-3 h-3 text-slate-400" /> {a.noHp}
+                            </span>
+                          )}
+                          {a.email && (
+                            <span className="text-xs text-slate-600 flex items-center gap-1">
+                              <Mail className="w-3 h-3 text-slate-400" /> {a.email}
+                            </span>
+                          )}
+                          {!a.noHp && !a.email && <span className="text-xs text-slate-400">-</span>}
+                        </div>
+                      </td>
+                      <td className="py-3.5 px-4">
+                        <span className={`inline-block px-2.5 py-1 rounded-lg text-[11px] font-bold ${statusColor[a.status]}`}>
+                          {a.status.replace("_", " ")}
+                        </span>
+                      </td>
+                      <td className="py-3.5 px-4 text-sm text-slate-600">
+                        {formatDate(a.tanggalGabung)}
+                      </td>
+                      <td className="py-3.5 px-4 text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <Link
+                            href={`/dashboard/anggota/edit/${a.id}`}
+                            title="Edit Anggota"
+                            aria-label="Edit Anggota"
+                            className="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </Link>
+                          <DeleteAnggotaButton id={a.id} nama={a.namaLengkap} />
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
           </div>
-        )}
-      </div>
-      {/* Tabel Data Anggota */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm">
-        <div className="px-6 py-4 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                <Users className="w-5 h-5 text-blue-600" />
-                Tabel Data Anggota
-              </h2>
-              <p className="text-xs text-slate-500 mt-1">
+          {anggotaList.length > 0 && (
+            <div className="px-4 py-3 border-t border-slate-100 flex items-center justify-between">
+              <p className="text-xs text-slate-500 font-medium">
                 Menampilkan {(page - 1) * PER_PAGE + 1}–{Math.min(page * PER_PAGE, totalFiltered)} dari {totalFiltered} anggota
                 {(q || statusFilter !== "SEMUA") && " (difilter)"}
               </p>
+              <Pagination currentPage={page} totalPages={totalPages} baseUrl={baseUrl} />
             </div>
-          </div>
+          )}
         </div>
-
-        {anggotaList.length === 0 ? (
-          <div className="py-20 text-center">
-            <div className="inline-flex p-4 bg-slate-100 rounded-2xl mb-4">
-              <Users className="w-12 h-12 text-slate-300" />
-            </div>
-            <p className="text-base font-bold text-slate-900 mb-1">Belum Ada Data Anggota</p>
-            <p className="text-sm text-slate-500">
-              {q || statusFilter !== "SEMUA"
-                ? "Tidak ada anggota yang sesuai filter"
-                : "Mulai tambahkan anggota baru"}
-            </p>
-          </div>
-        ) : (
-          <>
-            {/* Card Grid Layout */}
-            <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              {anggotaList.map((a) => (
-                <div
-                  key={a.id}
-                  className="group bg-white border-2 border-slate-200 hover:border-blue-400 rounded-2xl p-5 transition-all hover:shadow-lg hover:shadow-blue-500/10"
-                >
-                  {/* Header with Photo & Status */}
-                  <div className="flex items-start justify-between mb-4">
-                    {a.foto ? (
-                      <div className="relative w-14 h-14">
-                        <Image
-                          src={a.foto}
-                          alt={a.namaLengkap}
-                          fill
-                          className="rounded-full object-cover border-2 border-slate-200 group-hover:border-blue-400 transition-colors"
-                          sizes="56px"
-                        />
-                      </div>
-                    ) : (
-                      <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-full flex items-center justify-center font-bold text-xl shrink-0 border-2 border-blue-200">
-                        {a.namaLengkap.charAt(0)}
-                      </div>
-                    )}
-                    <span className={`px-2.5 py-1 rounded-lg text-[10px] font-bold ${statusColor[a.status]}`}>
-                      {a.status.replace("_", " ")}
-                    </span>
-                  </div>
-
-                  {/* Name & NIK */}
-                  <div className="mb-3">
-                    <h3 className="text-sm font-bold text-slate-900 mb-1 line-clamp-1 group-hover:text-blue-600 transition-colors">
-                      {a.namaLengkap}
-                    </h3>
-                    <p className="text-xs text-slate-500 font-mono">{a.nik}</p>
-                  </div>
-
-                  {/* Info Details */}
-                  <div className="space-y-2 mb-4">
-                    {/* Gender & Tanggal Lahir */}
-                    <div className="flex items-center gap-2 text-xs text-slate-600">
-                      <Users className="w-3.5 h-3.5 text-slate-400" />
-                      <span>{genderLabel[a.jenisKelamin] || a.jenisKelamin}</span>
-                      {a.tanggalLahir && (
-                        <>
-                          <span className="text-slate-300">•</span>
-                          <span>{formatDate(a.tanggalLahir)}</span>
-                        </>
-                      )}
-                    </div>
-
-                    {/* Phone */}
-                    {a.noHp && (
-                      <div className="flex items-center gap-2 text-xs text-slate-600">
-                        <Phone className="w-3.5 h-3.5 text-slate-400" />
-                        <span className="line-clamp-1">{a.noHp}</span>
-                      </div>
-                    )}
-
-                    {/* Email */}
-                    {a.email && (
-                      <div className="flex items-center gap-2 text-xs text-slate-600">
-                        <Mail className="w-3.5 h-3.5 text-slate-400" />
-                        <span className="line-clamp-1">{a.email}</span>
-                      </div>
-                    )}
-
-                    {/* Pekerjaan */}
-                    {a.pekerjaan && (
-                      <div className="flex items-center gap-2 text-xs text-slate-600">
-                        <Briefcase className="w-3.5 h-3.5 text-slate-400" />
-                        <span className="line-clamp-1">{a.pekerjaan}</span>
-                      </div>
-                    )}
-
-                    {/* Alamat */}
-                    {a.alamat && (
-                      <div className="flex items-center gap-2 text-xs text-slate-600">
-                        <MapPin className="w-3.5 h-3.5 text-slate-400" />
-                        <span className="line-clamp-1">{a.alamat}</span>
-                      </div>
-                    )}
-
-                    {/* Tanggal Gabung */}
-                    <div className="flex items-center gap-2 text-xs text-slate-600">
-                      <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                      <span>Gabung: {formatDate(a.tanggalGabung)}</span>
-                    </div>
-                  </div>
-
-                  {/* Action Buttons */}
-                  <div className="flex items-center gap-2 pt-3 border-t border-slate-100">
-                    <Link
-                      href={`/dashboard/anggota/edit/${a.id}`}
-                      className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-amber-50 hover:bg-amber-100 text-amber-700 text-xs font-bold rounded-lg transition-colors"
-                    >
-                      <Pencil className="w-3.5 h-3.5" />
-                      Edit
-                    </Link>
-                    <DeleteAnggotaButton id={a.id} nama={a.namaLengkap} />
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <div className="px-6 py-4 border-t border-slate-100 flex items-center justify-between">
-                <p className="text-xs text-slate-500 font-medium">
-                  Halaman {page} dari {totalPages}
+      ) : (
+        /* Grid View */
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm">
+          <div className="px-6 py-4 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                  <Users className="w-5 h-5 text-blue-600" />
+                  Katalog Kartu Anggota
+                </h2>
+                <p className="text-xs text-slate-500 mt-1">
+                  Menampilkan {(page - 1) * PER_PAGE + 1}–{Math.min(page * PER_PAGE, totalFiltered)} dari {totalFiltered} anggota
+                  {(q || statusFilter !== "SEMUA") && " (difilter)"}
                 </p>
-                <Pagination currentPage={page} totalPages={totalPages} baseUrl={baseUrl} />
               </div>
-            )}
-          </>
-        )}
-      </div>
+            </div>
+          </div>
+
+          {anggotaList.length === 0 ? (
+            <div className="py-20 text-center">
+              <div className="inline-flex p-4 bg-slate-100 rounded-2xl mb-4">
+                <Users className="w-12 h-12 text-slate-300" />
+              </div>
+              <p className="text-base font-bold text-slate-900 mb-1">Belum Ada Data Anggota</p>
+              <p className="text-sm text-slate-500">
+                {q || statusFilter !== "SEMUA"
+                  ? "Tidak ada anggota yang sesuai filter"
+                  : "Mulai tambahkan anggota baru"}
+              </p>
+            </div>
+          ) : (
+            <>
+              {/* Card Grid Layout */}
+              <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {anggotaList.map((a) => (
+                  <div
+                    key={a.id}
+                    className="group bg-white border-2 border-slate-200 hover:border-blue-400 rounded-2xl p-5 transition-all hover:shadow-lg hover:shadow-blue-500/10"
+                  >
+                    {/* Header with Photo & Status */}
+                    <div className="flex items-start justify-between mb-4">
+                      {a.foto ? (
+                        <div className="relative w-14 h-14">
+                          <Image
+                            src={a.foto}
+                            alt={a.namaLengkap}
+                            fill
+                            className="rounded-full object-cover border-2 border-slate-200 group-hover:border-blue-400 transition-colors"
+                            sizes="56px"
+                          />
+                        </div>
+                      ) : (
+                        <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-full flex items-center justify-center font-bold text-xl shrink-0 border-2 border-blue-200">
+                          {a.namaLengkap.charAt(0)}
+                        </div>
+                      )}
+                      <span className={`px-2.5 py-1 rounded-lg text-[10px] font-bold ${statusColor[a.status]}`}>
+                        {a.status.replace("_", " ")}
+                      </span>
+                    </div>
+
+                    {/* Name & NIK */}
+                    <div className="mb-3">
+                      <h3 className="text-sm font-bold text-slate-900 mb-1 line-clamp-1 group-hover:text-blue-600 transition-colors">
+                        {a.namaLengkap}
+                      </h3>
+                      <p className="text-xs text-slate-500 font-mono">{a.nik}</p>
+                    </div>
+
+                    {/* Info Details */}
+                    <div className="space-y-2 mb-4">
+                      {/* Gender & Tanggal Lahir */}
+                      <div className="flex items-center gap-2 text-xs text-slate-600">
+                        <Users className="w-3.5 h-3.5 text-slate-400" />
+                        <span>{genderLabel[a.jenisKelamin] || a.jenisKelamin}</span>
+                        {a.tanggalLahir && (
+                          <>
+                            <span className="text-slate-300">•</span>
+                            <span>{formatDate(a.tanggalLahir)}</span>
+                          </>
+                        )}
+                      </div>
+
+                      {/* Phone */}
+                      {a.noHp && (
+                        <div className="flex items-center gap-2 text-xs text-slate-600">
+                          <Phone className="w-3.5 h-3.5 text-slate-400" />
+                          <span className="line-clamp-1">{a.noHp}</span>
+                        </div>
+                      )}
+
+                      {/* Email */}
+                      {a.email && (
+                        <div className="flex items-center gap-2 text-xs text-slate-600">
+                          <Mail className="w-3.5 h-3.5 text-slate-400" />
+                          <span className="line-clamp-1">{a.email}</span>
+                        </div>
+                      )}
+
+                      {/* Pekerjaan */}
+                      {a.pekerjaan && (
+                        <div className="flex items-center gap-2 text-xs text-slate-600">
+                          <Briefcase className="w-3.5 h-3.5 text-slate-400" />
+                          <span className="line-clamp-1">{a.pekerjaan}</span>
+                        </div>
+                      )}
+
+                      {/* Alamat */}
+                      {a.alamat && (
+                        <div className="flex items-center gap-2 text-xs text-slate-600">
+                          <MapPin className="w-3.5 h-3.5 text-slate-400" />
+                          <span className="line-clamp-1">{a.alamat}</span>
+                        </div>
+                      )}
+
+                      {/* Tanggal Gabung */}
+                      <div className="flex items-center gap-2 text-xs text-slate-600">
+                        <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                        <span>Gabung: {formatDate(a.tanggalGabung)}</span>
+                      </div>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex items-center gap-2 pt-3 border-t border-slate-100">
+                      <Link
+                        href={`/dashboard/anggota/edit/${a.id}`}
+                        className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-amber-50 hover:bg-amber-100 text-amber-700 text-xs font-bold rounded-lg transition-colors"
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                        Edit
+                      </Link>
+                      <DeleteAnggotaButton id={a.id} nama={a.namaLengkap} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="px-6 py-4 border-t border-slate-100 flex items-center justify-between">
+                  <p className="text-xs text-slate-500 font-medium">
+                    Halaman {page} dari {totalPages}
+                  </p>
+                  <Pagination currentPage={page} totalPages={totalPages} baseUrl={baseUrl} />
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      )}
 
       {/* Konfigurasi Data Anggota */}
       <div className="bg-gradient-to-br from-blue-50 to-white rounded-2xl border border-blue-100 p-6">

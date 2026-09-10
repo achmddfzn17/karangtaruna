@@ -227,7 +227,7 @@ export default async function KeuanganPage({
 
         <div className="px-6 py-4 border-t border-slate-50 bg-slate-50/40">
           <p className="text-[11px] text-slate-400 text-center font-medium">
-            Data keuangan dikelola oleh Bendahara Karang Taruna Generasi Emas dan diperbarui secara berkala.
+            Data keuangan dikelola oleh Bendahara Karang Taruna Muda Berkarya dan diperbarui secara berkala.
           </p>
         </div>
       </div>

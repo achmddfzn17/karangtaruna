@@ -39,7 +39,7 @@ export default function HeroSection({ statsData }: HeroSectionProps) {
               Karang Taruna
               <br />
               <span className="text-blue-500">
-                Generasi Emas
+                Muda Berkarya
               </span>
             </h1>
 

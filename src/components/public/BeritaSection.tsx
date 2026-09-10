@@ -44,7 +44,7 @@ export default async function BeritaSection() {
             </h2>
             <p className="text-[15px] md:text-lg text-slate-500 mt-4 max-w-xl font-medium leading-relaxed">
               Dapatkan informasi terkini seputar kegiatan, pencapaian, dan program
-              strategis Karang Taruna Generasi Emas.
+              strategis Karang Taruna Muda Berkarya.
             </p>
           </div>
           <Link
@@ -98,7 +98,7 @@ export default async function BeritaSection() {
                   {featured.judul}
                 </h3>
                 <p className="text-[15px] md:text-lg text-slate-500 leading-relaxed line-clamp-3 flex-1 font-medium">
-                  {featured.ringkasan || "Baca berita selengkapnya mengenai perkembangan terkini Karang Taruna Generasi Emas."}
+                  {featured.ringkasan || "Baca berita selengkapnya mengenai perkembangan terkini Karang Taruna Muda Berkarya."}
                 </p>
                 <Link
                   href={`/berita/${featured.slug}`}

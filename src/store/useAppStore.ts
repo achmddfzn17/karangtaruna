@@ -20,6 +20,11 @@ interface AppState extends SidebarState, NotificationState {
   // Combined state
 }
 
+/**
+ * @deprecated Dead Code / Unused Store.
+ * Komponen UI saat ini (Sidebar, Header, dsb.) menggunakan local state (useState) dan Server Actions.
+ * Disimpan sebagai referensi jika di masa depan dibutuhkan client-side global state persistence.
+ */
 export const useAppStore = create<AppState>()(
   persist(
     (set) => ({

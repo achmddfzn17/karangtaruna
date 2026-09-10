@@ -1,6 +1,10 @@
 /**
  * API Helper Utilities
  * Standardized request validation and response formatting
+ * 
+ * @deprecated Legacy / Unused Helpers.
+ * Endpoint API Route Handler dan Server Actions saat ini menggunakan standard `NextResponse.json()`
+ * dan helper otorisasi dari `src/lib/auth-helpers.ts` secara langsung.
  */
 
 import { NextResponse } from "next/server";

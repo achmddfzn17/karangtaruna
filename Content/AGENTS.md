@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Panduan kerja untuk agen AI (Claude Code, Codex, Cursor, dan sejenisnya) pada repositori Sistem Informasi Karang Taruna Generasi Emas. Dokumen ini melengkapi `CLAUDE.md`. Jika `CLAUDE.md` berisi aturan teknis repo, `AGENTS.md` berisi cara agen berpikir dan bekerja.
+Panduan kerja untuk agen AI (Claude Code, Codex, Cursor, dan sejenisnya) pada repositori Sistem Informasi Karang Taruna Muda Berkarya. Dokumen ini melengkapi `CLAUDE.md`. Jika `CLAUDE.md` berisi aturan teknis repo, `AGENTS.md` berisi cara agen berpikir dan bekerja.
 
 Metodologi di sini mengadaptasi pendekatan berbasis skill ala `obra/superpowers` dan tata letak dokumen ala `nexu-io/open-design`. Skill konkret proyek ada di `skill.md`.
 

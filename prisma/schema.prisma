@@ -169,6 +169,8 @@ model Kegiatan {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@index([status, tanggalMulai])
+  @@index([tanggalMulai])
   @@map("kegiatan")
 }
 
@@ -183,6 +185,7 @@ model AnggotaKegiatan {
   createdAt   DateTime    @default(now())
 
   @@unique([anggotaId, kegiatanId])
+  @@index([kegiatanId])
   @@map("anggota_kegiatan")
 }
 
@@ -326,6 +329,9 @@ model TransaksiKeuangan {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@index([tanggal(sort: Desc)])
+  @@index([jenis, tanggal])
+  @@index([kategoriId])
   @@map("transaksi_keuangan")
 }
 
@@ -368,6 +374,8 @@ model Notification {
 
   createdAt DateTime @default(now())
 
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([userId, isRead])
   @@map("notifications")
 }
 
@@ -406,6 +414,8 @@ model Aspirasi {
   createdAt DateTime       @default(now())
   updatedAt DateTime       @updatedAt
 
+  @@index([status, createdAt(sort: Desc)])
+  @@index([userId, createdAt(sort: Desc)])
   @@map("aspirasi")
 }
 
@@ -431,6 +441,7 @@ model PollingOption {
   label     String
   votes     Vote[]
   
+  @@index([pollingId])
   @@map("polling_options")
 }
 
@@ -444,6 +455,8 @@ model Vote {
   createdAt DateTime @default(now())
 
   @@unique([userId, pollingId])
+  @@index([optionId])
+  @@index([pollingId])
   @@map("votes")
 }
 

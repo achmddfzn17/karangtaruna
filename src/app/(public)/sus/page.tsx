@@ -103,7 +103,7 @@ export default function SusFormPage() {
                 System Usability <span className="text-blue-500">Scale</span>
               </h1>
               <p className="text-slate-500 text-[15px] mt-1">
-                Bantu kami meningkatkan kualitas website Karang Taruna Generasi Emas.
+                Bantu kami meningkatkan kualitas website Karang Taruna Muda Berkarya.
               </p>
             </div>
           </div>

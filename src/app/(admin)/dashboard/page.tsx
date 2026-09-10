@@ -19,49 +19,65 @@ export default async function AdminDashboard() {
   // Get current month range
   const now = new Date();
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-  const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+  const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
 
   // Get date 7 days from now for upcoming events
   const sevenDaysFromNow = new Date();
   sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
 
-  // Parallel data fetching
+  // Setup rentang 6 bulan terakhir (menghindari bug rollover tanggal 31)
+  const months = Array.from({ length: 6 }, (_, i) => {
+    const d = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1);
+    const year = d.getFullYear();
+    const month = d.getMonth();
+    const start = new Date(year, month, 1);
+    const end = new Date(year, month + 1, 0, 23, 59, 59, 999);
+    return {
+      year,
+      month,
+      start,
+      end,
+      label: d.toLocaleDateString("id-ID", { month: "short" }),
+    };
+  });
+  const sixMonthsAgoStart = months[0].start;
+
+  // Parallel data fetching: Hanya 4 kueri database (sebelumnya 24 kueri)
   const [
-    totalAnggotaAktif,
-    totalPemasukan,
-    totalPengeluaran,
+    activeAnggota,
+    transaksi6Bulan,
     kegiatanAktif,
     upcomingEvents,
-    monthlyTransactionCount,
-    anggotaPerBulan,
-    keuanganPerBulan,
   ] = await Promise.all([
-    // Stats Cards Data
-    prisma.anggota.count({ where: { status: "AKTIF" } }),
-    
-    prisma.transaksiKeuangan.aggregate({
+    // 1. Ambil createdAt anggota aktif (1 query findMany)
+    prisma.anggota.findMany({
+      where: { status: "AKTIF" },
+      select: { createdAt: true },
+    }),
+
+    // 2. Ambil transaksi 6 bulan terakhir sekaligus (1 query findMany)
+    prisma.transaksiKeuangan.findMany({
       where: {
-        jenis: "MASUK",
-        tanggal: { gte: startOfMonth, lte: endOfMonth },
+        tanggal: {
+          gte: sixMonthsAgoStart,
+          lte: endOfMonth,
+        },
       },
-      _sum: { jumlah: true },
-    }).then(result => result._sum.jumlah || 0),
-    
-    prisma.transaksiKeuangan.aggregate({
-      where: {
-        jenis: "KELUAR",
-        tanggal: { gte: startOfMonth, lte: endOfMonth },
+      select: {
+        jenis: true,
+        jumlah: true,
+        tanggal: true,
       },
-      _sum: { jumlah: true },
-    }).then(result => result._sum.jumlah || 0),
-    
+    }),
+
+    // 3. Hitung kegiatan aktif
     prisma.kegiatan.count({
       where: {
         status: { in: ["UPCOMING", "ONGOING"] },
       },
     }),
 
-    // Upcoming Events (next 7 days, limit 6)
+    // 4. Agenda kegiatan mendatang (7 hari ke depan, limit 6)
     prisma.kegiatan.findMany({
       where: {
         status: "UPCOMING",
@@ -84,70 +100,43 @@ export default async function AdminDashboard() {
         },
       },
     }),
-
-    // Monthly transaction count for notification
-    prisma.transaksiKeuangan.count({
-      where: {
-        tanggal: { gte: startOfMonth, lte: endOfMonth },
-      },
-    }),
-
-    // Chart Data: Anggota per bulan (last 6 months)
-    Promise.all(
-      Array.from({ length: 6 }, async (_, i) => {
-        const monthDate = new Date();
-        monthDate.setMonth(monthDate.getMonth() - (5 - i));
-        const monthStart = new Date(monthDate.getFullYear(), monthDate.getMonth(), 1);
-        const monthEnd = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0);
-        
-        const count = await prisma.anggota.count({
-          where: {
-            createdAt: { lte: monthEnd },
-            status: "AKTIF",
-          },
-        });
-
-        return {
-          bulan: monthDate.toLocaleDateString("id-ID", { month: "short" }),
-          jumlah: count,
-        };
-      })
-    ),
-
-    // Chart Data: Keuangan per bulan (last 6 months)
-    Promise.all(
-      Array.from({ length: 6 }, async (_, i) => {
-        const monthDate = new Date();
-        monthDate.setMonth(monthDate.getMonth() - (5 - i));
-        const monthStart = new Date(monthDate.getFullYear(), monthDate.getMonth(), 1);
-        const monthEnd = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0, 23, 59, 59);
-
-        const [pemasukan, pengeluaran] = await Promise.all([
-          prisma.transaksiKeuangan.aggregate({
-            where: {
-              jenis: "MASUK",
-              tanggal: { gte: monthStart, lte: monthEnd },
-            },
-            _sum: { jumlah: true },
-          }).then(result => result._sum.jumlah || 0),
-          
-          prisma.transaksiKeuangan.aggregate({
-            where: {
-              jenis: "KELUAR",
-              tanggal: { gte: monthStart, lte: monthEnd },
-            },
-            _sum: { jumlah: true },
-          }).then(result => result._sum.jumlah || 0),
-        ]);
-
-        return {
-          bulan: monthDate.toLocaleDateString("id-ID", { month: "short" }),
-          pemasukan,
-          pengeluaran,
-        };
-      })
-    ),
   ]);
+
+  // JS Processing: Data Anggota
+  const totalAnggotaAktif = activeAnggota.length;
+  const anggotaPerBulan = months.map((m) => ({
+    bulan: m.label,
+    jumlah: activeAnggota.filter((a) => a.createdAt <= m.end).length,
+  }));
+
+  // JS Processing: Data Keuangan per bulan
+  const keuanganPerBulan = months.map((m) => {
+    let pemasukan = 0;
+    let pengeluaran = 0;
+
+    for (const t of transaksi6Bulan) {
+      const tDate = new Date(t.tanggal);
+      if (tDate >= m.start && tDate <= m.end) {
+        if (t.jenis === "MASUK") pemasukan += t.jumlah;
+        else if (t.jenis === "KELUAR") pengeluaran += t.jumlah;
+      }
+    }
+
+    return {
+      bulan: m.label,
+      pemasukan,
+      pengeluaran,
+    };
+  });
+
+  // JS Processing: Metrik bulan berjalan dari transaksi6Bulan
+  const currentMonthTransactions = transaksi6Bulan.filter((t) => {
+    const d = new Date(t.tanggal);
+    return d >= startOfMonth && d <= endOfMonth;
+  });
+  const monthlyTransactionCount = currentMonthTransactions.length;
+  const totalPemasukan = keuanganPerBulan[5]?.pemasukan ?? 0;
+  const totalPengeluaran = keuanganPerBulan[5]?.pengeluaran ?? 0;
 
   return (
     <div className="space-y-6">

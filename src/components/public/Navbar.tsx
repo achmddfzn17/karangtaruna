@@ -91,7 +91,7 @@ export default function Navbar({ session }: { session: Session | null }) {
                 Karang Taruna
               </span>
               <span className="text-[11px] font-bold text-blue-500 leading-tight">
-                Generasi Emas
+                Muda Berkarya
               </span>
             </div>
             <div className="ml-2 hidden sm:flex items-center gap-1.5 px-2 py-0.5 bg-green-50 rounded-full border border-green-200">

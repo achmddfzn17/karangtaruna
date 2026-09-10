@@ -4,7 +4,7 @@ Panduan untuk Claude Code (dan agen AI lain) saat bekerja di repositori ini. Iku
 
 ## Ringkasan Proyek
 
-Sistem Informasi Karang Taruna Generasi Emas. Aplikasi web full-stack untuk mengelola keanggotaan, kegiatan, keuangan, dan konten organisasi kepemudaan. Ini adalah proyek skripsi, jadi kestabilan, kejelasan kode, dan kemudahan penjelasan lebih penting daripada trik canggih.
+Sistem Informasi Karang Taruna Muda Berkarya. Aplikasi web full-stack untuk mengelola keanggotaan, kegiatan, keuangan, dan konten organisasi kepemudaan. Ini adalah proyek skripsi, jadi kestabilan, kejelasan kode, dan kemudahan penjelasan lebih penting daripada trik canggih.
 
 Baca `PRD.md` untuk kebutuhan produk, `desain.md` untuk sistem desain, `AGENTS.md` untuk cara kerja agen, dan `skill.md` untuk metodologi kerja.
 

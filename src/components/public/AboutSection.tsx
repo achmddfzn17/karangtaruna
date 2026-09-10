@@ -59,7 +59,7 @@ export default function AboutSection({ statsData }: AboutSectionProps) {
             </h2>
 
             <p className="text-slate-600 leading-relaxed text-[15px] md:text-[16px] mt-2">
-              Karang Taruna Generasi Emas adalah organisasi kepemudaan yang
+              Karang Taruna Muda Berkarya adalah organisasi kepemudaan yang
               berdiri sejak tahun 2020, berkedudukan di Kota Jakarta, Jakarta
               Pusat. Kami hadir dengan komitmen penuh untuk memberdayakan
               generasi muda agar menjadi pribadi yang mandiri, inovatif, dan
@@ -116,7 +116,7 @@ export default function AboutSection({ statsData }: AboutSectionProps) {
                     Karang Taruna
                   </div>
                   <div className="text-xs text-blue-500 font-bold">
-                    Generasi Emas
+                    Muda Berkarya
                   </div>
                 </div>
                 <span className="ml-auto text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-bold">

@@ -14,7 +14,7 @@ import { formatDate } from "@/lib/utils";
 export const metadata: Metadata = {
   title: "Artikel",
   description:
-    "Artikel edukatif dan inspiratif dari Karang Taruna Generasi Emas untuk pengembangan diri pemuda.",
+    "Artikel edukatif dan inspiratif dari Karang Taruna Muda Berkarya untuk pengembangan diri pemuda.",
 };
 
 export default async function ArtikelPage({

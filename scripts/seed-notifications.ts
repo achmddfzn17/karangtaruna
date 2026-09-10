@@ -3,9 +3,23 @@
  * Jalankan: npx tsx scripts/seed-notifications.ts
  */
 
-import { PrismaClient } from "@prisma/client";
+import "dotenv/config";
+import { config } from "dotenv";
+config({ path: ".env.local" });
 
-const prisma = new PrismaClient();
+import { PrismaClient } from "@prisma/client";
+import { Pool } from "pg";
+import { PrismaPg } from "@prisma/adapter-pg";
+
+const connectionString = process.env.DATABASE_URL;
+if (!connectionString) {
+  console.error("❌ DATABASE_URL tidak ditemukan di environment variables (.env / .env.local)");
+  process.exit(1);
+}
+
+const pool = new Pool({ connectionString });
+const adapter = new PrismaPg(pool);
+const prisma = new PrismaClient({ adapter });
 
 async function main() {
   console.log("🌱 Seeding notifications...");
@@ -47,7 +61,7 @@ async function main() {
     },
     {
       title: "Selamat Datang di Portal Anggota!",
-      message: "Terima kasih telah bergabung dengan Karang Taruna Generasi Emas. Lengkapi profil Anda untuk pengalaman yang lebih baik.",
+      message: "Terima kasih telah bergabung dengan Karang Taruna Muda Berkarya. Lengkapi profil Anda untuk pengalaman yang lebih baik.",
       type: "info",
     },
     {
@@ -97,4 +111,5 @@ main()
   })
   .finally(async () => {
     await prisma.$disconnect();
+    await pool.end();
   });

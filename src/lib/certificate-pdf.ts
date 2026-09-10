@@ -11,8 +11,8 @@ export interface CertificateData {
   logoUrl?: string; // Organization logo
   watermarkText?: string; // Watermark text (default: "KARANG TARUNA")
   watermarkOpacity?: number; // 0-1, default: 0.08
-  organizationName?: string; // Default: "GENERASI EMAS"
-  signedBy?: string; // Default: "Admin Generasi Emas"
+  organizationName?: string; // Default: "MUDA BERKARYA"
+  signedBy?: string; // Default: "Admin Muda Berkarya"
   approvedBy?: string; // Default: "Ketua Pengurus"
 }
 
@@ -116,7 +116,7 @@ export async function generateCertificatePDF(
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(18);
   doc.setFont("helvetica", "bold");
-  doc.text(certificateData.organizationName || "GENERASI EMAS", width / 2, 20, { align: "center" });
+  doc.text(certificateData.organizationName || "MUDA BERKARYA", width / 2, 20, { align: "center" });
 
   // Title
   doc.setTextColor(59, 130, 246);
@@ -196,7 +196,7 @@ export async function generateCertificatePDF(
   // Left signature
   doc.text(`Diterbitkan oleh:`, 20, signatureY);
   doc.line(20, signatureY + 2, 50, signatureY + 2);
-  doc.text(certificateData.signedBy || "Admin Generasi Emas", 20, signatureY + 12, { align: "center" });
+  doc.text(certificateData.signedBy || "Admin Muda Berkarya", 20, signatureY + 12, { align: "center" });
 
   // Date issued right
   const dateIssued = format(new Date(), "dd MMMM yyyy", { locale: idLocale });
@@ -278,7 +278,7 @@ export async function generateCertificatePDFDataUrl(
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(18);
   doc.setFont("helvetica", "bold");
-  doc.text(certificateData.organizationName || "GENERASI EMAS", width / 2, 20, { align: "center" });
+  doc.text(certificateData.organizationName || "MUDA BERKARYA", width / 2, 20, { align: "center" });
 
   // Title
   doc.setTextColor(59, 130, 246);
@@ -354,7 +354,7 @@ export async function generateCertificatePDFDataUrl(
   doc.setFont("helvetica", "normal");
   doc.text(`Diterbitkan oleh:`, 20, signatureY);
   doc.line(20, signatureY + 2, 50, signatureY + 2);
-  doc.text(certificateData.signedBy || "Admin Generasi Emas", 20, signatureY + 12, { align: "center" });
+  doc.text(certificateData.signedBy || "Admin Muda Berkarya", 20, signatureY + 12, { align: "center" });
 
   const dateIssued = format(new Date(), "dd MMMM yyyy", { locale: idLocale });
   doc.text(`Jakarta, ${dateIssued}`, width - 20, signatureY, {

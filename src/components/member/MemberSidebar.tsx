@@ -213,7 +213,7 @@ export default function MemberSidebar({
             Portal Anggota
           </h2>
           <p className="text-[10px] text-blue-500 font-bold uppercase tracking-wider leading-tight">
-            Generasi Emas
+            Muda Berkarya
           </p>
         </div>
         <button

@@ -32,7 +32,7 @@ export async function sendEmail({ to, subject, html }: SendEmailOptions) {
     }
 
     const result = await resend.emails.send({
-      from: process.env.RESEND_FROM_EMAIL || "noreply@generasiemas.id",
+      from: process.env.RESEND_FROM_EMAIL || "noreply@mudaberkarya.id",
       to,
       subject,
       html,
@@ -123,7 +123,7 @@ export async function sendCertificateEmail(
             <p>Sertifikat ini adalah bukti resmi bahwa Anda telah mengikuti kegiatan tersebut. Anda dapat membagikan QR code ini atau link verifikasi untuk menunjukkan kredibilitas Anda.</p>
             
             <div class="footer">
-              <p>📧 Email ini dikirim otomatis oleh sistem Generasi Emas</p>
+              <p>📧 Email ini dikirim otomatis oleh sistem Muda Berkarya</p>
               <p>Jangan balas email ini. Jika ada pertanyaan, hubungi admin.</p>
             </div>
           </div>

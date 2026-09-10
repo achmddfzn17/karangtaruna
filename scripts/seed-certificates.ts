@@ -5,9 +5,23 @@
  * Run: npx tsx scripts/seed-certificates.ts
  */
 
-import { PrismaClient } from "@prisma/client";
+import "dotenv/config";
+import { config } from "dotenv";
+config({ path: ".env.local" });
 
-const prisma = new PrismaClient();
+import { PrismaClient } from "@prisma/client";
+import { Pool } from "pg";
+import { PrismaPg } from "@prisma/adapter-pg";
+
+const connectionString = process.env.DATABASE_URL;
+if (!connectionString) {
+  console.error("❌ DATABASE_URL tidak ditemukan di environment variables (.env / .env.local)");
+  process.exit(1);
+}
+
+const pool = new Pool({ connectionString });
+const adapter = new PrismaPg(pool);
+const prisma = new PrismaClient({ adapter });
 
 async function main() {
   console.log("🎓 Starting certificate generation...\n");
@@ -70,4 +84,5 @@ main()
   })
   .finally(async () => {
     await prisma.$disconnect();
+    await pool.end();
   });

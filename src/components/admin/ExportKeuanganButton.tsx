@@ -87,7 +87,7 @@ export default function ExportKeuanganButton({
     doc.text("LAPORAN KEUANGAN", doc.internal.pageSize.width / 2, 18, { align: "center" });
     doc.setFontSize(10);
     doc.setFont("helvetica", "normal");
-    doc.text("Karang Taruna Generasi Emas", doc.internal.pageSize.width / 2, 25, { align: "center" });
+    doc.text("Karang Taruna Muda Berkarya", doc.internal.pageSize.width / 2, 25, { align: "center" });
     doc.text(
       `Dicetak: ${new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}`,
       doc.internal.pageSize.width / 2,

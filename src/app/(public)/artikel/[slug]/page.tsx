@@ -44,7 +44,7 @@ export default async function DetailArtikelPage({ params }: { params: Promise<{ 
     description: artikel.ringkasan,
     author: {
       "@type": "Organization",
-      name: "Karang Taruna Generasi Emas",
+      name: "Karang Taruna Muda Berkarya",
     },
   };
 

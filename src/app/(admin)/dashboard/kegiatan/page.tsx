@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import Image from "next/image";
@@ -207,13 +208,22 @@ export default async function DataKegiatanPage({ searchParams }: PageProps) {
               )}
             </form>
 
-            {/* ✅ BUG FIX: Extract filters to client component */}
-            <KegiatanFilters
-              jenisOptions={jenisOptions}
-              statusOptions={statusOptions}
-              currentJenis={jenisFilter}
-              currentStatus={statusFilter}
-            />
+            {/* ✅ Suspense boundary for client filter using useSearchParams */}
+            <Suspense
+              fallback={
+                <div className="flex gap-2 items-center animate-pulse">
+                  <div className="w-36 h-11 bg-slate-100 rounded-xl" />
+                  <div className="w-36 h-11 bg-slate-100 rounded-xl" />
+                </div>
+              }
+            >
+              <KegiatanFilters
+                jenisOptions={jenisOptions}
+                statusOptions={statusOptions}
+                currentJenis={jenisFilter}
+                currentStatus={statusFilter}
+              />
+            </Suspense>
           </div>
         </div>
       </div>

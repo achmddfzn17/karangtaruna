@@ -62,7 +62,7 @@ export default function SertifikatList({ sertifikatList }: SertifikatListProps) 
       doc.setTextColor(255, 255, 255);
       doc.setFontSize(9);
       doc.setFont("helvetica", "bold");
-      doc.text("KARANG TARUNA GENERASI EMAS", W / 2, 8, { align: "center" });
+      doc.text("KARANG TARUNA MUDA BERKARYA", W / 2, 8, { align: "center" });
       doc.setFontSize(7);
       doc.setFont("helvetica", "normal");
       doc.text("RW 10 Mangga Dua Selatan", W / 2, 13, { align: "center" });
@@ -147,7 +147,7 @@ export default function SertifikatList({ sertifikatList }: SertifikatListProps) 
   // ── Share ─────────────────────────────────────────────────────────────────
   const handleShare = async (cert: Sertifikat) => {
     const verifyUrl = `${window.location.origin}/verify/${cert.nomorSertifikat}`;
-    const text = `Saya telah menyelesaikan kegiatan "${cert.namaKegiatan}" dan mendapatkan Sertifikat Digital dari Karang Taruna Generasi Emas!\n\nVerifikasi: ${verifyUrl}`;
+    const text = `Saya telah menyelesaikan kegiatan "${cert.namaKegiatan}" dan mendapatkan Sertifikat Digital dari Karang Taruna Muda Berkarya!\n\nVerifikasi: ${verifyUrl}`;
 
     // Try native share first (mobile)
     if (navigator.share) {

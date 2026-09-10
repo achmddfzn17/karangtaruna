@@ -8,7 +8,7 @@ import { formatDate } from "@/lib/utils";
 export const metadata: Metadata = {
   title: "Berita",
   description:
-    "Berita dan informasi terkini dari Karang Taruna Generasi Emas.",
+    "Berita dan informasi terkini dari Karang Taruna Muda Berkarya.",
 };
 
 export default async function BeritaPage({
@@ -53,7 +53,7 @@ export default async function BeritaPage({
             Berita <span className="text-blue-500">Terkini</span>
           </h1>
           <p className="text-[16px] text-slate-600 max-w-xl leading-relaxed">
-            Informasi, pengumuman, dan liputan terbaru dari Karang Taruna Generasi Emas.
+            Informasi, pengumuman, dan liputan terbaru dari Karang Taruna Muda Berkarya.
           </p>
         </div>
       </section>

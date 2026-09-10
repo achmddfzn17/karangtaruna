@@ -6,7 +6,7 @@ import { safeQuery } from "@/lib/safe-query";
 import { Program } from "@prisma/client";
 
 export const metadata = {
-  title: "Program Kami - Karang Taruna Generasi Emas",
+  title: "Program Kami - Karang Taruna Muda Berkarya",
 };
 
 export default async function ProgramPage() {
@@ -49,7 +49,7 @@ export default async function ProgramPage() {
             Program <span className="text-blue-500 text-glow">Unggulan</span>
           </h1>
           <p className="text-lg md:text-xl text-slate-400 max-w-3xl mx-auto leading-relaxed font-medium">
-            Dedikasi nyata Karang Taruna Generasi Emas dalam mengembangkan
+            Dedikasi nyata Karang Taruna Muda Berkarya dalam mengembangkan
             potensi pemuda dan memberikan dampak positif bagi seluruh lapisan
             masyarakat melalui program strategis yang berkelanjutan.
           </p>

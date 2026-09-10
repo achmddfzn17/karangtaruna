@@ -16,23 +16,23 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "Karang Taruna Generasi Emas",
-    template: "%s | Karang Taruna Generasi Emas",
+    default: "Karang Taruna Muda Berkarya",
+    template: "%s | Karang Taruna Muda Berkarya",
   },
   description:
     "Bersama membangun pemuda yang kreatif, inovatif, dan berprestasi untuk Indonesia yang lebih baik",
   keywords: [
     "karang taruna",
     "organisasi pemuda",
-    "generasi emas",
+    "muda berkarya",
     "pemuda indonesia",
   ],
-  authors: [{ name: "Karang Taruna Generasi Emas" }],
+  authors: [{ name: "Karang Taruna Muda Berkarya" }],
   openGraph: {
     type: "website",
     locale: "id_ID",
-    siteName: "Karang Taruna Generasi Emas",
-    title: "Karang Taruna Generasi Emas",
+    siteName: "Karang Taruna Muda Berkarya",
+    title: "Karang Taruna Muda Berkarya",
     description:
       "Bersama membangun pemuda yang kreatif, inovatif, dan berprestasi untuk Indonesia yang lebih baik",
   },
