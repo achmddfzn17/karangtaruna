@@ -41,6 +41,8 @@ export default async function ProfilePage({
     const tempatLahir = formData.get("tempatLahir") as string;
     const tanggalLahirRaw = formData.get("tanggalLahir") as string;
 
+    let redirectUrl = "";
+
     try {
       await prisma.anggota.update({
         where: { userId },
@@ -55,9 +57,16 @@ export default async function ProfilePage({
       });
       revalidatePath("/member/profile");
       revalidatePath("/member/dashboard");
-      redirect("/member/profile?success=1");
-    } catch {
-      redirect("/member/profile?error=1");
+      redirectUrl = "/member/profile?success=1";
+    } catch (error) {
+      if (error instanceof Error && error.message.includes("NEXT_REDIRECT")) {
+        throw error;
+      }
+      redirectUrl = "/member/profile?error=1";
+    }
+
+    if (redirectUrl) {
+      redirect(redirectUrl);
     }
   }
 

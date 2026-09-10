@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
+import { auditUpdate, auditDelete } from "@/lib/audit";
 
 /**
  * PATCH /api/iuran/[id]
@@ -55,6 +56,15 @@ export async function PATCH(
       include: { anggota: { select: { namaLengkap: true } } },
     });
 
+    await auditUpdate(
+      "iuran",
+      id,
+      `${updated.anggota.namaLengkap} - ${updated.bulan}/${updated.tahun}`,
+      session.user.id,
+      session.user.name || undefined,
+      `Update iuran anggota ${updated.anggota.namaLengkap} periode ${updated.bulan}/${updated.tahun} menjadi Rp ${jumlah.toLocaleString("id-ID")}`
+    );
+
     return NextResponse.json({
       success: true,
       data: updated,
@@ -97,6 +107,15 @@ export async function DELETE(
     }
 
     await prisma.iuranAnggota.delete({ where: { id } });
+
+    await auditDelete(
+      "iuran",
+      id,
+      `${iuran.anggota.namaLengkap} - ${iuran.bulan}/${iuran.tahun}`,
+      session.user.id,
+      session.user.name || undefined,
+      `Hapus iuran anggota ${iuran.anggota.namaLengkap} periode ${iuran.bulan}/${iuran.tahun}`
+    );
 
     return NextResponse.json({
       success: true,

@@ -69,8 +69,15 @@ export async function updateAnggota(id: string, formData: FormData) {
       `Updated anggota: ${data.namaLengkap} (${data.nik})`
     );
   } catch (error) {
-    if (error instanceof Error && "code" in error && error.code === "P2002") {
-      throw new Error("NIK sudah terdaftar oleh anggota lain");
+    if (error && typeof error === "object" && "code" in error && error.code === "P2002") {
+      const target = (error as { meta?: { target?: string[] } }).meta?.target;
+      if (target?.includes("email")) {
+        throw new Error("Email sudah terdaftar oleh anggota lain");
+      }
+      if (target?.includes("nik")) {
+        throw new Error("NIK sudah terdaftar oleh anggota lain");
+      }
+      throw new Error("Data unik sudah terdaftar oleh anggota lain");
     }
     console.error("[UPDATE_ANGGOTA_ERROR]", error);
     if (error instanceof Error && error.message.includes("NEXT_REDIRECT")) throw error;

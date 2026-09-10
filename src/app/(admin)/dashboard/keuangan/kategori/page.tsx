@@ -1,9 +1,8 @@
 import { prisma } from "@/lib/prisma";
-import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Plus, Pencil, Trash2, Tag } from "lucide-react";
 import DeleteKategoriButton from "@/components/admin/DeleteKategoriButton";
+import { createKategori } from "../actions";
 
 export const metadata = { title: "Kategori Keuangan" };
 
@@ -12,23 +11,6 @@ export default async function KategoriKeuanganPage() {
     orderBy: [{ jenis: "asc" }, { nama: "asc" }],
     include: { _count: { select: { transaksi: true } } },
   });
-
-  async function createKategori(formData: FormData) {
-    "use server";
-    const nama = (formData.get("nama") as string)?.trim();
-    const jenis = formData.get("jenis") as "MASUK" | "KELUAR";
-    const keterangan = (formData.get("keterangan") as string)?.trim();
-
-    if (!nama || !jenis) throw new Error("Nama dan jenis wajib diisi");
-
-    await prisma.kategoriTransaksi.create({
-      data: { nama, jenis, keterangan: keterangan || null },
-    });
-
-    revalidatePath("/dashboard/keuangan/kategori");
-    revalidatePath("/dashboard/keuangan");
-    redirect("/dashboard/keuangan/kategori");
-  }
 
   const masuk = kategoriList.filter((k) => k.jenis === "MASUK");
   const keluar = kategoriList.filter((k) => k.jenis === "KELUAR");

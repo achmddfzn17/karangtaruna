@@ -30,6 +30,8 @@ export async function createPolling(formData: FormData) {
 
   const { judul, deskripsi, options, expiresAt } = validation.data;
 
+  let redirectUrl = "";
+
   try {
     await prisma.polling.create({
       data: {
@@ -55,17 +57,22 @@ export async function createPolling(formData: FormData) {
     revalidatePath("/dashboard/voting");
     revalidatePath("/member/voting");
     revalidatePath("/dashboard");
-    redirect("/dashboard/voting?success=1");
+    redirectUrl = "/dashboard/voting?success=1";
   } catch (error) {
+    if (error instanceof Error && error.message.includes("NEXT_REDIRECT")) {
+      throw error;
+    }
     console.error("[CREATE_POLLING_ERROR]", error);
-    redirect("/dashboard/voting?error=Gagal+membuat+voting");
+    redirectUrl = "/dashboard/voting?error=Gagal+membuat+voting";
+  }
+
+  if (redirectUrl) {
+    redirect(redirectUrl);
   }
 }
 
 export async function togglePollingStatus(formData: FormData) {
   const session = await requireAdmin();
-
-  const id = formData.get("id") as string;
   const currentStatus = formData.get("currentStatus") === "true";
 
   const idValidation = idSchema.safeParse(id);

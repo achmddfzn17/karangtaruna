@@ -4,6 +4,7 @@ import { ArrowLeft, Save, AlertCircle } from "lucide-react";
 import { notFound, redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { requireSuperAdmin } from "@/lib/auth-helpers";
+import { auditUpdate } from "@/lib/audit";
 import { Role } from "@prisma/client";
 
 export const metadata = { title: "Edit Admin" };
@@ -38,7 +39,7 @@ export default async function EditAdminPage({
     const currentId = currentSession.user.id;
 
     const name = (formData.get("name") as string)?.trim();
-    const roleRaw = formData.get("role") as string;
+    const roleRaw = (formData.get("role") as string) || (isSelf ? user.role : "");
     const nip = (formData.get("nip") as string)?.trim();
     const jabatan = (formData.get("jabatan") as string)?.trim();
     const phone = (formData.get("phone") as string)?.trim();
@@ -143,6 +144,15 @@ export default async function EditAdminPage({
             phone: phone || null,
           },
         });
+
+        await auditUpdate(
+          "admin",
+          id,
+          name,
+          currentSession.user.id,
+          currentSession.user.name || undefined,
+          `Memperbarui profil admin ${name} (${newRole})`
+        );
       });
     } catch (error) {
       console.error("[UPDATE_ADMIN_ERROR]", error);
@@ -247,9 +257,12 @@ export default async function EditAdminPage({
               <option value="SUPER_ADMIN">Super Admin</option>
             </select>
             {isSelf && (
-              <p className="text-[11px] text-amber-600 font-medium">
-                Role tidak dapat diubah untuk akun sendiri
-              </p>
+              <>
+                <input type="hidden" name="role" value={user.role} />
+                <p className="text-[11px] text-amber-600 font-medium">
+                  Role tidak dapat diubah untuk akun sendiri
+                </p>
+              </>
             )}
           </div>
 

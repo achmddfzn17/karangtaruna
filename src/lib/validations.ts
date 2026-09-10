@@ -118,6 +118,8 @@ export const createKategoriSchema = z.object({
   keterangan: z.string().max(500).optional().or(z.literal("")),
 });
 
+export const updateKategoriSchema = createKategoriSchema;
+
 // ===== IURAN SCHEMAS =====
 
 export const updateIuranSchema = z.object({

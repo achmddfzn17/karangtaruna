@@ -54,7 +54,7 @@ export async function requireAdmin(allowedRoles: Role[] = ["ADMIN", "SUPER_ADMIN
   
   if (!allowedRoles.includes(session.user.role)) {
     // Non-admin users redirect to member area
-    redirect("/member");
+    redirect("/member/dashboard");
   }
   
   return session;

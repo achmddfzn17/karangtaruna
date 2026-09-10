@@ -1,10 +1,10 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { ArrowLeft, Save, Eye } from "lucide-react";
-import { notFound, redirect } from "next/navigation";
-import { revalidatePath } from "next/cache";
+import { notFound } from "next/navigation";
 import ThumbnailUpload from "@/components/admin/ThumbnailUpload";
 import TagsInput from "@/components/admin/TagsInput";
+import { updateArtikel } from "../../actions";
 
 export const metadata = { title: "Edit Artikel" };
 
@@ -18,55 +18,7 @@ export default async function EditArtikelPage({ params }: EditArtikelPageProps) 
   const artikel = await prisma.artikel.findUnique({ where: { slug } });
   if (!artikel) notFound();
 
-  const artikelPublishedAt = artikel.publishedAt;
-
-  async function updateArtikel(formData: FormData) {
-    "use server";
-    const judul = formData.get("judul") as string;
-    const kategori = formData.get("kategori") as string;
-    const status = formData.get("status") as "DRAFT" | "PUBLISHED" | "ARCHIVED";
-    const ringkasan = formData.get("ringkasan") as string;
-    const isi = formData.get("isi") as string;
-    const thumbnail = formData.get("thumbnail") as string;
-    const tagsRaw = formData.get("tags") as string;
-    let tags: string[] = [];
-    if (tagsRaw) {
-      try {
-        const parsed = JSON.parse(tagsRaw);
-        tags = Array.isArray(parsed) ? parsed : [];
-      } catch (error) {
-        console.error('[PARSE_TAGS_ERROR]', error);
-        // Continue with empty tags array
-        tags = [];
-      }
-    }
-
-    if (!judul || judul.length < 5) throw new Error("Judul minimal 5 karakter");
-    if (!isi || isi.length < 10) throw new Error("Isi artikel tidak boleh kosong");
-
-    try {
-      await prisma.artikel.update({
-        where: { slug },
-        data: {
-          judul,
-          kategori: kategori || null,
-          status,
-          ringkasan: ringkasan || null,
-          isi,
-          thumbnail: thumbnail || null,
-          tags,
-          publishedAt:
-            status === "PUBLISHED" && !artikelPublishedAt ? new Date() : artikelPublishedAt,
-        },
-      });
-    } catch {
-      throw new Error("Gagal mengupdate artikel");
-    }
-
-    revalidatePath("/dashboard/artikel");
-    revalidatePath(`/artikel/${slug}`);
-    redirect("/dashboard/artikel");
-  }
+  const updateArtikelWithId = updateArtikel.bind(null, artikel.id);
 
   const inputCls =
     "w-full px-4 py-3 rounded-xl border border-slate-200 bg-white text-sm text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 transition-all";
@@ -87,7 +39,7 @@ export default async function EditArtikelPage({ params }: EditArtikelPageProps) 
       </div>
 
       <div className="bg-white rounded-2xl border border-gray-100 p-6">
-        <form action={updateArtikel} className="space-y-5">
+        <form action={updateArtikelWithId} className="space-y-5">
           {/* Judul */}
           <div className="space-y-1.5">
             <label htmlFor="judul" className="text-[12px] font-bold text-slate-600">

@@ -65,6 +65,8 @@ export default async function MemberVotingPage({
       redirect("/member/voting?error=Data+tidak+lengkap");
     }
 
+    let redirectUrl = "";
+
     try {
       // Use transaction to prevent race condition
       await prisma.$transaction(async (tx) => {
@@ -134,33 +136,35 @@ export default async function MemberVotingPage({
       revalidatePath("/member/voting");
       revalidatePath("/dashboard/voting");
       revalidatePath("/dashboard");
-      redirect("/member/voting?success=1");
+      redirectUrl = "/member/voting?success=1";
     } catch (error) {
+      if (error instanceof Error && error.message.includes("NEXT_REDIRECT")) {
+        throw error;
+      }
       console.error("[SUBMIT_VOTE_ERROR]", error);
 
       const errorMessage = error instanceof Error ? error.message : "";
 
       // Handle specific errors
       if (errorMessage === "ALREADY_VOTED") {
-        redirect("/member/voting?error=Anda+sudah+memberikan+suara+pada+voting+ini");
+        redirectUrl = "/member/voting?error=Anda+sudah+memberikan+suara+pada+voting+ini";
       } else if (errorMessage === "POLLING_NOT_FOUND") {
-        redirect("/member/voting?error=Voting+tidak+ditemukan");
+        redirectUrl = "/member/voting?error=Voting+tidak+ditemukan";
       } else if (errorMessage === "POLLING_INACTIVE") {
-        redirect("/member/voting?error=Voting+sudah+tidak+aktif");
+        redirectUrl = "/member/voting?error=Voting+sudah+tidak+aktif";
       } else if (errorMessage === "POLLING_EXPIRED") {
-        redirect("/member/voting?error=Voting+sudah+kadaluarsa");
+        redirectUrl = "/member/voting?error=Voting+sudah+kadaluarsa";
       } else if (errorMessage === "OPTION_NOT_FOUND") {
-        redirect("/member/voting?error=Pilihan+tidak+valid");
+        redirectUrl = "/member/voting?error=Pilihan+tidak+valid";
+      } else if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+        redirectUrl = "/member/voting?error=Anda+sudah+memberikan+suara+pada+voting+ini";
+      } else {
+        redirectUrl = "/member/voting?error=Gagal+mengirim+suara.+Silakan+coba+lagi";
       }
+    }
 
-      // Handle Prisma unique constraint error
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        if (error.code === "P2002") {
-          redirect("/member/voting?error=Anda+sudah+memberikan+suara+pada+voting+ini");
-        }
-      }
-
-      redirect("/member/voting?error=Gagal+mengirim+suara.+Silakan+coba+lagi");
+    if (redirectUrl) {
+      redirect(redirectUrl);
     }
   }
 

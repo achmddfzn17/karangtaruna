@@ -5,11 +5,12 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import bcrypt from "bcryptjs";
 import { requireAdmin } from "@/lib/auth-helpers";
+import { auditCreate } from "@/lib/audit";
 
 export async function createAnggota(formData: FormData) {
   // ✅ Auth check — server actions are invokable as POST endpoints,
   // so this must authenticate the caller like every other admin action.
-  await requireAdmin();
+  const session = await requireAdmin();
 
   const namaLengkap = formData.get("namaLengkap") as string;
   const nik = formData.get("nik") as string;
@@ -43,8 +44,9 @@ export async function createAnggota(formData: FormData) {
   }
 
   try {
+    let createdId = "";
+
     if (buatAkun) {
-      // Buat User + Anggota sekaligus dalam satu transaksi
       const hashedPassword = await bcrypt.hash(loginPassword, 12);
 
       await prisma.$transaction(async (tx) => {
@@ -57,7 +59,7 @@ export async function createAnggota(formData: FormData) {
           },
         });
 
-        await tx.anggota.create({
+        const created = await tx.anggota.create({
           data: {
             userId: user.id,
             namaLengkap,
@@ -73,10 +75,12 @@ export async function createAnggota(formData: FormData) {
             status,
           },
         });
+
+        createdId = created.id;
       });
     } else {
       // Buat Anggota tanpa akun
-      await prisma.anggota.create({
+      const created = await prisma.anggota.create({
         data: {
           namaLengkap,
           nik,
@@ -91,10 +95,31 @@ export async function createAnggota(formData: FormData) {
           status,
         },
       });
+
+      createdId = created.id;
+    }
+
+    // Audit log
+    if (createdId) {
+      await auditCreate(
+        "anggota",
+        createdId,
+        namaLengkap,
+        session?.user?.id,
+        session?.user?.name || undefined,
+        `Menambahkan anggota baru: ${namaLengkap} (${nik})`
+      );
     }
   } catch (error) {
     if (error && typeof error === "object" && "code" in error && error.code === "P2002") {
-      throw new Error("NIK sudah terdaftar!");
+      const target = (error as { meta?: { target?: string[] } }).meta?.target;
+      if (target?.includes("email")) {
+        throw new Error("Email sudah terdaftar!");
+      }
+      if (target?.includes("nik")) {
+        throw new Error("NIK sudah terdaftar!");
+      }
+      throw new Error("Data unik sudah terdaftar di sistem!");
     }
     throw error;
   }

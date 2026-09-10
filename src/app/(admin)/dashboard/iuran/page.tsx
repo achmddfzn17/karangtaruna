@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/auth-helpers";
+import { auditCreate } from "@/lib/audit";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { 
   Wallet, CheckCircle2, Plus, Search, Settings, Filter,
@@ -84,7 +85,7 @@ export default async function IuranPage({ searchParams }: PageProps) {
     "use server";
     
     // ✅ Auth check in server action
-    await requireAdmin();
+    const session = await requireAdmin();
 
     const anggotaId = formData.get("anggotaId") as string;
     const jumlah = parseFloat(formData.get("jumlah") as string);
@@ -102,13 +103,34 @@ export default async function IuranPage({ searchParams }: PageProps) {
     // ✅ Use transaction to prevent race condition
     try {
       await prisma.$transaction(async (tx) => {
+        // Cek anggota
+        const anggota = await tx.anggota.findUnique({
+          where: { id: anggotaId },
+          select: { namaLengkap: true },
+        });
+        if (!anggota) throw new Error("Anggota tidak ditemukan");
+
         // Cek sudah bayar
         const existing = await tx.iuranAnggota.findFirst({
           where: { anggotaId, bulan: bulanVal, tahun: tahunVal },
         });
         if (existing) throw new Error("Anggota sudah membayar iuran bulan ini");
 
-        await tx.iuranAnggota.create({
+        // Cari atau buat kategori transaksi "Iuran Anggota"
+        let kategori = await tx.kategoriTransaksi.findFirst({
+          where: { nama: "Iuran Anggota", jenis: "MASUK" },
+        });
+        if (!kategori) {
+          kategori = await tx.kategoriTransaksi.create({
+            data: {
+              nama: "Iuran Anggota",
+              jenis: "MASUK",
+              keterangan: "Penerimaan iuran bulanan kas anggota",
+            },
+          });
+        }
+
+        const iuran = await tx.iuranAnggota.create({
           data: {
             anggotaId,
             bulan: bulanVal,
@@ -118,6 +140,27 @@ export default async function IuranPage({ searchParams }: PageProps) {
             tanggalBayar: new Date(),
           },
         });
+
+        // Sinkronisasi otomatis ke kas organisasi (transaksi keuangan)
+        await tx.transaksiKeuangan.create({
+          data: {
+            keterangan: `Iuran Kas - ${anggota.namaLengkap} (${bulanVal}/${tahunVal})`,
+            jumlah,
+            jenis: "MASUK",
+            tanggal: new Date(),
+            kategoriId: kategori.id,
+          },
+        });
+
+        // Audit log
+        await auditCreate(
+          "iuran",
+          iuran.id,
+          `${anggota.namaLengkap} - ${bulanVal}/${tahunVal}`,
+          session?.user?.id,
+          session?.user?.name || undefined,
+          `Mencatat iuran anggota ${anggota.namaLengkap} periode ${bulanVal}/${tahunVal} sejumlah Rp ${jumlah.toLocaleString("id-ID")}`
+        );
       });
     } catch (error) {
       console.error("[BAYAR_IURAN_ERROR]", error);
@@ -126,6 +169,8 @@ export default async function IuranPage({ searchParams }: PageProps) {
     }
 
     revalidatePath("/dashboard/iuran");
+    revalidatePath("/dashboard/keuangan");
+    revalidatePath("/dashboard");
   }
 
   return (

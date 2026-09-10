@@ -1,10 +1,8 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { ArrowLeft, PlusCircle } from "lucide-react";
-import { redirect } from "next/navigation";
-import { revalidatePath } from "next/cache";
 import ThumbnailUpload from "@/components/admin/ThumbnailUpload";
-import { KategoriTransaksi } from "@prisma/client";
+import { createTransaksi } from "../actions";
 
 export const metadata = { title: "Tambah Transaksi Keuangan" };
 
@@ -12,39 +10,6 @@ export default async function TambahTransaksiPage() {
   const kategoriList = await prisma.kategoriTransaksi.findMany({
     orderBy: { nama: "asc" },
   });
-
-  async function createTransaksi(formData: FormData) {
-    "use server";
-    const keterangan = formData.get("keterangan") as string;
-    const jumlah = formData.get("jumlah") as string;
-    const jenis = formData.get("jenis") as "MASUK" | "KELUAR";
-    const tanggal = formData.get("tanggal") as string;
-    const kategoriId = formData.get("kategoriId") as string;
-    const bukti = formData.get("bukti") as string;
-
-    if (!keterangan || !jumlah || !jenis || !tanggal) {
-      throw new Error("Semua field wajib diisi");
-    }
-
-    const jumlahNum = parseFloat(jumlah);
-    if (isNaN(jumlahNum) || jumlahNum <= 0) {
-      throw new Error("Jumlah harus berupa angka positif");
-    }
-
-    await prisma.transaksiKeuangan.create({
-      data: {
-        keterangan,
-        jumlah: jumlahNum,
-        jenis,
-        tanggal: new Date(tanggal),
-        kategoriId: kategoriId || null,
-        bukti: bukti || null,
-      },
-    });
-
-    revalidatePath("/dashboard/keuangan");
-    redirect("/dashboard/keuangan");
-  }
 
   const labelCls = "text-[11px] font-black text-slate-500 uppercase tracking-widest ml-1";
   const inputCls =

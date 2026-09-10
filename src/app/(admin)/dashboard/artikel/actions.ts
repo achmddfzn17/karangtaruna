@@ -4,10 +4,11 @@ import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { deleteFileFromStorage } from "@/lib/supabase";
-import { auditCreate, auditDelete } from "@/lib/audit";
+import { auditCreate, auditUpdate, auditDelete } from "@/lib/audit";
 import { requireAdmin } from "@/lib/auth-helpers";
 import { 
-  createArtikelSchema, 
+  createArtikelSchema,
+  updateArtikelSchema, 
   validateFormData 
 } from "@/lib/validations";
 
@@ -118,4 +119,61 @@ export async function deleteArtikel(id: string) {
     }
     throw new Error("Gagal menghapus artikel");
   }
+}
+
+export async function updateArtikel(id: string, formData: FormData) {
+  // ✅ Auth check
+  const session = await requireAdmin();
+
+  // ✅ VALIDATE INPUT with centralized schema
+  const data = validateFormData(formData, updateArtikelSchema);
+
+  const tagsRaw = formData.get("tags") as string;
+  let tags: string[] = [];
+  try {
+    tags = tagsRaw ? JSON.parse(tagsRaw) : [];
+  } catch (error) {
+    console.error("[PARSE_TAGS_ERROR]", error);
+  }
+
+  try {
+    const existing = await prisma.artikel.findUnique({
+      where: { id },
+      select: { publishedAt: true },
+    });
+
+    await prisma.artikel.update({
+      where: { id },
+      data: {
+        judul: data.judul,
+        kategori: data.kategori || null,
+        status: data.status,
+        ringkasan: data.ringkasan || null,
+        isi: data.isi,
+        thumbnail: data.thumbnail || null,
+        tags,
+        publishedAt:
+          data.status === "PUBLISHED"
+            ? existing?.publishedAt ?? new Date()
+            : null,
+      },
+    });
+
+    // Audit log
+    await auditUpdate(
+      "artikel",
+      id,
+      data.judul,
+      session.user.id,
+      session.user.name || undefined,
+      `Updated artikel: ${data.judul} (${data.status})`
+    );
+  } catch (error) {
+    console.error("[UPDATE_ARTIKEL_ERROR]", error);
+    throw new Error("Gagal mengupdate artikel");
+  }
+
+  revalidatePath("/dashboard/artikel");
+  revalidatePath("/artikel");
+  redirect("/dashboard/artikel");
 }
