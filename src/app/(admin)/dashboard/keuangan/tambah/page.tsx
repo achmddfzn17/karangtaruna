@@ -70,7 +70,7 @@ export default async function TambahTransaksiPage() {
             <div className="relative">
               <select id="kategoriId" name="kategoriId" title="Pilih Kategori Transaksi" className={inputCls}>
                 <option value="">Tanpa Kategori</option>
-                {kategoriList.map((k: KategoriTransaksi) => (
+                {kategoriList.map((k) => (
                   <option key={k.id} value={k.id}>
                     {k.nama} ({k.jenis === "MASUK" ? "Masuk" : "Keluar"})
                   </option>

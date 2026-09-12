@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { ArrowLeft, Save } from "lucide-react";
 import { notFound } from "next/navigation";
-import { updateKategori } from "../../actions";
+import { updateKategori } from "@/app/(admin)/dashboard/keuangan/actions";
 
 export const metadata = { title: "Edit Kategori" };
 

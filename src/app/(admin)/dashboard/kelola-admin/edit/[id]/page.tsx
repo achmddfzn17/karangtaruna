@@ -30,6 +30,7 @@ export default async function EditAdminPage({
   if (!user || (user.role !== "ADMIN" && user.role !== "SUPER_ADMIN")) notFound();
 
   const isSelf = user.id === currentUserId;
+  const existingRole = user.role;
 
   async function updateAdmin(formData: FormData) {
     "use server";
@@ -39,7 +40,7 @@ export default async function EditAdminPage({
     const currentId = currentSession.user.id;
 
     const name = (formData.get("name") as string)?.trim();
-    const roleRaw = (formData.get("role") as string) || (isSelf ? user.role : "");
+    const roleRaw = (formData.get("role") as string) || (isSelf ? existingRole : "");
     const nip = (formData.get("nip") as string)?.trim();
     const jabatan = (formData.get("jabatan") as string)?.trim();
     const phone = (formData.get("phone") as string)?.trim();

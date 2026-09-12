@@ -21,6 +21,7 @@ export type AuditModule =
   | "artikel" 
   | "galeri" 
   | "keuangan" 
+  | "iuran"
   | "aspirasi" 
   | "voting" 
   | "admin" 

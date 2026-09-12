@@ -73,6 +73,7 @@ export async function createPolling(formData: FormData) {
 
 export async function togglePollingStatus(formData: FormData) {
   const session = await requireAdmin();
+  const id = formData.get("id") as string;
   const currentStatus = formData.get("currentStatus") === "true";
 
   const idValidation = idSchema.safeParse(id);
