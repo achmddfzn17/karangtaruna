@@ -1,6 +1,6 @@
 /**
- * Seed data SUS — 25 responden, rata-rata 73.90 (mendekati 73.96)
- * Jawaban natural: tiap orang punya pola berbeda, tidak ada yang identik
+ * Seed data SUS — 12 responden (data mentah final)
+ * Rumus: item ganjil = skor - 1, item genap = 5 - skor, sum * 2.5
  * Jalankan: npx tsx scripts/seed-sus.ts
  */
 
@@ -23,181 +23,23 @@ function calcSUS(q: number[]): { score: number; kategori: string } {
   return { score, kategori };
 }
 
-/**
- * Pola jawaban natural:
- * - Q ganjil (1,3,5,7,9): positif → nilai tinggi (4-5), negatif → nilai rendah (1-2)
- * - Q genap (2,4,6,8,10): positif → nilai rendah (1-2), negatif → nilai tinggi (4-5)
- * - Orang yang puas: Q ganjil tinggi, Q genap rendah
- * - Orang yang kritis: Q ganjil lebih rendah, Q genap lebih tinggi
- * - Variasi: tidak semua jawaban sama, ada yang 3 di beberapa pertanyaan
- */
 const respondents = [
-  // === SANGAT PUAS (skor 80) ===
-  {
-    name: "Ahmad Fauzi",
-    // Konsisten positif, hanya Q8 agak ragu
-    q: [4, 1, 4, 1, 4, 2, 4, 2, 4, 2],
-    date: new Date("2026-03-10"),
-  },
-  {
-    name: "Siti Nurhaliza",
-    // Sangat positif di Q1,3,5 tapi Q7 agak ragu
-    q: [4, 1, 4, 1, 4, 2, 3, 2, 4, 2],
-    date: new Date("2026-03-11"),
-  },
-
-  // === PUAS (skor 77.5) ===
-  {
-    name: "Budi Santoso",
-    // Positif tapi Q4 agak ragu
-    q: [4, 1, 4, 2, 4, 2, 4, 2, 4, 2],
-    date: new Date("2026-03-12"),
-  },
-  {
-    name: "Dewi Rahayu",
-    // Positif tapi Q6 agak ragu
-    q: [4, 2, 4, 1, 4, 2, 4, 2, 4, 2],
-    date: new Date("2026-03-13"),
-  },
-  {
-    name: "Eko Prasetyo",
-    // Positif tapi Q2 agak ragu
-    q: [4, 1, 4, 2, 4, 2, 4, 2, 4, 2],
-    date: new Date("2026-03-14"),
-  },
-  {
-    name: "Fitri Handayani",
-    // Positif, Q10 agak ragu
-    q: [4, 2, 4, 1, 4, 2, 4, 2, 4, 2],
-    date: new Date("2026-03-15"),
-  },
-
-  // === CUKUP PUAS (skor 75) ===
-  {
-    name: "Gunawan Wibowo",
-    // Semua netral-positif
-    q: [4, 2, 4, 2, 4, 2, 4, 2, 4, 2],
-    date: new Date("2026-03-17"),
-  },
-  {
-    name: "Hesti Wulandari",
-    // Netral-positif, Q9 agak ragu
-    q: [4, 2, 4, 2, 4, 2, 4, 2, 4, 2],
-    date: new Date("2026-03-18"),
-  },
-  {
-    name: "Irfan Maulana",
-    // Netral-positif, konsisten
-    q: [4, 2, 4, 2, 4, 2, 4, 2, 4, 2],
-    date: new Date("2026-03-19"),
-  },
-  {
-    name: "Juwita Sari",
-    // Netral-positif, Q3 agak lebih tinggi
-    q: [4, 2, 4, 2, 4, 2, 4, 2, 4, 2],
-    date: new Date("2026-03-20"),
-  },
-  {
-    name: "Kurniawan Adi",
-    // Netral-positif
-    q: [4, 2, 4, 2, 4, 2, 4, 2, 4, 2],
-    date: new Date("2026-03-21"),
-  },
-  {
-    name: "Lestari Putri",
-    // Netral-positif, Q5 agak ragu
-    q: [4, 2, 4, 2, 4, 2, 4, 2, 4, 2],
-    date: new Date("2026-03-22"),
-  },
-  {
-    name: "Muhammad Rizki",
-    // Netral-positif
-    q: [4, 2, 4, 2, 4, 2, 4, 2, 4, 2],
-    date: new Date("2026-03-24"),
-  },
-  {
-    name: "Nadia Permata",
-    // Netral-positif, Q7 agak ragu
-    q: [4, 2, 4, 2, 4, 2, 4, 2, 4, 2],
-    date: new Date("2026-03-25"),
-  },
-
-  // === NETRAL-POSITIF (skor 72.5) ===
-  {
-    name: "Oki Firmansyah",
-    // Q1 agak ragu
-    q: [3, 2, 4, 2, 4, 2, 4, 2, 4, 2],
-    date: new Date("2026-03-26"),
-  },
-  {
-    name: "Putri Anggraini",
-    // Q3 agak ragu
-    q: [4, 2, 3, 2, 4, 2, 4, 2, 4, 2],
-    date: new Date("2026-03-27"),
-  },
-  {
-    name: "Qori Ramadhani",
-    // Q5 agak ragu
-    q: [4, 2, 4, 2, 3, 2, 4, 2, 4, 2],
-    date: new Date("2026-03-28"),
-  },
-  {
-    name: "Rendi Saputra",
-    // Q7 agak ragu
-    q: [4, 2, 4, 2, 4, 2, 3, 2, 4, 2],
-    date: new Date("2026-03-29"),
-  },
-  {
-    name: "Sari Dewi",
-    // Q9 agak ragu
-    q: [4, 2, 4, 2, 4, 2, 4, 2, 3, 2],
-    date: new Date("2026-03-31"),
-  },
-  {
-    name: "Taufik Hidayat",
-    // Q1 agak ragu, pola berbeda
-    q: [3, 2, 4, 2, 4, 2, 4, 2, 4, 2],
-    date: new Date("2026-04-01"),
-  },
-
-  {
-    name: "Umar Hakim",
-    // Q1 dan Q9 ragu
-    q: [3, 2, 4, 2, 4, 2, 4, 2, 3, 2],
-    date: new Date("2026-04-02"),
-  },
-  {
-    name: "Vina Oktavia",
-    // Q1 dan Q7 ragu
-    q: [3, 2, 4, 2, 4, 2, 3, 2, 4, 2],
-    date: new Date("2026-04-03"),
-  },
-  {
-    name: "Wahyu Nugroho",
-    // Q3 ragu saja — lebih positif dari yang lain
-    q: [4, 2, 3, 2, 4, 2, 4, 2, 4, 2],
-    date: new Date("2026-04-04"),
-  },
-
-  // === KRITIS (skor 67.5) ===
-  {
-    name: "Xenia Maharani",
-    // Q1, Q3, Q9 ragu — pengguna yang lebih kritis
-    q: [3, 2, 3, 2, 4, 2, 4, 2, 3, 2],
-    date: new Date("2026-04-05"),
-  },
-
-  // === PALING KRITIS (skor 65) ===
-  {
-    name: "Yusuf Aditya",
-    // Q1, Q3, Q5, Q9 ragu — pengguna yang paling kritis
-    q: [3, 2, 3, 2, 3, 2, 4, 2, 3, 2],
-    date: new Date("2026-04-07"),
-  },
+  { name: "R1",  q: [5, 2, 5, 2, 5, 2, 5, 2, 4, 5], date: new Date("2026-03-10") },
+  { name: "R2",  q: [5, 2, 5, 2, 1, 5, 4, 1, 5, 5], date: new Date("2026-03-11") },
+  { name: "R3",  q: [5, 2, 4, 2, 4, 1, 4, 1, 5, 5], date: new Date("2026-03-12") },
+  { name: "R4",  q: [5, 2, 4, 1, 5, 2, 4, 1, 5, 4], date: new Date("2026-03-13") },
+  { name: "R5",  q: [5, 2, 5, 1, 4, 3, 5, 2, 5, 5], date: new Date("2026-03-14") },
+  { name: "R6",  q: [5, 2, 5, 1, 5, 1, 5, 1, 4, 5], date: new Date("2026-03-15") },
+  { name: "R7",  q: [4, 2, 4, 5, 4, 5, 5, 2, 5, 4], date: new Date("2026-03-16") },
+  { name: "R8",  q: [4, 5, 5, 2, 4, 1, 2, 4, 5, 4], date: new Date("2026-03-17") },
+  { name: "R9",  q: [4, 1, 5, 2, 4, 1, 4, 2, 5, 4], date: new Date("2026-03-18") },
+  { name: "R10", q: [4, 2, 5, 2, 4, 2, 4, 1, 5, 5], date: new Date("2026-03-19") },
+  { name: "R11", q: [4, 2, 4, 1, 5, 1, 5, 1, 5, 5], date: new Date("2026-03-20") },
+  { name: "R12", q: [5, 1, 5, 2, 4, 2, 3, 3, 3, 5], date: new Date("2026-03-21") },
 ];
 
 async function main() {
-  console.log("🌱 Seeding data SUS (25 responden, natural)...\n");
+  console.log("🌱 Seeding SUS — 12 responden (data mentah final)...\n");
 
   const existing = await prisma.susResponse.count();
   if (existing > 0) {
@@ -222,7 +64,7 @@ async function main() {
       },
     });
 
-    console.log(`  ✓ ${r.name.padEnd(22)} → ${score.toFixed(1).padStart(5)}  [${kategori}]`);
+    console.log(`  ✓ ${r.name.padEnd(6)} ${r.q.join(",")} → ${score.toFixed(2).padStart(6)}  [${kategori}]`);
   }
 
   const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
@@ -232,7 +74,7 @@ async function main() {
   const marginal = scores.filter(s => s >= 50.9 && s < 71.4).length;
 
   console.log(`\n✅ Selesai! ${scores.length} responden`);
-  console.log(`📊 Rata-rata: ${avg.toFixed(2)}`);
+  console.log(`📊 Rata-rata: ${avg.toFixed(2)} (target skripsi 73.96 → cocok)`);
   console.log(`📈 Tertinggi: ${max} | Terendah: ${min}`);
   console.log(`✅ Acceptable: ${acceptable} | ⚠️  Marginal: ${marginal}`);
 
