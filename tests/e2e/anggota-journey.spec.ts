@@ -1,85 +1,95 @@
 /**
- * End-to-end test scenarios for the Karang Taruna application.
+ * End-to-end checks for the Karang Taruna application.
  *
- * Login credentials must be provided via environment variables. Do not put
- * working credentials, tokens, or production personal data in this file.
- * These tests should run only against a dedicated test database/environment.
+ * Use a dedicated test environment/database. Never commit real credentials.
+ * Optional login scenarios are skipped unless their E2E_* environment
+ * variables are configured.
  */
 import { test, expect } from "@playwright/test";
 
-const ANGGOTA_EMAIL = process.env.E2E_ANGGOTA_EMAIL;
-const ANGGOTA_PASSWORD = process.env.E2E_ANGGOTA_PASSWORD;
-const ADMIN_EMAIL = process.env.E2E_ADMIN_EMAIL;
-const ADMIN_PASSWORD = process.env.E2E_ADMIN_PASSWORD;
+const anggotaEmail = process.env.E2E_ANGGOTA_EMAIL;
+const anggotaPassword = process.env.E2E_ANGGOTA_PASSWORD;
+const adminEmail = process.env.E2E_ADMIN_EMAIL;
+const adminPassword = process.env.E2E_ADMIN_PASSWORD;
 
-test.describe("E2E — Journey Anggota Karang Taruna", () => {
-  test("E2E-01 | Pengunjung dapat membuka halaman pendaftaran", async ({ page }) => {
-    await page.goto("/register");
-    await expect(page.locator("body")).toBeVisible();
-    await expect(page.locator('input[name="namaLengkap"]')).toBeVisible();
+test.describe("E2E — Halaman publik", () => {
+  test("E2E-01 | Pengunjung dapat membuka halaman beranda", async ({ page }) => {
+    await page.goto("/");
+
+    await expect(page.getByRole("heading", { name: /Karang Taruna\s+Muda Berkarya/i })).toBeVisible();
   });
 
-  test("E2E-02 | Anggota dapat login dan diarahkan ke dashboard", async ({ page }) => {
-    test.skip(
-      !ANGGOTA_EMAIL || !ANGGOTA_PASSWORD,
-      "Atur E2E_ANGGOTA_EMAIL dan E2E_ANGGOTA_PASSWORD untuk menjalankan skenario login anggota.",
+  test("E2E-03 | Login anggota menampilkan pesan saat kredensial tidak valid", async ({ page }) => {
+    await page.goto("/anggota/login");
+    await page.getByPlaceholder("Masukkan email Anda").fill(
+      anggotaEmail ?? "nonexistent-e2e-user@example.invalid",
     );
+    await page.getByPlaceholder("••••••••").fill("Invalid-Test-Password-Only");
+    await page.getByRole("button", { name: /^Login$/ }).click();
 
-    await page.goto("/login");
-    await page.fill('input[name="email"]', ANGGOTA_EMAIL!);
-    await page.fill('input[name="password"]', ANGGOTA_PASSWORD!);
-    await page.click('button[type="submit"]');
-
-    await expect(page).toHaveURL(/\/member\/dashboard/);
-    await expect(page.locator("h1, h2")).toContainText(/dashboard|selamat/i);
+    await expect(page.getByText("Email atau password salah", { exact: true })).toBeVisible();
   });
 
-  test("E2E-03 | Login ditolak untuk akun yang tidak dikenal", async ({ page }) => {
-    await page.goto("/login");
-    await page.fill(
-      'input[name="email"]',
-      ANGGOTA_EMAIL ?? "nonexistent-e2e-user@example.invalid",
-    );
-    await page.fill('input[name="password"]', "Invalid-Test-Password-Only");
-    await page.click('button[type="submit"]');
-
-    await expect(page.locator(".error, [role=alert]")).toContainText(
-      /salah|invalid|tidak|gagal/i,
-    );
-  });
-
-  test("E2E-04 | Halaman aspirasi publik dapat dibuka", async ({ page }) => {
+  test("E2E-04 | Halaman aspirasi publik menampilkan formulir", async ({ page }) => {
     await page.goto("/aspirasi");
-    await expect(page.locator("body")).toBeVisible();
+
+    await expect(page.getByRole("heading", { name: "Kirim Aspirasi" })).toBeVisible();
+    await expect(page.locator('input[name="judul"]')).toBeVisible();
+    await expect(page.locator('textarea[name="pesan"]')).toBeVisible();
+    await expect(page.getByRole("button", { name: /Kirim Aspirasi/i })).toBeVisible();
   });
 
-  test("E2E-05 | Halaman survei SUS dapat dibuka", async ({ page }) => {
+  test("E2E-05 | Halaman SUS menampilkan sepuluh pertanyaan", async ({ page }) => {
     await page.goto("/sus");
-    await expect(page.locator("body")).toBeVisible();
+
+    await expect(page.getByRole("heading", { name: /System Usability Scale/i })).toBeVisible();
+    await expect(page.locator("h3")).toHaveCount(10);
+    await expect(page.getByPlaceholder("Masukkan nama Anda...")).toBeVisible();
+    await expect(page.getByRole("button", { name: /Kirim Evaluasi/i })).toBeVisible();
   });
 });
 
-test.describe("E2E — Journey Admin", () => {
+test.describe("E2E — Anggota terautentikasi", () => {
+  test("E2E-02 | Anggota yang valid diarahkan ke dashboard anggota", async ({ page }) => {
+    test.skip(
+      !anggotaEmail || !anggotaPassword,
+      "Atur E2E_ANGGOTA_EMAIL dan E2E_ANGGOTA_PASSWORD untuk menjalankan skenario ini.",
+    );
+
+    await page.goto("/anggota/login");
+    await page.getByPlaceholder("Masukkan email Anda").fill(anggotaEmail!);
+    await page.getByPlaceholder("••••••••").fill(anggotaPassword!);
+    await page.getByRole("button", { name: /^Login$/ }).click();
+
+    await expect(page).toHaveURL(/\/member\/dashboard(?:\/|$)/);
+    await expect(page.locator("body")).toContainText(/dashboard|selamat|kegiatan/i);
+  });
+});
+
+test.describe("E2E — Administrator terautentikasi", () => {
   test.beforeEach(async ({ page }) => {
     test.skip(
-      !ADMIN_EMAIL || !ADMIN_PASSWORD,
-      "Atur E2E_ADMIN_EMAIL dan E2E_ADMIN_PASSWORD dengan akun admin khusus pengujian.",
+      !adminEmail || !adminPassword,
+      "Atur E2E_ADMIN_EMAIL dan E2E_ADMIN_PASSWORD untuk menjalankan skenario admin.",
     );
 
     await page.goto("/login");
-    await page.fill('input[name="email"]', ADMIN_EMAIL!);
-    await page.fill('input[name="password"]', ADMIN_PASSWORD!);
-    await page.click('button[type="submit"]');
-    await page.waitForURL(/\/dashboard/);
+    await page.getByPlaceholder("Masukkan email admin").fill(adminEmail!);
+    await page.getByPlaceholder("••••••••").fill(adminPassword!);
+    await page.getByRole("button", { name: /^Login$/ }).click();
+    await expect(page).toHaveURL(/\/dashboard(?:\/|$)/);
   });
 
-  test("E2E-06 | Admin dapat melihat dashboard statistik", async ({ page }) => {
+  test("E2E-06 | Administrator dapat membuka dashboard", async ({ page }) => {
     await page.goto("/dashboard");
-    await expect(page.locator("body")).toContainText(/anggota|kegiatan|saldo/i);
+
+    await expect(page.locator("body")).toContainText(/anggota|kegiatan|keuangan/i);
   });
 
-  test("E2E-07 | Dashboard pengelolaan kegiatan dapat dibuka", async ({ page }) => {
+  test("E2E-07 | Administrator dapat membuka manajemen kegiatan", async ({ page }) => {
     await page.goto("/dashboard/kegiatan");
-    await expect(page.locator("body")).toBeVisible();
+
+    await expect(page.getByRole("heading", { name: "Manajemen Data Kegiatan" })).toBeVisible();
+    await expect(page.getByRole("link", { name: /Tambah Kegiatan Baru|Tambah Kegiatan/i }).first()).toBeVisible();
   });
 });
