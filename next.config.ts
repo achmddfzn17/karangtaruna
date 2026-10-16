@@ -5,8 +5,24 @@ const nextConfig: NextConfig = {
     // Turbopack doesn't need watchOptions — it handles file watching natively
   },
   serverExternalPackages: ["pg"],
+  async headers() {
+    return [
+      {
+        source: "/:path*",
+        headers: [
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "X-Frame-Options", value: "SAMEORIGIN" },
+          {
+            key: "Referrer-Policy",
+            value: "strict-origin-when-cross-origin",
+          },
+        ],
+      },
+    ];
+  },
   images: {
-    dangerouslyAllowLocalIP: true,
+    // Do not enable dangerouslyAllowLocalIP for the public image optimizer.
+    // Public Supabase image URLs are covered by the explicit remotePatterns rule.
     remotePatterns: [
       {
         protocol: "https",
