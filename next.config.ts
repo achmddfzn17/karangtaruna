@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  allowedDevOrigins: ["127.0.0.1", "localhost"],
   turbopack: {
     // Turbopack doesn't need watchOptions — it handles file watching natively
   },

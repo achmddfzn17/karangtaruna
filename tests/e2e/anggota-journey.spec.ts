@@ -21,6 +21,7 @@ test.describe("E2E — Halaman publik", () => {
 
   test("E2E-03 | Login anggota menampilkan pesan saat kredensial tidak valid", async ({ page }) => {
     await page.goto("/anggota/login");
+    await page.waitForLoadState("networkidle");
     await page.getByPlaceholder("Masukkan email Anda").fill(
       anggotaEmail ?? "nonexistent-e2e-user@example.invalid",
     );
@@ -57,6 +58,7 @@ test.describe("E2E — Anggota terautentikasi", () => {
     );
 
     await page.goto("/anggota/login");
+    await page.waitForLoadState("networkidle");
     await page.getByPlaceholder("Masukkan email Anda").fill(anggotaEmail!);
     await page.getByPlaceholder("••••••••").fill(anggotaPassword!);
     await page.getByRole("button", { name: /^Login$/ }).click();
@@ -74,6 +76,7 @@ test.describe("E2E — Administrator terautentikasi", () => {
     );
 
     await page.goto("/login");
+    await page.waitForLoadState("networkidle");
     await page.getByPlaceholder("Masukkan email admin").fill(adminEmail!);
     await page.getByPlaceholder("••••••••").fill(adminPassword!);
     await page.getByRole("button", { name: /^Login$/ }).click();
